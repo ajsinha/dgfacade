@@ -1,0 +1,45 @@
+/*
+ * Copyright © 2025-2030, All Rights Reserved
+ * Ashutosh Sinha | Email: ajsinha@gmail.com
+ * DGFacade Custom Styles
+ */
+
+:root {
+    --dgf-primary: #0079c1;
+    --dgf-secondary: #005a8e;
+    --dgf-dark: #003366;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar-brand { font-size: 1.3rem; }
+
+.bg-primary {
+    background: linear-gradient(135deg, var(--dgf-primary) 0%, var(--dgf-secondary) 50%, var(--dgf-dark) 100%) !important;
+}
+
+.card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 0.5rem; }
+.card-header { background-color: #fff; border-bottom: 2px solid #f0f0f0; }
+
+.footer { font-size: 0.85rem; }
+
+.font-monospace { font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; }
+
+code { color: var(--dgf-primary); }
+
+.table th { font-weight: 600; }
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--dgf-primary), var(--dgf-secondary));
+    border: none;
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--dgf-secondary), var(--dgf-dark));
+}
+
+.badge { font-weight: 500; }
+
+pre { max-height: 400px; overflow-y: auto; }

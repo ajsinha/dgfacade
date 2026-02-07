@@ -1,0 +1,26 @@
+[
+  {
+    "userId": "admin",
+    "password": "admin123",
+    "displayName": "Administrator",
+    "email": "admin@dgfacade.local",
+    "roles": ["ADMIN", "USER"],
+    "active": true
+  },
+  {
+    "userId": "operator",
+    "password": "operator123",
+    "displayName": "Operator",
+    "email": "operator@dgfacade.local",
+    "roles": ["USER"],
+    "active": true
+  },
+  {
+    "userId": "viewer",
+    "password": "viewer123",
+    "displayName": "Viewer",
+    "email": "viewer@dgfacade.local",
+    "roles": ["VIEWER"],
+    "active": true
+  }
+]

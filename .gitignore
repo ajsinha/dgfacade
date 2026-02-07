@@ -1,0 +1,83 @@
+# =============================================================================
+# DGFacade .gitignore
+# Java / Maven / Spring Boot project
+# =============================================================================
+
+# --- Compiled class files ---
+*.class
+
+# --- Package files ---
+*.jar
+*.war
+*.ear
+*.nar
+
+# --- Maven build output ---
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# --- Gradle (in case of future migration) ---
+.gradle/
+build/
+
+# --- Log files ---
+*.log
+logs/
+
+# --- OS generated files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# --- IntelliJ IDEA ---
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+atlassian-ide-plugin.xml
+
+# --- Eclipse ---
+.classpath
+.project
+.settings/
+bin/
+.metadata/
+
+# --- VS Code ---
+.vscode/
+*.code-workspace
+
+# --- NetBeans ---
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# --- Spring Boot ---
+spring-shell.log
+
+# --- Runtime data ---
+*.pid
+*.seed
+*.pid.lock
+hs_err_pid*
+replay_pid*
+
+# --- Temp files ---
+*.tmp
+*.bak
+*.swp
+*~
+
+# --- Archives (built artifacts) ---
+*.zip
+*.tar.gz
+*.rar
+*.7z

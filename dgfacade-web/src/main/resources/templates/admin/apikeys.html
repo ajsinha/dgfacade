@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('API Keys')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-key me-2"></i> API Keys</h2>
+        <a th:href="@{/admin}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to Admin
+        </a>
+    </div>
+    <hr>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr><th>Key</th><th>Owner</th><th>Description</th><th>Allowed Types</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="key : ${apiKeys}">
+                            <td><code th:text="${key.key}">key</code></td>
+                            <td th:text="${key.owner}">owner</td>
+                            <td th:text="${key.description}">desc</td>
+                            <td>
+                                <span th:each="type : ${key.allowedRequestTypes}" class="badge bg-info me-1" th:text="${type}">*</span>
+                            </td>
+                            <td>
+                                <span th:if="${key.active}" class="badge bg-success">Active</span>
+                                <span th:unless="${key.active}" class="badge bg-danger">Inactive</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted small mt-2">
+                <i class="fas fa-info-circle me-1"></i>
+                API keys are managed via <code>config/apikeys.json</code>. Restart required after changes.
+            </p>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

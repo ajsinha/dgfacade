@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin Dashboard')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container-fluid mt-4">
+    <h2><i class="fas fa-shield-alt me-2"></i> Admin Dashboard</h2>
+    <hr>
+
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                    <h3 th:text="${userCount}">0</h3>
+                    <p class="text-muted mb-2">Users</p>
+                    <a th:href="@{/admin/users}" class="btn btn-outline-primary btn-sm">Manage Users</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-success h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-key fa-3x text-success mb-3"></i>
+                    <h3 th:text="${apiKeyCount}">0</h3>
+                    <p class="text-muted mb-2">API Keys</p>
+                    <a th:href="@{/admin/apikeys}" class="btn btn-outline-success btn-sm">Manage Keys</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-info h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-cogs fa-3x text-info mb-3"></i>
+                    <h3 th:text="${handlerCount}">0</h3>
+                    <p class="text-muted mb-2">Handlers</p>
+                    <a th:href="@{/admin/handlers}" class="btn btn-outline-info btn-sm">Manage Handlers</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i> Quick Actions</h5></div>
+                <div class="card-body">
+                    <a th:href="@{/admin/messaging}" class="btn btn-outline-secondary btn-sm mb-2 me-2">
+                        <i class="fas fa-exchange-alt me-1"></i> Messaging Config
+                    </a>
+                    <a th:href="@{/admin/handlers}" class="btn btn-outline-secondary btn-sm mb-2 me-2">
+                        <i class="fas fa-cogs me-1"></i> Handler Registry
+                    </a>
+                    <a th:href="@{/api/v1/health}" class="btn btn-outline-secondary btn-sm mb-2" target="_blank">
+                        <i class="fas fa-heartbeat me-1"></i> Health Check
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> System Info</h5></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr><td class="fw-bold">Application</td><td th:text="${appName}">DGFacade</td></tr>
+                        <tr><td class="fw-bold">Version</td><td th:text="${version}">1.0.0</td></tr>
+                        <tr><td class="fw-bold">Java</td><td th:text="${javaVersion}">17</td></tr>
+                        <tr><td class="fw-bold">OS</td><td th:text="${osName}">Linux</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Help')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- ============================================================ -->
+        <!-- LEFT SIDEBAR - Table of Contents                             -->
+        <!-- ============================================================ -->
+        <div class="col-md-3 mb-4">
+            <div class="card sticky-top" style="top: 80px;">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-list me-2"></i> Table of Contents</h6>
+                </div>
+                <div class="card-body p-0">
+                    <nav class="nav flex-column small">
+                        <a class="nav-link py-1" href="#overview">1. What is DGFacade?</a>
+                        <a class="nav-link py-1" href="#big-picture">2. The Big Picture</a>
+                        <a class="nav-link py-1" href="#step-by-step">3. Step-by-Step Walkthrough</a>
+                        <a class="nav-link py-1" href="#modules">4. Project Modules</a>
+                        <a class="nav-link py-1" href="#handler-lifecycle">5. Handler Lifecycle</a>
+                        <a class="nav-link py-1" href="#streaming-handlers">6. Streaming (Long-Living) Handlers</a>
+                        <a class="nav-link py-1" href="#streaming-walkthrough">7. Streaming Step-by-Step</a>
+                        <a class="nav-link py-1" href="#actor-system">8. Actor System (Pekko)</a>
+                        <a class="nav-link py-1" href="#channels">9. Four Input/Output Channels</a>
+                        <a class="nav-link py-1" href="#auth-security">10. Authentication &amp; API Keys</a>
+                        <a class="nav-link py-1" href="#configuration">11. Configuration Reference</a>
+                        <a class="nav-link py-1" href="#custom-handlers">12. Writing a One-Shot Handler</a>
+                        <a class="nav-link py-1" href="#custom-streaming">13. Writing a Streaming Handler</a>
+                        <a class="nav-link py-1" href="#api-reference">14. REST API Reference</a>
+                        <a class="nav-link py-1" href="#websocket-api">15. WebSocket API Reference</a>
+                        <a class="nav-link py-1" href="#sample-handlers">16. Built-in Handlers</a>
+                        <a class="nav-link py-1" href="#composite-listener">17. Composite Message Listener</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- RIGHT CONTENT                                                -->
+        <!-- ============================================================ -->
+        <div class="col-md-9">
+            <h2><i class="fas fa-book me-2"></i> Help &amp; Documentation</h2>
+            <p class="text-muted mb-4">Complete guide to DGFacade — one-shot handlers, streaming handlers, WebSocket, Kafka, ActiveMQ, and more</p>
+
+            <!-- ========================================================== -->
+            <!-- 1. OVERVIEW                                                -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="overview">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-home me-2 text-primary"></i> 1. What is DGFacade?</h5></div>
+                <div class="card-body">
+                    <p>
+                        <strong>DGFacade</strong> is a <em>configuration-driven facade service</em>.
+                        It acts as a universal gateway that sits between the outside world and your business logic.
+                    </p>
+                    <p>
+                        Clients send a JSON message containing an <strong>API key</strong>, a <strong>request type</strong>,
+                        and a <strong>payload</strong>. DGFacade finds the matching <strong>Handler</strong>, runs it,
+                        and sends back the result. You only write the handler — DGFacade does everything else.
+                    </p>
+
+                    <h6 class="mt-3 mb-2">Two kinds of handlers:</h6>
+                    <div class="row text-center mb-3">
+                        <div class="col-md-6 mb-2">
+                            <div class="p-3 border rounded bg-light h-100">
+                                <i class="fas fa-bolt fa-2x text-success mb-2"></i>
+                                <h6>One-Shot Handlers</h6>
+                                <small class="text-muted">Request in → process → response out. Done in milliseconds.
+                                    Example: ARITHMETIC, ECHO.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="p-3 border rounded bg-light h-100">
+                                <i class="fas fa-stream fa-2x text-info mb-2"></i>
+                                <h6>Streaming (Long-Living) Handlers</h6>
+                                <small class="text-muted">Stay alive for minutes or hours. Publish data whenever
+                                    it arrives — at unpredictable intervals. Example: MARKET_DATA.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-3 mb-2">Four input/output channels:</h6>
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-2"><div class="p-2 border rounded"><i class="fas fa-plug text-success"></i><br><small>REST API</small></div></div>
+                        <div class="col-md-3 mb-2"><div class="p-2 border rounded"><i class="fas fa-stream text-info"></i><br><small>Kafka</small></div></div>
+                        <div class="col-md-3 mb-2"><div class="p-2 border rounded"><i class="fas fa-exchange-alt text-warning"></i><br><small>ActiveMQ</small></div></div>
+                        <div class="col-md-3 mb-2"><div class="p-2 border rounded"><i class="fas fa-wifi text-primary"></i><br><small>WebSocket</small></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 2. THE BIG PICTURE                                         -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="big-picture">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-project-diagram me-2 text-primary"></i> 2. The Big Picture</h5></div>
+                <div class="card-body">
+<pre class="bg-dark text-light p-4 rounded" style="font-size: 0.8rem; line-height: 1.5;">
+ CLIENT  (REST / Kafka / ActiveMQ / WebSocket)
+   │
+   │  JSON:  { "apiKey":"...", "requestType":"...", "payload":{...},
+   │           "streaming": true/false, "responseChannels":["WEBSOCKET","KAFKA"],
+   │           "ttlMinutes": 30, "responseTopic": "my-topic" }
+   ▼
+ ┌───────────────────────────────────────────────────────────────┐
+ │  <span class="text-info">ENTRY POINT</span>                                                    │
+ │  ApiController ─── REST POST /api/v1/request                  │
+ │  WebSocketController ─── STOMP /app/request                   │
+ │  KafkaRequestListener ── Kafka topic                          │
+ │  ActiveMQRequestListener ── JMS queue                         │
+ └────────────────────────────┬──────────────────────────────────┘
+                              ▼
+ ┌───────────────────────────────────────────────────────────────┐
+ │  <span class="text-warning">ActorRequestDispatcher</span>  (central hub)                        │
+ │  ① Validate API key  ② Look up handler  ③ Route:             │
+ │                                                               │
+ │     One-shot handler? ──→ Pekko Ask → child actor → done      │
+ │     Streaming handler? ─→ Spawn StreamingHandlerActor         │
+ │                            └─→ runs for TTL minutes           │
+ │                            └─→ publishes via callback         │
+ └────────────────────────────┬──────────────────────────────────┘
+                              ▼
+ ┌───────────────────────────────────────────────────────────────┐
+ │  <span class="text-success">RESPONSE ROUTING</span>                                              │
+ │                                                               │
+ │  One-shot:  Response → same channel as request                │
+ │                                                               │
+ │  Streaming: Immediate ACK → same channel as request           │
+ │             Then data ticks → ALL configured responseChannels: │
+ │               WEBSOCKET → /topic/stream/{sessionId}           │
+ │               KAFKA     → responseTopic on Kafka              │
+ │               ACTIVEMQ  → responseTopic on ActiveMQ           │
+ │             (fan-out: can publish to multiple simultaneously)  │
+ └───────────────────────────────────────────────────────────────┘</pre>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 3. ONE-SHOT STEP BY STEP                                   -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="step-by-step">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-shoe-prints me-2 text-primary"></i> 3. Step-by-Step: One-Shot Request</h5></div>
+                <div class="card-body">
+                    <p>Example request:</p>
+<pre class="bg-light p-3 rounded"><code>POST /api/v1/request
+{ "apiKey": "dgf-dev-key-001", "requestType": "ARITHMETIC",
+  "payload": { "operation": "ADD", "operandA": 10, "operandB": 5 } }</code></pre>
+
+                    <div class="ms-2 mt-3">
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-primary rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">1</span>
+                            <div><strong>ApiController</strong> receives the HTTP POST, stamps <code>source=REST_API</code>, generates a UUID <code>requestId</code>, forwards to <code>RequestDispatcher</code>.</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-primary rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">2</span>
+                            <div><strong>ActorRequestDispatcher.dispatch()</strong> — validates API key via <code>FileApiKeyService</code> (exists? active? allowed type?). Validates handler exists via <code>DefaultHandlerRegistry</code>.</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-info rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">3</span>
+                            <div><strong>Pekko ask pattern</strong> sends <code>ExecuteRequest</code> to the <code>HandlerActor</code>. Returns <code>CompletableFuture</code> immediately (non-blocking, 60s timeout).</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-info rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">4</span>
+                            <div><strong>HandlerActor</strong> creates a prototype <code>ArithmeticHandler</code> via Spring, spawns an anonymous <strong>child actor</strong> (parent never blocked).</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-warning text-dark rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">5</span>
+                            <div><strong>Child actor runs lifecycle:</strong> <code>start()</code> validates payload → <code>execute()</code> computes 10+5=15 → <code>stop()</code> publishes to Kafka if enabled. Child sends <code>HandlerSuccess</code> back and terminates.</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-success rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">6</span>
+                            <div><strong>Response</strong> returned as JSON: <code>{ "status": "SUCCESS", "result": { "expression": "10.0 + 5.0 = 15.0" }, "executionTimeMs": 3 }</code></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 4. PROJECT MODULES                                         -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="modules">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-cubes me-2 text-primary"></i> 4. Project Modules</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-dark"><tr><th style="width:170px;">Module</th><th>Responsibility</th><th>Key Classes</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>dgfacade-common</strong></td>
+                                    <td>Shared contracts: models, interfaces, config. No business logic.</td>
+                                    <td><code>DGHandler</code>, <code>StreamingHandler</code>, <code>DGRequest/Response</code>, <code>StreamingSession</code>, <code>ResponseChannel</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>dgfacade-messaging</strong></td>
+                                    <td>Kafka &amp; ActiveMQ listeners/publishers. Conditionally loaded.</td>
+                                    <td><code>KafkaRequestListener</code>, <code>KafkaPublisher</code>, <code>ActiveMQPublisher</code>, <code>StreamingPublisher</code>, <code>MessagePublisher</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>dgfacade-server</strong></td>
+                                    <td>Processing engine: actors, dispatcher, registry, handlers.</td>
+                                    <td><code>HandlerActor</code>, <code>StreamingHandlerActor</code>, <code>ActorRequestDispatcher</code>, <code>StreamingSessionManager</code>, <code>DefaultStreamingPublisher</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>dgfacade-web</strong></td>
+                                    <td>Spring Boot app, REST API, WebSocket, Thymeleaf UI, Security.</td>
+                                    <td><code>ApiController</code>, <code>WebSocketController</code>, <code>WebSocketConfig</code>, <code>SecurityConfig</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+<pre class="bg-light p-3 rounded">dgfacade-web → dgfacade-server → dgfacade-messaging → dgfacade-common</pre>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 5. HANDLER LIFECYCLE                                       -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="handler-lifecycle">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-sync-alt me-2 text-primary"></i> 5. Handler Lifecycle (start → execute → stop)</h5></div>
+                <div class="card-body">
+                    <p>Every handler (one-shot <em>and</em> streaming) implements the <code>DGHandler</code> interface with three lifecycle methods:</p>
+                    <div class="row text-center my-3">
+                        <div class="col-md-4 mb-2">
+                            <div class="p-3 border rounded border-info h-100">
+                                <i class="fas fa-play-circle fa-2x text-info mb-2"></i>
+                                <h6>start(request)</h6>
+                                <small class="text-muted">Parse/validate payload. Acquire resources. Fail fast on bad input.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <div class="p-3 border rounded border-success h-100">
+                                <i class="fas fa-cog fa-2x text-success mb-2"></i>
+                                <h6>execute()</h6>
+                                <small class="text-muted"><strong>One-shot:</strong> compute and return.<br><strong>Streaming:</strong> run a loop, push data via callback, block until TTL.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <div class="p-3 border rounded border-warning h-100">
+                                <i class="fas fa-stop-circle fa-2x text-warning mb-2"></i>
+                                <h6>stop(response)</h6>
+                                <small class="text-muted">Cleanup. <strong>Always called</strong> — even on error (response will be null).</small>
+                            </div>
+                        </div>
+                    </div>
+<pre class="bg-light p-3 rounded">CREATED → STARTING → READY → EXECUTING → STOPPING → STOPPED
+                                            ↘ (on error) → FAILED</pre>
+                    <p>Every handler instance is <code>@Scope(SCOPE_PROTOTYPE)</code> — a brand-new instance per request. No shared state, no race conditions.</p>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 6. STREAMING HANDLERS                                      -->
+            <!-- ========================================================== -->
+            <div class="card mb-4 border-info" id="streaming-handlers">
+                <div class="card-header bg-info text-white"><h5 class="mb-0"><i class="fas fa-stream me-2"></i> 6. Streaming (Long-Living) Handlers</h5></div>
+                <div class="card-body">
+                    <p>
+                        A <strong>streaming handler</strong> stays alive for a configurable period (e.g. 30 minutes)
+                        and publishes data <em>whenever it arrives</em> — at unknown, irregular intervals.
+                        Think of a stock market feed, a sensor monitor, or a log tail.
+                    </p>
+
+                    <h6 class="mt-3">How it differs from a one-shot handler:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light"><tr><th style="width:200px;"></th><th>One-Shot</th><th>Streaming</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Lifetime</strong></td><td>Milliseconds</td><td>Minutes to hours (configurable TTL)</td></tr>
+                                <tr><td><strong>execute() behavior</strong></td><td>Runs once, returns DGResponse</td><td>Runs a loop, pushes data via callback, blocks until TTL or shutdown</td></tr>
+                                <tr><td><strong>Response</strong></td><td>Single JSON response</td><td>Immediate ACK + continuous data stream</td></tr>
+                                <tr><td><strong>Actor</strong></td><td>Anonymous child — short-lived</td><td>Named <code>StreamingHandlerActor</code> — long-lived, with TTL timer</td></tr>
+                                <tr><td><strong>Output channel</strong></td><td>Same as input</td><td>Multi-channel fan-out: any combination of WebSocket, Kafka, and/or ActiveMQ simultaneously</td></tr>
+                                <tr><td><strong>Interface</strong></td><td><code>DGHandler</code></td><td><code>StreamingHandler</code> (extends DGHandler)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="mt-4">The StreamingHandler interface adds:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light"><tr><th>Method</th><th>Purpose</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>getDefaultTtlMinutes()</code></td><td>How long the handler stays alive by default (can be overridden per-request)</td></tr>
+                                <tr><td><code>getDefaultResponseChannels()</code></td><td>Set of channels to publish to — any combination of <code>WEBSOCKET</code>, <code>KAFKA</code>, <code>ACTIVEMQ</code></td></tr>
+                                <tr><td><code>setDataPublisher(Consumer&lt;DGResponse&gt;)</code></td><td>Framework injects a callback — the handler calls <code>publisher.accept(response)</code> to push data</td></tr>
+                                <tr><td><code>requestShutdown()</code></td><td>Framework calls this to ask the handler to stop its loop gracefully</td></tr>
+                                <tr><td><code>isRunning()</code></td><td>Returns true while the streaming loop is active</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="mt-4">StreamingSession — what tracks the session:</h6>
+                    <p>When a streaming handler starts, DGFacade creates a <code>StreamingSession</code> object that tracks:</p>
+                    <ul>
+                        <li><code>sessionId</code> — unique UUID for this session</li>
+                        <li><code>responseChannels</code> — set of channels: any combination of WEBSOCKET, KAFKA, ACTIVEMQ</li>
+                        <li><code>responseTopic</code> — the specific topic/destination for published data</li>
+                        <li><code>ttlMinutes</code> — how long before auto-shutdown</li>
+                        <li><code>expiresAt</code> — computed expiry timestamp</li>
+                        <li><code>messagesPublished</code> — counter of data messages sent</li>
+                        <li><code>status</code> — current handler lifecycle status</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 7. STREAMING STEP BY STEP                                  -->
+            <!-- ========================================================== -->
+            <div class="card mb-4 border-info" id="streaming-walkthrough">
+                <div class="card-header bg-info text-white"><h5 class="mb-0"><i class="fas fa-shoe-prints me-2"></i> 7. Step-by-Step: Streaming Request</h5></div>
+                <div class="card-body">
+                    <p>Example: Start a MARKET_DATA streaming session that pushes stock ticks to WebSocket for 5 minutes:</p>
+<pre class="bg-light p-3 rounded"><code>POST /api/v1/request
+{
+  "apiKey": "dgf-dev-key-001",
+  "requestType": "MARKET_DATA",
+  "streaming": true,
+  "responseChannels": ["WEBSOCKET"],
+  "ttlMinutes": 5,
+  "payload": { "symbols": ["AAPL", "GOOGL"], "intervalMinMs": 1000, "intervalMaxMs": 3000 }
+}</code></pre>
+
+                    <div class="ms-2 mt-3">
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-primary rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">1</span>
+                            <div><strong>API key validated, handler found</strong> — same as one-shot. But <code>MarketDataHandler</code> implements <code>StreamingHandler</code>, so the dispatcher takes the streaming path.</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-primary rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">2</span>
+                            <div><strong>Dispatcher checks limits</strong> — Is streaming enabled? Is <code>maxConcurrentSessions</code> (50) reached? Is requested TTL (5min) within <code>maxTtlMinutes</code> (480)?</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-info rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">3</span>
+                            <div><strong>StreamingSession created</strong> — UUID session ID, channels=[WEBSOCKET], topic=<code>/topic/stream/{sessionId}</code>, TTL=5min, expiresAt calculated. Multiple channels can be specified for simultaneous fan-out.</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-info rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">4</span>
+                            <div><strong>StreamingHandlerActor spawned</strong> — a dedicated, named Pekko actor for this session. It schedules a <code>TtlExpired</code> message for 5 minutes from now.</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-warning text-dark rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">5</span>
+                            <div><strong>handler.start(request)</strong> — MarketDataHandler parses symbols [AAPL, GOOGL], validates interval config, initializes starting prices.</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-success rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">6</span>
+                            <div><strong>Immediate ACK response</strong> returned to the caller with <code>status: STREAMING_STARTED</code>, sessionId, TTL, responseChannels, expiresAt. The REST call completes.</div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-danger rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">7</span>
+                            <div>
+                                <strong>handler.execute() starts in a background thread</strong> — enters a loop:
+                                <ol class="mt-1 mb-0">
+                                    <li>Pick random symbol, simulate price change (−2% to +2%)</li>
+                                    <li>Build tick data (symbol, price, change, volume, bid, ask, timestamp)</li>
+                                    <li>Call <code>dataPublisher.accept(tickResponse)</code> → routes through <code>StreamingHandlerActor</code> → <code>DefaultStreamingPublisher</code> → WebSocket <code>/topic/stream/{sessionId}</code></li>
+                                    <li>Sleep random 1000–3000ms</li>
+                                    <li>Repeat until <code>shutdownRequested == true</code></li>
+                                </ol>
+                            </div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-dark rounded-pill me-3 mt-1" style="min-width:28px; height:28px; display:flex; align-items:center; justify-content:center;">8</span>
+                            <div>
+                                <strong>Session ends</strong> when:
+                                <ul class="mb-0">
+                                    <li><strong>TTL expires</strong> — actor receives <code>TtlExpired</code> message, calls <code>requestShutdown()</code>, waits for loop to exit, calls <code>stop()</code></li>
+                                    <li><strong>Manual stop</strong> — client sends <code>DELETE /api/v1/streaming/sessions/{sessionId}</code>, actor receives <code>StopStreaming</code></li>
+                                </ul>
+                                A final <code>STREAMING_ENDED</code> message is published with totalMessages and duration. Actor terminates, session unregistered.
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-3">What the client receives on WebSocket:</h6>
+<pre class="bg-light p-3 rounded" style="font-size: 0.85rem;"><code>// Subscribe to: /topic/stream/{sessionId}
+
+// Each tick message:
+{ "status": "STREAMING_DATA", "handlerType": "MARKET_DATA",
+  "result": { "symbol": "AAPL", "price": 188.42, "change": 0.92,
+              "changePercent": 0.49, "volume": 23456, "bid": 188.40,
+              "ask": 188.44, "tickTimestamp": "2025-06-15T10:30:01Z",
+              "_sessionId": "a1b2c3d4-...", "_sequenceNumber": 47 } }
+
+// Final message:
+{ "status": "STREAMING_ENDED", "handlerType": "MARKET_DATA",
+  "result": { "sessionId": "a1b2c3d4-...", "totalMessages": 152,
+              "reason": "TTL expired", "duration": "PT5M" } }</code></pre>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 8. ACTOR SYSTEM                                            -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="actor-system">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-atom me-2 text-primary"></i> 8. Actor System (Apache Pekko)</h5></div>
+                <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded" style="font-size: 0.85rem;">
+  ActorSystem "dgfacade-actors"
+    │
+    ├── <span class="text-warning">HandlerActor</span> (parent — long-lived, for one-shot handlers)
+    │     ├── Child Actor #1 → ArithmeticHandler → done → stops
+    │     ├── Child Actor #2 → EchoHandler → done → stops
+    │     └── ... (spawned on demand, thousands at once)
+    │
+    ├── <span class="text-info">streaming-a1b2c3d4</span> (StreamingHandlerActor — for MARKET_DATA session)
+    │     └── Background thread running MarketDataHandler.execute()
+    │     └── Scheduled TtlExpired timer
+    │
+    └── <span class="text-info">streaming-e5f6g7h8</span> (another streaming session)
+          └── ...</pre>
+
+                    <p class="mt-3">
+                        <strong>One-shot handlers</strong> use anonymous child actors — spawned and terminated per request.
+                        <strong>Streaming handlers</strong> get their own named <code>StreamingHandlerActor</code> that lives
+                        for the duration of the session and handles TTL scheduling, data routing, and graceful shutdown.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 9. FOUR CHANNELS                                           -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="channels">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-network-wired me-2 text-primary"></i> 9. Four Input/Output Channels</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-dark"><tr><th>Channel</th><th>Input</th><th>Output (One-Shot)</th><th>Output (Streaming)</th><th>Config</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>REST API</strong></td>
+                                    <td>POST <code>/api/v1/request</code></td>
+                                    <td>HTTP response body</td>
+                                    <td>ACK response only; data via configured channels (fan-out)</td>
+                                    <td>Always enabled</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>WebSocket</strong></td>
+                                    <td>STOMP <code>/app/request</code></td>
+                                    <td><code>/topic/responses</code></td>
+                                    <td><code>/topic/stream/{sessionId}</code></td>
+                                    <td>Always enabled (connect to <code>/ws</code>)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Kafka</strong></td>
+                                    <td>Topic: <code>dgfacade-requests</code></td>
+                                    <td>Topic: <code>dgfacade-responses</code></td>
+                                    <td>Topic: request's <code>responseTopic</code></td>
+                                    <td><code>dgfacade.kafka.enabled=true</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ActiveMQ</strong></td>
+                                    <td>Queue: <code>dgfacade.requests</code></td>
+                                    <td>Queue: <code>dgfacade.responses</code></td>
+                                    <td>Queue: request's <code>responseTopic</code></td>
+                                    <td><code>dgfacade.activemq.enabled=true</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="mt-3"><i class="fas fa-wifi me-2"></i> WebSocket Setup</h6>
+                    <p>Clients connect using SockJS + STOMP:</p>
+<pre class="bg-light p-3 rounded"><code>// Connect
+var socket = new SockJS('/ws');
+var stompClient = Stomp.over(socket);
+stompClient.connect({}, function(frame) {
+    // Subscribe to streaming data
+    stompClient.subscribe('/topic/stream/' + sessionId, function(msg) {
+        var data = JSON.parse(msg.body);
+        console.log('Tick:', data);
+    });
+    // Or send a request
+    stompClient.send('/app/request', {}, JSON.stringify({
+        apiKey: 'dgf-dev-key-001', requestType: 'ECHO', payload: { msg: 'hello' }
+    }));
+});</code></pre>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 10. AUTH & SECURITY                                        -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="auth-security">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-shield-alt me-2 text-primary"></i> 10. Authentication &amp; API Keys</h5></div>
+                <div class="card-body">
+                    <h6>Web UI Login (Spring Security)</h6>
+                    <p>Form login using <code>config/users.json</code>. Roles: ADMIN, USER, VIEWER.</p>
+
+                    <h6 class="mt-3">API Key Validation (REST / Kafka / ActiveMQ / WebSocket)</h6>
+                    <p>Every JSON request must include <code>apiKey</code>. Validated against <code>config/apikeys.json</code>: key exists? active? requestType allowed?</p>
+                    <p>
+                        <strong>Public endpoints</strong> (no auth): <code>/api/v1/health</code>, <code>/ws/**</code> (WebSocket handshake).
+                        <strong>API key-only</strong>: <code>/api/v1/request</code>, <code>/api/v1/streaming/**</code>.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 11. CONFIGURATION                                          -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="configuration">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-sliders-h me-2 text-primary"></i> 11. Configuration Reference</h5></div>
+                <div class="card-body">
+                    <h6>application.properties</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light"><tr><th>Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>dgfacade.app-name</code></td><td>DGFacade</td><td>Display name</td></tr>
+                                <tr><td><code>dgfacade.version</code></td><td>1.1.0</td><td>Version</td></tr>
+                                <tr><td><code>dgfacade.external-libs-path</code></td><td>./libs</td><td>External JARs directory</td></tr>
+                                <tr><td colspan="3" class="table-secondary"><strong>Security</strong></td></tr>
+                                <tr><td><code>dgfacade.security.users-file</code></td><td>config/users.json</td><td>Web UI user accounts</td></tr>
+                                <tr><td><code>dgfacade.security.api-keys-file</code></td><td>config/apikeys.json</td><td>API keys</td></tr>
+                                <tr><td colspan="3" class="table-secondary"><strong>Actor System</strong></td></tr>
+                                <tr><td><code>dgfacade.actor.max-pool-size</code></td><td>100</td><td>Max concurrent actor threads</td></tr>
+                                <tr><td><code>dgfacade.actor.handler-timeout-seconds</code></td><td>60</td><td>One-shot handler timeout</td></tr>
+                                <tr><td colspan="3" class="table-secondary"><strong>Streaming / Long-Living Handlers</strong></td></tr>
+                                <tr><td><code>dgfacade.streaming.enabled</code></td><td>true</td><td>Enable streaming handler support</td></tr>
+                                <tr><td><code>dgfacade.streaming.default-ttl-minutes</code></td><td>30</td><td>Default session duration</td></tr>
+                                <tr><td><code>dgfacade.streaming.max-ttl-minutes</code></td><td>480</td><td>Maximum allowed TTL (8 hours)</td></tr>
+                                <tr><td><code>dgfacade.streaming.max-concurrent-sessions</code></td><td>50</td><td>Max simultaneous streaming sessions</td></tr>
+                                <tr><td><code>dgfacade.streaming.default-response-channels</code></td><td>WEBSOCKET</td><td>Comma-separated default channels (WEBSOCKET,KAFKA,ACTIVEMQ)</td></tr>
+                                <tr><td colspan="3" class="table-secondary"><strong>Kafka (disabled by default)</strong></td></tr>
+                                <tr><td><code>dgfacade.kafka.enabled</code></td><td>false</td><td>Enable Kafka integration</td></tr>
+                                <tr><td><code>dgfacade.kafka.bootstrap-servers</code></td><td>localhost:9092</td><td>Kafka brokers</td></tr>
+                                <tr><td colspan="3" class="table-secondary"><strong>ActiveMQ (disabled by default)</strong></td></tr>
+                                <tr><td><code>dgfacade.activemq.enabled</code></td><td>false</td><td>Enable ActiveMQ integration</td></tr>
+                                <tr><td><code>dgfacade.activemq.broker-url</code></td><td>tcp://localhost:61616</td><td>Artemis broker URL</td></tr>
+                                <tr><td colspan="3" class="table-secondary"><strong>Composite Listener (disabled by default)</strong></td></tr>
+                                <tr><td><code>dgfacade.composite.enabled</code></td><td>false</td><td>Enable composite multi-broker listener bean</td></tr>
+                                <tr><td><code>dgfacade.composite.kafka.enabled</code></td><td>false</td><td>Enable Kafka subscriptions in composite</td></tr>
+                                <tr><td><code>dgfacade.composite.activemq.enabled</code></td><td>false</td><td>Enable ActiveMQ subscriptions in composite</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="mt-4">config/apikeys.json</h6>
+<pre class="bg-light p-3 rounded"><code>[ { "key": "dgf-dev-key-001", "owner": "Dev Team",
+    "allowedRequestTypes": ["*"], "active": true } ]</code></pre>
+                    <h6 class="mt-3">config/users.json</h6>
+<pre class="bg-light p-3 rounded"><code>[ { "userId": "admin", "password": "admin123",
+    "roles": ["ADMIN","USER"], "active": true } ]</code></pre>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 12. WRITING A ONE-SHOT HANDLER                             -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="custom-handlers">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-code me-2 text-primary"></i> 12. Writing a One-Shot Handler</h5></div>
+                <div class="card-body">
+<pre class="bg-light p-3 rounded"><code>@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class WeatherHandler implements DGHandler {
+    private DGRequest request;
+    private HandlerStatus status = HandlerStatus.CREATED;
+
+    public String getRequestType() { return "WEATHER"; }
+    public String getDescription() { return "Fetches weather"; }
+
+    public void start(DGRequest request) throws Exception {
+        this.request = request;
+        if (!request.getPayload().containsKey("city"))
+            throw new DGFacadeException("'city' required");
+        this.status = HandlerStatus.READY;
+    }
+
+    public DGResponse execute() throws Exception {
+        String city = (String) request.getPayload().get("city");
+        return DGResponse.success(request.getRequestId(), getRequestType(),
+            Map.of("city", city, "temperature", 22, "condition", "Sunny"));
+    }
+
+    public void stop(DGResponse response) { this.status = HandlerStatus.STOPPED; }
+    public HandlerStatus getStatus() { return status; }
+}</code></pre>
+                    <div class="alert alert-warning mb-0 mt-2">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Always use <code>@Scope(SCOPE_PROTOTYPE)</code> — without it, all concurrent requests share one instance.
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 13. WRITING A STREAMING HANDLER                            -->
+            <!-- ========================================================== -->
+            <div class="card mb-4 border-info" id="custom-streaming">
+                <div class="card-header bg-info text-white"><h5 class="mb-0"><i class="fas fa-stream me-2"></i> 13. Writing a Streaming Handler</h5></div>
+                <div class="card-body">
+                    <p>Extend <code>StreamingHandler</code> instead of <code>DGHandler</code>. The key difference:
+                       your <code>execute()</code> runs a <em>loop</em> and calls <code>dataPublisher.accept()</code>
+                       whenever data is available.</p>
+<pre class="bg-light p-3 rounded" style="font-size: 0.85rem;"><code>@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class SensorMonitorHandler implements StreamingHandler {
+
+    private DGRequest request;
+    private HandlerStatus status = HandlerStatus.CREATED;
+    private Consumer&lt;DGResponse&gt; dataPublisher;
+    private volatile boolean shutdownRequested = false;
+    private volatile boolean running = false;
+
+    public String getRequestType() { return "SENSOR_MONITOR"; }
+    public String getDescription() { return "Monitors sensor data and pushes readings"; }
+    public long getDefaultTtlMinutes() { return 60; }  // default 1 hour
+    public Set&lt;ResponseChannel&gt; getDefaultResponseChannels() {
+        return Set.of(ResponseChannel.WEBSOCKET);  // can also add KAFKA, ACTIVEMQ
+    }
+
+    public void setDataPublisher(Consumer&lt;DGResponse&gt; publisher) {
+        this.dataPublisher = publisher;
+    }
+    public void requestShutdown() { this.shutdownRequested = true; }
+    public boolean isRunning() { return running; }
+
+    public void start(DGRequest request) throws Exception {
+        this.request = request;
+        // validate payload, connect to sensor, etc.
+        this.status = HandlerStatus.READY;
+    }
+
+    public DGResponse execute() throws Exception {
+        this.running = true;
+        this.status = HandlerStatus.EXECUTING;
+
+        while (!shutdownRequested && !Thread.currentThread().isInterrupted()) {
+            // Wait for data (poll sensor, read queue, etc.)
+            Map&lt;String, Object&gt; reading = readSensor();
+
+            // Push data to ALL configured channels (WebSocket, Kafka, ActiveMQ)
+            DGResponse tick = DGResponse.success(
+                request.getRequestId(), getRequestType(), reading);
+            dataPublisher.accept(tick);
+
+            // Data arrives at unpredictable intervals
+            Thread.sleep(randomInterval());
+        }
+
+        this.running = false;
+        return DGResponse.success(request.getRequestId(), getRequestType(),
+            Map.of("finalStatus", "Monitoring complete"));
+    }
+
+    public void stop(DGResponse response) {
+        this.shutdownRequested = true;
+        this.running = false;
+        this.status = HandlerStatus.STOPPED;
+        // close sensor connections, etc.
+    }
+
+    public HandlerStatus getStatus() { return status; }
+}</code></pre>
+                    <h6 class="mt-3">Client sends:</h6>
+<pre class="bg-light p-3 rounded"><code>{
+  "apiKey": "dgf-dev-key-001",
+  "requestType": "SENSOR_MONITOR",
+  "streaming": true,
+  "responseChannels": ["WEBSOCKET"],
+  "ttlMinutes": 60,
+  "responseTopic": "my-sensor-feed",
+  "payload": { "sensorId": "temp-001", "thresholdC": 30 }
+}</code></pre>
+                    <h6 class="mt-3">Client receives:</h6>
+                    <ol>
+                        <li><strong>Immediate ACK</strong> (via REST): <code>{ "status": "STREAMING_STARTED", "result": { "sessionId": "...", "expiresAt": "..." } }</code></li>
+                        <li><strong>Subscribe</strong> to <code>/topic/stream/{sessionId}</code> on WebSocket</li>
+                        <li><strong>Data messages</strong> arrive at irregular intervals with <code>"status": "STREAMING_DATA"</code></li>
+                        <li><strong>End message</strong> arrives with <code>"status": "STREAMING_ENDED"</code> when TTL expires or session is stopped</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 14. REST API REFERENCE                                     -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="api-reference">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-plug me-2 text-primary"></i> 14. REST API Reference</h5></div>
+                <div class="card-body">
+                    <h6><span class="badge bg-success me-2">POST</span> /api/v1/request</h6>
+                    <p>Submit a request (works for both one-shot and streaming handlers).</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light"><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>apiKey</code></td><td>String</td><td>Yes</td><td>API key</td></tr>
+                                <tr><td><code>requestType</code></td><td>String</td><td>Yes</td><td>Handler type (ARITHMETIC, ECHO, MARKET_DATA, etc.)</td></tr>
+                                <tr><td><code>payload</code></td><td>Object</td><td>Yes</td><td>Handler-specific data</td></tr>
+                                <tr><td><code>correlationId</code></td><td>String</td><td>No</td><td>Your tracking ID</td></tr>
+                                <tr class="table-info"><td><code>streaming</code></td><td>Boolean</td><td>No</td><td>Set to <code>true</code> for streaming handlers (auto-detected if handler is streaming type)</td></tr>
+                                <tr class="table-info"><td><code>responseChannel</code></td><td>String</td><td>No</td><td>Single channel (backward-compatible): <code>WEBSOCKET</code>, <code>KAFKA</code>, or <code>ACTIVEMQ</code></td></tr>
+                                <tr class="table-info"><td><code>responseChannels</code></td><td>Array</td><td>No</td><td>Multi-channel fan-out: <code>["WEBSOCKET","KAFKA"]</code> — publishes to ALL listed channels simultaneously. Takes precedence over <code>responseChannel</code>.</td></tr>
+                                <tr class="table-info"><td><code>responseTopic</code></td><td>String</td><td>No</td><td>Custom topic/destination for streaming data</td></tr>
+                                <tr class="table-info"><td><code>ttlMinutes</code></td><td>Long</td><td>No</td><td>Session duration override (capped at <code>maxTtlMinutes</code>)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr>
+                    <h6><span class="badge bg-primary me-2">GET</span> /api/v1/streaming/sessions</h6>
+                    <p>List all active streaming sessions.</p>
+
+                    <h6><span class="badge bg-primary me-2">GET</span> /api/v1/streaming/sessions/{sessionId}</h6>
+                    <p>Get details of a specific streaming session.</p>
+
+                    <h6><span class="badge bg-danger me-2">DELETE</span> /api/v1/streaming/sessions/{sessionId}</h6>
+                    <p>Stop a streaming session immediately.</p>
+
+                    <hr>
+                    <h6><span class="badge bg-primary me-2">GET</span> /api/v1/handlers</h6>
+                    <p>List registered handler types: <code>["ARITHMETIC", "ECHO", "MARKET_DATA"]</code></p>
+
+                    <h6><span class="badge bg-primary me-2">GET</span> /api/v1/health</h6>
+                    <p>Public health check: <code>{ "status": "UP", "handlers": 3, "streamingSessions": 2 }</code></p>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 15. WEBSOCKET API                                          -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="websocket-api">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-wifi me-2 text-primary"></i> 15. WebSocket API Reference</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-dark"><tr><th style="width:200px;">Endpoint</th><th>Direction</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>/ws</code></td><td>Connect</td><td>SockJS WebSocket endpoint. Connect here with <code>new SockJS('/ws')</code></td></tr>
+                                <tr><td><code>/app/request</code></td><td>Client → Server</td><td>Send a JSON <code>DGRequest</code> via STOMP. Works for both one-shot and streaming.</td></tr>
+                                <tr><td><code>/topic/responses</code></td><td>Server → Client</td><td>Subscribe to receive one-shot handler responses (and streaming ACKs)</td></tr>
+                                <tr><td><code>/topic/stream/{sessionId}</code></td><td>Server → Client</td><td>Subscribe to receive live streaming data for a specific session</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="mt-3">Complete JavaScript Example:</h6>
+<pre class="bg-light p-3 rounded" style="font-size: 0.85rem;"><code>var socket = new SockJS('/ws');
+var client = Stomp.over(socket);
+
+client.connect({}, function() {
+    // 1. Subscribe to one-shot responses
+    client.subscribe('/topic/responses', function(msg) {
+        var resp = JSON.parse(msg.body);
+        if (resp.status === 'STREAMING_STARTED') {
+            // 2. Subscribe to streaming data
+            var sid = resp.result.sessionId;
+            client.subscribe('/topic/stream/' + sid, function(tick) {
+                console.log('Tick:', JSON.parse(tick.body));
+            });
+        }
+    });
+
+    // 3. Send a streaming request
+    client.send('/app/request', {}, JSON.stringify({
+        apiKey: 'dgf-dev-key-001',
+        requestType: 'MARKET_DATA',
+        streaming: true,
+        responseChannels: ['WEBSOCKET'],
+        ttlMinutes: 5,
+        payload: { symbols: ['AAPL', 'GOOGL'] }
+    }));
+});</code></pre>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 16. BUILT-IN HANDLERS                                      -->
+            <!-- ========================================================== -->
+            <div class="card mb-4" id="sample-handlers">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-flask me-2 text-primary"></i> 16. Built-in Handlers</h5></div>
+                <div class="card-body">
+                    <h6>ARITHMETIC <span class="badge bg-secondary">One-Shot</span></h6>
+                    <p>Performs ADD, SUBTRACT, MULTIPLY, DIVIDE. Publishes to Kafka if enabled.</p>
+<pre class="bg-light p-3 rounded"><code>{ "apiKey": "dgf-dev-key-001", "requestType": "ARITHMETIC",
+  "payload": { "operation": "MULTIPLY", "operandA": 7, "operandB": 6 } }
+→ result: { "result": 42.0, "expression": "7.0 * 6.0 = 42.0" }</code></pre>
+
+                    <hr>
+                    <h6>ECHO <span class="badge bg-secondary">One-Shot</span></h6>
+                    <p>Returns whatever you send. Testing connectivity.</p>
+<pre class="bg-light p-3 rounded"><code>{ "apiKey": "dgf-dev-key-001", "requestType": "ECHO",
+  "payload": { "message": "Hello!" } }
+→ result: { "echo": { "message": "Hello!" }, "source": "REST_API" }</code></pre>
+
+                    <hr>
+                    <h6>MARKET_DATA <span class="badge bg-info">Streaming</span></h6>
+                    <p>
+                        Simulated live market data feed. Publishes random stock price ticks at
+                        unpredictable intervals. Default TTL: 30 minutes. Default channels: [WEBSOCKET]. Supports multi-channel fan-out.
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light"><tr><th>Payload Field</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>symbols</code></td><td>["AAPL","GOOGL","MSFT","AMZN","TSLA"]</td><td>Stock symbols to monitor</td></tr>
+                                <tr><td><code>intervalMinMs</code></td><td>500</td><td>Minimum ms between ticks</td></tr>
+                                <tr><td><code>intervalMaxMs</code></td><td>3000</td><td>Maximum ms between ticks</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+<pre class="bg-light p-3 rounded"><code>{ "apiKey": "dgf-dev-key-001", "requestType": "MARKET_DATA",
+  "streaming": true, "responseChannels": ["WEBSOCKET"], "ttlMinutes": 5,
+  "payload": { "symbols": ["AAPL","GOOGL"], "intervalMinMs": 1000, "intervalMaxMs": 3000 } }
+→ ACK: { "status": "STREAMING_STARTED", "result": { "sessionId": "..." } }
+→ Ticks: { "symbol": "AAPL", "price": 188.42, "change": 0.92, "volume": 23456 }</code></pre>
+
+                    <p class="mt-3">
+                        <strong>Tip:</strong> Go to <a th:href="@{/handlers}">Handlers</a> → click <strong>Test</strong>
+                        next to MARKET_DATA to see a live streaming demo with WebSocket data flowing in real-time.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ===================== 17. Composite Message Listener ===================== -->
+            <div class="card mb-4" id="composite-listener">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-layer-group me-2 text-primary"></i> 17. Composite Message Listener</h5></div>
+                <div class="card-body">
+                    <p>
+                        The <strong>CompositeMessageListener</strong> (v1.1.0) is a dynamic, multi-broker listener
+                        that subscribes to Kafka topics and/or ActiveMQ destinations at runtime. It uses a
+                        single shared connection per broker and supports multiple listeners per topic.
+                    </p>
+
+                    <h6 class="mt-3">Architecture</h6>
+<pre class="bg-light p-3 rounded"><code> ┌──────────────────────────────────────────────────────────────┐
+ │                 CompositeMessageListener                     │
+ │                                                              │
+ │   topicListeners:  Map&lt;topic → Set&lt;TopicMessageListener&gt;&gt;   │
+ │                                                              │
+ │   addListener("prices", handlerA)                            │
+ │   addListener("prices", handlerB)   ← two listeners, 1 sub  │
+ │   addListener("trades", handlerA)   ← same listener, new topic │
+ │                                                              │
+ │   ┌─────────────────────────┐  ┌────────────────────────┐   │
+ │   │  KafkaDynamicSubscriber │  │ ActiveMQDynamicSubscr  │   │
+ │   │  (shared ConsumerFactory)│  │ (shared ConnFactory)   │   │
+ │   │                         │  │                        │   │
+ │   │ "prices" → container    │  │ "prices" → container   │   │
+ │   │ "trades" → container    │  │ "trades" → container   │   │
+ │   └─────────────────────────┘  └────────────────────────┘   │
+ └──────────────────────────────────────────────────────────────┘
+
+ Message arrives on "prices" from Kafka:
+   → KafkaDynamicSubscriber receives it
+   → builds ReceivedMessage(topic="prices", source=KAFKA, ...)
+   → fanOutToListeners("prices", msg)
+   → handlerA.onMessage(msg)
+   → handlerB.onMessage(msg)
+</code></pre>
+
+                    <h6 class="mt-4">Key behaviors</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-dark"><tr><th>Feature</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Dynamic subscriptions</strong></td><td>Topics can be added/removed at runtime — no restart required</td></tr>
+                                <tr><td><strong>Multiple listeners per topic</strong></td><td>Each message is fanned out to ALL registered listeners for that topic</td></tr>
+                                <tr><td><strong>Automatic unsubscribe</strong></td><td>When the last listener for a topic is removed, the underlying broker subscription is torn down and the topic is purged from memory</td></tr>
+                                <tr><td><strong>Multi-broker</strong></td><td>A single <code>addListener</code> call subscribes on ALL enabled brokers simultaneously</td></tr>
+                                <tr><td><strong>Shared connections</strong></td><td>One shared connection factory per broker, regardless of topic count</td></tr>
+                                <tr><td><strong>Thread-safe</strong></td><td>All operations are safe for concurrent use from multiple threads</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="mt-4">The TopicMessageListener interface</h6>
+<pre class="bg-light p-3 rounded"><code>@FunctionalInterface
+public interface TopicMessageListener {
+    void onMessage(ReceivedMessage message);
+}
+
+// ReceivedMessage is an immutable record:
+public record ReceivedMessage(
+    String topic,       // topic or queue name
+    String key,         // message key (Kafka only, null for ActiveMQ)
+    String value,       // payload as string
+    Map&lt;String, String&gt; headers,  // message headers/properties
+    BrokerSource source,  // KAFKA or ACTIVEMQ
+    Instant receivedAt    // when the message was received
+) {}</code></pre>
+
+                    <h6 class="mt-4">Programmatic usage</h6>
+<pre class="bg-light p-3 rounded"><code>// 1. Build configuration
+CompositeListenerConfig config = CompositeListenerConfig.builder()
+    .kafkaEnabled(true)
+    .kafkaBootstrapServers("broker1:9092,broker2:9092")
+    .kafkaGroupId("my-app")
+    .activeMqEnabled(true)
+    .activeMqBrokerUrl("tcp://localhost:61616")
+    .activeMqUsername("admin")
+    .activeMqPassword("admin")
+    .build();
+
+// 2. Create the composite listener
+CompositeMessageListener composite = new CompositeMessageListener(config);
+
+// 3. Define listeners
+TopicMessageListener priceHandler = msg -&gt;
+    System.out.println("Price tick: " + msg.value());
+TopicMessageListener auditLogger = msg -&gt;
+    log.info("Audit: {} from {}", msg.topic(), msg.source());
+
+// 4. Add listeners at runtime — first listener triggers broker subscription
+composite.addListener("market-data", priceHandler);
+composite.addListener("market-data", auditLogger);   // same topic, second listener
+composite.addListener("trade-events", priceHandler);  // same listener, new topic
+
+// 5. Query state
+composite.getActiveTopics();          // → {"market-data", "trade-events"}
+composite.getListenerCount("market-data");  // → 2
+composite.getTopicListenerCounts();   // → {"market-data": 2, "trade-events": 1}
+
+// 6. Remove a listener
+composite.removeListener("market-data", auditLogger);
+// "market-data" still has priceHandler → stays subscribed
+
+// 7. Remove last listener → topic auto-unsubscribed and purged
+composite.removeListener("market-data", priceHandler);
+// "market-data" has 0 listeners → unsubscribed from Kafka + ActiveMQ, removed from memory
+
+// 8. Bulk removal
+composite.removeListenerFromAllTopics(priceHandler);  // removes from all topics at once
+composite.removeAllListeners("trade-events");          // removes all listeners for a topic
+
+// 9. Shutdown
+composite.shutdown();  // or use try-with-resources: try (var c = new CompositeMessageListener(cfg))</code></pre>
+
+                    <h6 class="mt-4">Spring auto-configuration</h6>
+                    <p>
+                        When <code>dgfacade.composite.enabled=true</code>, a <code>CompositeMessageListener</code>
+                        Spring bean is created automatically from <code>application.properties</code>. Inject it
+                        into any component:
+                    </p>
+<pre class="bg-light p-3 rounded"><code>@Autowired
+private CompositeMessageListener compositeListener;
+
+public void startListening() {
+    compositeListener.addListener("my-topic", msg -&gt; process(msg));
+}
+
+public void stopListening(TopicMessageListener listener) {
+    compositeListener.removeListener("my-topic", listener);
+}</code></pre>
+
+                    <h6 class="mt-4">Configuration properties</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-dark"><tr><th>Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>dgfacade.composite.enabled</code></td><td>false</td><td>Enable the composite listener Spring bean</td></tr>
+                                <tr><td><code>dgfacade.composite.name</code></td><td>dgfacade-composite-listener</td><td>Listener instance name (for logging)</td></tr>
+                                <tr class="table-info"><td colspan="3"><strong>Kafka</strong></td></tr>
+                                <tr><td><code>dgfacade.composite.kafka.enabled</code></td><td>false</td><td>Enable Kafka subscriptions</td></tr>
+                                <tr><td><code>dgfacade.composite.kafka.bootstrap-servers</code></td><td>localhost:9092</td><td>Kafka broker addresses</td></tr>
+                                <tr><td><code>dgfacade.composite.kafka.group-id</code></td><td>dgfacade-composite</td><td>Consumer group ID</td></tr>
+                                <tr><td><code>dgfacade.composite.kafka.auto-offset-reset</code></td><td>latest</td><td>Offset reset policy</td></tr>
+                                <tr><td><code>dgfacade.composite.kafka.concurrency</code></td><td>1</td><td>Consumer threads per topic</td></tr>
+                                <tr class="table-info"><td colspan="3"><strong>ActiveMQ</strong></td></tr>
+                                <tr><td><code>dgfacade.composite.activemq.enabled</code></td><td>false</td><td>Enable ActiveMQ subscriptions</td></tr>
+                                <tr><td><code>dgfacade.composite.activemq.broker-url</code></td><td>tcp://localhost:61616</td><td>Artemis broker URL</td></tr>
+                                <tr><td><code>dgfacade.composite.activemq.username</code></td><td>—</td><td>Broker username</td></tr>
+                                <tr><td><code>dgfacade.composite.activemq.password</code></td><td>—</td><td>Broker password</td></tr>
+                                <tr><td><code>dgfacade.composite.activemq.concurrency</code></td><td>1</td><td>Consumer threads per destination</td></tr>
+                                <tr><td><code>dgfacade.composite.activemq.pub-sub-domain</code></td><td>true</td><td>true = JMS topics, false = JMS queues</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="mt-4">Diagnostics</h6>
+<pre class="bg-light p-3 rounded"><code>// Get a full status snapshot
+Map&lt;String, Object&gt; status = composite.getStatus();
+// → {name=..., kafkaAvailable=true, activeMqAvailable=true,
+//    activeTopics=2, topicListenerCounts={prices: 2, trades: 1},
+//    totalMessagesReceived=1547, totalMessagesDelivered=2341,
+//    kafkaSubscribedTopics=[prices, trades],
+//    activeMqSubscribedTopics=[prices, trades]}</code></pre>
+
+                </div>
+            </div>
+
+        </div><!-- /col-md-9 -->
+    </div><!-- /row -->
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<script>
+document.querySelectorAll('.nav-link[href^="#"]').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        var target = document.querySelector(this.getAttribute('href'));
+        if (target) window.scrollTo({ top: target.offsetTop - 90, behavior: 'smooth' });
+    });
+});
+</script>
+</body>
+</html>

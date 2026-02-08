@@ -1,0 +1,23 @@
+{
+  "type": "activemq",
+  "description": "Production ActiveMQ with PEM-based SSL and failover",
+  "enabled": true,
+  "connection": {
+    "broker_url": "failover:(ssl://amq-1.prod.example.com:61617,ssl://amq-2.prod.example.com:61617)?maxReconnectDelay=5000",
+    "username": "dgfacade-svc",
+    "password": "${AMQ_PASSWORD}"
+  },
+  "ssl": {
+    "enabled": true,
+    "format": "PEM",
+    "protocol": "TLSv1.3",
+    "ca_cert_path": "config/certs/activemq/ca-bundle.crt",
+    "client_cert_path": "config/certs/activemq/client.crt",
+    "client_key_path": "config/certs/activemq/client.key"
+  },
+  "properties": {
+    "prefetch_size": "100",
+    "redelivery_delay": "5000",
+    "max_redeliveries": "3"
+  }
+}

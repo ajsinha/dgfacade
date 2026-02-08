@@ -1,0 +1,17 @@
+{
+  "type": "kafka",
+  "description": "Development Kafka broker",
+  "enabled": true,
+  "connection": {
+    "bootstrap_servers": "localhost:9092",
+    "client_id": "dgfacade-dev",
+    "group_id": "dgfacade-consumer-group",
+    "auto_offset_reset": "latest",
+    "max_poll_records": 500,
+    "fetch_max_wait_ms": 500
+  },
+  "properties": {
+    "request.timeout.ms": "30000",
+    "session.timeout.ms": "10000"
+  }
+}

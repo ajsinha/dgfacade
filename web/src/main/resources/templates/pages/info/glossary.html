@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Glossary')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a th:href="@{/help}">Help</a></li>
+                        <li class="breadcrumb-item active">Glossary</li>
+                    </ol>
+                </nav>
+                <h2 class="mt-2">
+                    <i class="fas fa-book-open me-2 text-primary"></i>
+                    Glossary of Terms
+                </h2>
+                <p class="text-muted">Comprehensive reference of all terms and concepts used in <span th:text="${appName} ?: 'DGFacade'">DGFacade</span></p>
+            </div>
+        </div>
+
+        <!-- Quick Jump Navigation -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h6 class="text-muted mb-3"><i class="fas fa-compass me-2"></i>Quick Navigation</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="#section-a" class="btn btn-outline-primary btn-sm">A</a>
+                    <a href="#section-b" class="btn btn-outline-primary btn-sm">B</a>
+                    <a href="#section-c" class="btn btn-outline-primary btn-sm">C</a>
+                    <a href="#section-d" class="btn btn-outline-primary btn-sm">D</a>
+                    <a href="#section-e" class="btn btn-outline-primary btn-sm">E</a>
+                    <a href="#section-f" class="btn btn-outline-primary btn-sm">F</a>
+                    <a href="#section-h" class="btn btn-outline-primary btn-sm">H</a>
+                    <a href="#section-i" class="btn btn-outline-primary btn-sm">I</a>
+                    <a href="#section-j" class="btn btn-outline-primary btn-sm">J</a>
+                    <a href="#section-l" class="btn btn-outline-primary btn-sm">L</a>
+                    <a href="#section-q" class="btn btn-outline-primary btn-sm">Q</a>
+                    <a href="#section-r" class="btn btn-outline-primary btn-sm">R</a>
+                    <a href="#section-s" class="btn btn-outline-primary btn-sm">S</a>
+                    <a href="#section-t" class="btn btn-outline-primary btn-sm">T</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Box -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                    <input type="text" id="glossarySearch" class="form-control"
+                           placeholder="Search glossary terms..." onkeyup="filterGlossary()">
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Glossary Content -->
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1">
+
+                <!-- Section A -->
+                <div id="section-a" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">A</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>ADMIN Role</h5>
+                            <p class="card-text">The highest privilege level in DGFacade. ADMIN users have full access to all system features including user management, broker configuration, channel monitoring, and handler execution. Configured per user in <code>config/users.json</code>.</p>
+                            <span class="badge bg-light text-dark">Security</span>
+                            <span class="badge bg-light text-dark">Roles</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>API Key</h5>
+                            <p class="card-text">A token-based authentication credential for programmatic REST API access. API keys allow applications to invoke handlers and query status without username/password authentication. Managed per user in <code>config/users.json</code>. Passed via the <code>X-API-Key</code> HTTP header.</p>
+                            <span class="badge bg-light text-dark">Security</span>
+                            <span class="badge bg-light text-dark">API</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>ActiveMQ</h5>
+                            <p class="card-text">An open-source message broker that supports JMS (Java Message Service). DGFacade can connect to ActiveMQ as a broker type to consume messages from JMS queues and topics. Configured via JSON files in <code>config/brokers/</code>.</p>
+                            <span class="badge bg-light text-dark">Broker</span>
+                            <span class="badge bg-light text-dark">JMS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section B -->
+                <div id="section-b" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">B</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Backpressure</h5>
+                            <p class="card-text">A flow-control mechanism that prevents memory exhaustion when consumers are slower than producers. In DGFacade, each channel maintains an internal bounded queue. When queue depth reaches the critical threshold (default 90%), the broker consumer is paused until the queue drains below the resume threshold (default 70%). This propagates slowdown signals back to the broker without losing messages.</p>
+                            <span class="badge bg-light text-dark">Channel</span>
+                            <span class="badge bg-light text-dark">Queue</span>
+                            <span class="badge bg-light text-dark">Performance</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Broker</h5>
+                            <p class="card-text">An external message system that DGFacade connects to for data retrieval. Supported types include Kafka, ActiveMQ, RabbitMQ, and IBM MQ. Each broker is defined by a JSON file in <code>config/brokers/</code>, where the filename becomes the broker's logical name. Channels reference brokers by this name.</p>
+                            <span class="badge bg-light text-dark">Infrastructure</span>
+                            <span class="badge bg-light text-dark">Configuration</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Broker Config Directory</h5>
+                            <p class="card-text">The filesystem directory scanned at startup for broker JSON files. Default: <code>config/brokers/</code>. Configurable via <code>dgfacade.brokers.config-dir</code> in <code>application.properties</code>.</p>
+                            <span class="badge bg-light text-dark">Configuration</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section C -->
+                <div id="section-c" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">C</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Channel</h5>
+                            <p class="card-text">A logical data pipe that connects a broker's topics/queues to application listeners. Each channel is defined by a JSON file in <code>config/channels/</code>. A channel references a broker by name, subscribes to topics or queues, buffers messages in an internal bounded queue, and distributes every message to all registered listeners via fan-out.</p>
+                            <span class="badge bg-light text-dark">Core Concept</span>
+                            <span class="badge bg-light text-dark">Configuration</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Channel Config Directory</h5>
+                            <p class="card-text">The filesystem directory scanned at startup for channel JSON files. Default: <code>config/channels/</code>. Configurable via <code>dgfacade.channels.config-dir</code> in <code>application.properties</code>.</p>
+                            <span class="badge bg-light text-dark">Configuration</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Critical Threshold</h5>
+                            <p class="card-text">The internal queue depth percentage (default 90%) at which the broker consumer is paused. When the queue fills to this level, backpressure is fully engaged to prevent memory exhaustion. The consumer resumes when depth drops below the <em>drain resume</em> threshold.</p>
+                            <span class="badge bg-light text-dark">Backpressure</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section D -->
+                <div id="section-d" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">D</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>DGFacade</h5>
+                            <p class="card-text">Data Gateway Facade &mdash; a high-performance data gateway that acts as a facade between external message brokers and internal application handlers. It provides JSON-configured broker connections, channel-based data routing, fan-out distribution, and backpressure management.</p>
+                            <span class="badge bg-light text-dark">Product</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Drain Resume Percentage</h5>
+                            <p class="card-text">The internal queue depth percentage (default 70%) below which a paused broker consumer is resumed. This creates a hysteresis band between the critical threshold and resume threshold to prevent rapid pause/resume oscillation.</p>
+                            <span class="badge bg-light text-dark">Backpressure</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section E -->
+                <div id="section-e" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">E</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Execution Engine</h5>
+                            <p class="card-text">The core processing component that dispatches incoming messages to registered handlers based on request type. It manages the handler lifecycle: registration, dispatch, execution, state tracking, and error handling. Handlers are discovered via Spring component scan at startup.</p>
+                            <span class="badge bg-light text-dark">Core Component</span>
+                            <span class="badge bg-light text-dark">Handler</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section F -->
+                <div id="section-f" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">F</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Fan-Out</h5>
+                            <p class="card-text">The message distribution pattern used by DGFacade channels. When a message is dequeued from the internal queue, it is delivered to ALL registered listeners for that channel topic/queue. Each listener receives its own copy. If there are N listeners, each message results in N deliveries. Failures in one listener do not affect others.</p>
+                            <span class="badge bg-light text-dark">Distribution</span>
+                            <span class="badge bg-light text-dark">Core Concept</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>FileSystem Channel</h5>
+                            <p class="card-text">A channel type that watches a filesystem directory for incoming data files. When new files matching the configured pattern appear, they are read and their contents placed into the internal queue for fan-out distribution. Does not require a broker reference.</p>
+                            <span class="badge bg-light text-dark">Channel Type</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section H -->
+                <div id="section-h" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">H</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Handler</h5>
+                            <p class="card-text">A pluggable processing component registered with the Execution Engine. Each handler declares the request types it supports. When a matching message arrives (via channel listener or REST API), the handler processes it and produces a response. Handler execution is tracked with timing, status, and error information.</p>
+                            <span class="badge bg-light text-dark">Core Concept</span>
+                            <span class="badge bg-light text-dark">Processing</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Handler State</h5>
+                            <p class="card-text">A record of a handler's execution. Includes fields like <code>handlerId</code>, <code>requestType</code>, <code>status</code> (SUCCESS, FAILURE, RUNNING, TIMEOUT), <code>startTime</code>, <code>durationMs</code>, and <code>errorMessage</code>. Viewable in the monitoring dashboard.</p>
+                            <span class="badge bg-light text-dark">Monitoring</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section I -->
+                <div id="section-i" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">I</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Internal Queue</h5>
+                            <p class="card-text">A bounded in-memory queue (backed by <code>java.util.concurrent.LinkedBlockingQueue</code>) that sits between a channel's broker subscription and the fan-out engine. Its configurable depth is the primary mechanism for backpressure. When the queue fills, the broker consumer is paused. When it drains, the consumer resumes.</p>
+                            <span class="badge bg-light text-dark">Channel</span>
+                            <span class="badge bg-light text-dark">Backpressure</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>IBM MQ</h5>
+                            <p class="card-text">IBM's enterprise messaging middleware. DGFacade supports IBM MQ as a broker type, connecting via queue manager, channel, and optional SSL. Commonly used for mainframe integration in financial services.</p>
+                            <span class="badge bg-light text-dark">Broker</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section J -->
+                <div id="section-j" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">J</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>JSON Configuration</h5>
+                            <p class="card-text">DGFacade uses JSON files for broker and channel configuration. Brokers are in <code>config/brokers/*.json</code> and channels in <code>config/channels/*.json</code>. The filename (minus extension) becomes the entity's logical name. This file-based approach allows configuration changes without code modifications.</p>
+                            <span class="badge bg-light text-dark">Configuration</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>JMS (Java Message Service)</h5>
+                            <p class="card-text">A Java API for message-oriented middleware. DGFacade uses JMS to connect to ActiveMQ and IBM MQ brokers. Channel type <code>jms</code> indicates a JMS-based channel that can subscribe to JMS queues and topics with features like durable subscriptions and message selectors.</p>
+                            <span class="badge bg-light text-dark">Protocol</span>
+                            <span class="badge bg-light text-dark">Channel Type</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section L -->
+                <div id="section-l" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">L</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Listener</h5>
+                            <p class="card-text">An object registered to receive messages from a channel's fan-out engine. Listeners are typically handlers or logging/auditing components. Multiple listeners can be registered on the same channel topic/queue, and each receives every message. Listeners have independent error handling and retry policies.</p>
+                            <span class="badge bg-light text-dark">Fan-Out</span>
+                            <span class="badge bg-light text-dark">Core Concept</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Q -->
+                <div id="section-q" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">Q</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Queue Depth</h5>
+                            <p class="card-text">The number of messages currently buffered in a channel's internal queue. Monitored as a percentage of the queue's maximum capacity. Queue depth is the primary signal for backpressure: NORMAL (0-70%), WARNING (70-90%), CRITICAL (90-100%). Viewable on the monitoring dashboard and via the REST API.</p>
+                            <span class="badge bg-light text-dark">Monitoring</span>
+                            <span class="badge bg-light text-dark">Backpressure</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section R -->
+                <div id="section-r" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">R</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>RabbitMQ</h5>
+                            <p class="card-text">An open-source message broker implementing the AMQP protocol. DGFacade supports RabbitMQ as a broker type with virtual host, exchange, and queue configuration. Configured via JSON files in <code>config/brokers/</code>.</p>
+                            <span class="badge bg-light text-dark">Broker</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>REST Channel</h5>
+                            <p class="card-text">A channel type that creates HTTP endpoints accepting POST requests. Messages submitted to these endpoints are placed into the internal queue for fan-out distribution. Does not require a broker reference. Useful for webhook ingestion.</p>
+                            <span class="badge bg-light text-dark">Channel Type</span>
+                            <span class="badge bg-light text-dark">API</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Request Type</h5>
+                            <p class="card-text">A string identifier that links incoming messages to the appropriate handler. When a message arrives, the Execution Engine examines its request type and routes it to the registered handler. Each handler declares which request types it supports during registration.</p>
+                            <span class="badge bg-light text-dark">Handler</span>
+                            <span class="badge bg-light text-dark">Routing</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section S -->
+                <div id="section-s" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">S</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>SSL/TLS</h5>
+                            <p class="card-text">Encryption protocol used to secure broker connections. All broker types in DGFacade support SSL/TLS via an <code>ssl</code> block in the broker JSON file. Configuration includes keystore path/password (client certificate), truststore path/password (CA certificates), protocol version, and cipher suite.</p>
+                            <span class="badge bg-light text-dark">Security</span>
+                            <span class="badge bg-light text-dark">Broker</span>
+                        </div>
+                    </div>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Subscription</h5>
+                            <p class="card-text">A channel's declaration of which topics or queues to listen to on its referenced broker. Each subscription specifies a name (topic/queue name), type (topic or queue), and optional filters like JMS selectors or Kafka pattern subscriptions. Messages from all subscriptions feed into the channel's internal queue.</p>
+                            <span class="badge bg-light text-dark">Channel</span>
+                            <span class="badge bg-light text-dark">Configuration</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section T -->
+                <div id="section-t" class="glossary-section">
+                    <h3 class="text-primary border-bottom pb-2 mb-4">T</h3>
+
+                    <div class="glossary-term card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Topic</h5>
+                            <p class="card-text">A named publish-subscribe destination on a message broker. Multiple consumers can subscribe to the same topic and each receives a copy of published messages. In DGFacade, channels subscribe to topics via their <code>subscriptions</code> array. Kafka topics and JMS topics are both supported.</p>
+                            <span class="badge bg-light text-dark">Messaging</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="mt-5 text-center">
+            <a href="/help" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Back to Help Index</a>
+        </div>
+
+        <footer class="py-4 mt-5 border-top">
+            <div class="row">
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.2.0'">1.2.0</span></p></div>
+                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br><span class="badge bg-warning text-dark">Patent Pending</span></p></div>
+            </div>
+        </footer>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<script>
+function filterGlossary() {
+    const searchText = document.getElementById('glossarySearch').value.toLowerCase();
+    const terms = document.querySelectorAll('.glossary-term');
+    const sections = document.querySelectorAll('.glossary-section');
+
+    terms.forEach(function(term) {
+        const text = term.textContent.toLowerCase();
+        term.style.display = text.includes(searchText) ? '' : 'none';
+    });
+
+    sections.forEach(function(section) {
+        const visibleTerms = section.querySelectorAll('.glossary-term[style=""], .glossary-term:not([style])');
+        const hiddenCount = section.querySelectorAll('.glossary-term[style*="none"]').length;
+        const totalTerms = section.querySelectorAll('.glossary-term').length;
+        section.style.display = (hiddenCount === totalTerms && searchText !== '') ? 'none' : '';
+    });
+}
+
+function clearSearch() {
+    document.getElementById('glossarySearch').value = '';
+    filterGlossary();
+}
+</script>
+</body>
+</html>

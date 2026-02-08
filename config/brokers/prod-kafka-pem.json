@@ -1,0 +1,29 @@
+{
+  "type": "kafka",
+  "description": "Production Kafka cluster with PEM-based mTLS",
+  "enabled": true,
+  "connection": {
+    "bootstrap_servers": "kafka-1.prod.example.com:9093,kafka-2.prod.example.com:9093",
+    "client_id": "dgfacade-prod",
+    "group_id": "dgfacade-consumer-group",
+    "acks": "all",
+    "retries": 5
+  },
+  "ssl": {
+    "enabled": true,
+    "format": "PEM",
+    "protocol": "TLSv1.3",
+    "ca_cert_path": "config/certs/kafka/ca-chain.pem",
+    "client_cert_path": "config/certs/kafka/client-cert.pem",
+    "client_key_path": "config/certs/kafka/client-key.pem"
+  },
+  "authentication": {
+    "mechanism": "NONE"
+  },
+  "properties": {
+    "security.protocol": "SSL",
+    "ssl.endpoint.identification.algorithm": "https",
+    "max.poll.records": "500",
+    "auto.offset.reset": "latest"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "type": "kafka",
+  "description": "Order lifecycle events from Kafka",
+  "enabled": true,
+  "broker": "dev-kafka",
+  "subscriptions": [
+    {
+      "name": "orders.created",
+      "type": "topic"
+    },
+    {
+      "name": "orders.updated",
+      "type": "topic"
+    }
+  ],
+  "queue": {
+    "depth": 10000,
+    "warning_threshold_pct": 70,
+    "critical_threshold_pct": 90,
+    "drain_resume_pct": 60
+  },
+  "retry": {
+    "max_attempts": 3,
+    "backoff_ms": 1000,
+    "backoff_multiplier": 2.0
+  }
+}

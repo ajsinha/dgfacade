@@ -1,23 +1,18 @@
 [
   {
-    "key": "dgf-dev-key-001",
-    "owner": "Development Team",
-    "description": "Development API key - full access",
-    "allowedRequestTypes": ["*"],
-    "active": true
+    "key": "dgf-admin-key-0001",
+    "user_id": "admin",
+    "description": "Admin master key — full access to all request types",
+    "enabled": true,
+    "allowed_request_types": ["*"],
+    "rate_limit_per_minute": 0
   },
   {
-    "key": "dgf-test-key-002",
-    "owner": "QA Team",
-    "description": "Testing API key - arithmetic only",
-    "allowedRequestTypes": ["ARITHMETIC", "ECHO"],
-    "active": true
-  },
-  {
-    "key": "dgf-prod-key-003",
-    "owner": "Production",
-    "description": "Production API key",
-    "allowedRequestTypes": ["*"],
-    "active": true
+    "key": "dgf-test-key-0001",
+    "user_id": "user001",
+    "description": "Test user key — limited to ECHO, ARITHMETIC, STRING_TRANSFORM, HASH, JSON_TRANSFORM",
+    "enabled": true,
+    "allowed_request_types": ["ECHO", "ARITHMETIC", "STRING_TRANSFORM", "HASH", "JSON_TRANSFORM"],
+    "rate_limit_per_minute": 60
   }
 ]

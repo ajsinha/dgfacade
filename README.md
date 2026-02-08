@@ -1,147 +1,113 @@
-# DGFacade v1.0.0
+# DGFacade — Data Gateway Facade
 
-## Configuration-Driven Facade Service
-
-Copyright © 2025-2030, All Rights Reserved - Ashutosh Sinha | Email: ajsinha@gmail.com
-
-**Patent Pending**: Certain architectural patterns and implementations may be subject to patent applications.
+**Version:** 1.1.0
+**Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.**
+**Patent Pending:** Certain architectural patterns and implementations may be subject to patent applications.
 
 ---
 
 ## Overview
 
-DGFacade is a high-performance, configuration-driven service that accepts JSON requests via REST API, Apache Kafka, and ActiveMQ. It features an Apache Pekko actor-based handler execution framework for massive concurrency, a full-featured web UI with authentication, and admin functionality.
+DGFacade is a high-performance, configuration-driven data gateway facade system designed to handle millions of concurrent requests across multiple communication channels through a unified handler model.
 
-## Architecture
+## Features
 
-```
-┌─────────────┐  ┌──────────┐  ┌───────────┐
-│  REST API   │  │  Kafka   │  │ ActiveMQ  │
-└──────┬──────┘  └─────┬────┘  └─────┬─────┘
-       │               │              │
-       └───────────────┼──────────────┘
-                       │
-              ┌────────▼─────────┐
-              │  Request         │
-              │  Dispatcher      │
-              │  (API Key Auth)  │
-              └────────┬─────────┘
-                       │
-              ┌────────▼─────────┐
-              │  Apache Pekko    │
-              │  Actor System    │
-              └────────┬─────────┘
-                       │
-              ┌────────▼─────────┐
-              │  Handler         │
-              │  start()→execute()│
-              │  →stop()         │
-              └──────────────────┘
-```
+- **Multi-Channel Support** — REST API, WebSocket, Apache Kafka, ActiveMQ, FileSystem, SQL
+- **Actor-Based Execution** — Apache Pekko manages handler lifecycle with TTL enforcement
+- **Dynamic Configuration** — JSON-based handler configs with per-user overrides and hot reload
+- **External Handler Loading** — Drop JAR files in `libs/` to add custom handlers at runtime
+- **Streaming Handlers** — Long-running handlers send incremental updates
+- **Backpressure** — Queue depth monitoring; messages stay on broker when limits exceeded
+- **Auto-Recovery** — Automatic broker reconnection with configurable intervals
+- **Web Dashboard** — Real-time monitoring, admin UI for users/keys/channels
+- **Security** — BCrypt passwords, role-based access (ADMIN/USER), per-key rate limiting
+
+## Technology Stack
+
+| Component     | Technology              |
+|---------------|-------------------------|
+| Language      | Java 17, Scala 2.13     |
+| Framework     | Spring Boot 3.2.5       |
+| Actors        | Apache Pekko 1.0.2      |
+| Messaging     | Kafka 3.7, ActiveMQ 6.1 |
+| Serialization | Jackson 2.17            |
+| UI            | Thymeleaf, Bootstrap 5  |
+| Build         | Maven 3.8+              |
 
 ## Project Structure
 
-| Module | Description |
-|--------|-------------|
-| `dgfacade-common` | Shared models, interfaces, configuration, utilities |
-| `dgfacade-messaging` | Kafka and ActiveMQ integration |
-| `dgfacade-server` | Pekko actor system, handler execution, services |
-| `dgfacade-web` | Spring Boot application, REST API, Web UI |
+```
+dgfacade/
+├── common/              Shared models, exceptions, utilities
+├── messaging/           Pub/sub: Kafka, ActiveMQ, FileSystem, SQL
+├── server/              Pekko actors, execution engine, handler lifecycle
+├── web/                 Spring Boot app, REST API, WebSocket, admin UI
+├── docs/                Architecture, quickstart, tutorials
+├── config/
+│   ├── handlers/        Handler type mappings (JSON)
+│   ├── users.json       User accounts
+│   └── apikeys.json     API key definitions
+├── libs/                External handler JARs (drop-in)
+├── build.sh             Build script
+├── run.sh               Run script
+└── pom.xml              Parent Maven POM
+```
 
-## Prerequisites
-
-- Java 17+
-- Maven 3.8+
-- (Optional) Apache Kafka for messaging
-- (Optional) Apache ActiveMQ for messaging
-
-## Build
+## Quick Start
 
 ```bash
-cd dgfacade-parent
-mvn clean install
+# Build
+mvn clean package -DskipTests
+
+# Run
+mvn spring-boot:run -pl web
+
+# Or use scripts
+chmod +x build.sh run.sh
+./build.sh
+./run.sh
 ```
 
-## Run
+### Test
 
 ```bash
-cd dgfacade-web
-mvn spring-boot:run
+# Health check
+curl http://localhost:8080/api/v1/health
+
+# Echo request
+curl -X POST http://localhost:8080/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"dgf-test-key-0001","request_type":"ECHO","payload":{"message":"Hello!"}}'
+
+# Arithmetic
+curl -X POST http://localhost:8080/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"dgf-test-key-0001","request_type":"ARITHMETIC","payload":{"operation":"MUL","operands":[7,6]}}'
 ```
 
-Access: http://localhost:8080
+### Web Dashboard
 
-## Default Credentials
+Open `http://localhost:8080` — Login: `admin` / `password`
 
-| User | Password | Roles |
-|------|----------|-------|
-| admin | admin123 | ADMIN, USER |
-| operator | operator123 | USER |
-| viewer | viewer123 | VIEWER |
+## API Endpoints
 
-## REST API
+| Method | Path                | Description                    |
+|--------|---------------------|--------------------------------|
+| POST   | /api/v1/request     | Submit a DGRequest             |
+| GET    | /api/v1/handlers    | List registered handler types  |
+| GET    | /api/v1/status      | Recent execution states        |
+| POST   | /api/v1/reload      | Reload handler configs         |
+| GET    | /api/v1/health      | Health check                   |
+| WS     | /ws/gateway         | WebSocket gateway              |
 
-### Submit Request
-```
-POST /api/v1/request
-Content-Type: application/json
+## Documentation
 
-{
-  "apiKey": "dgf-dev-key-001",
-  "requestType": "ARITHMETIC",
-  "payload": {
-    "operation": "ADD",
-    "operandA": 10,
-    "operandB": 5
-  }
-}
-```
-
-### Health Check
-```
-GET /api/v1/health
-```
-
-### List Handlers
-```
-GET /api/v1/handlers
-```
-
-## Configuration
-
-Edit `application.properties` for:
-- Server port, application name
-- Kafka/ActiveMQ enable/disable and connection settings
-- Actor system tuning (pool sizes, timeouts)
-- Security file paths
-
-### External Libraries
-Place `.jar` files in the `libs/` directory - they are automatically loaded to the classpath at startup.
-
-### Users & API Keys
-Managed via JSON files in `config/` directory:
-- `config/users.json` - User accounts
-- `config/apikeys.json` - API keys
-
-## Creating Custom Handlers
-
-Implement `DGHandler` interface:
-
-```java
-@Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class MyHandler implements DGHandler {
-    public String getRequestType() { return "MY_TYPE"; }
-    public String getDescription() { return "My custom handler"; }
-    public void start(DGRequest request) { /* init */ }
-    public DGResponse execute() { /* business logic */ }
-    public void stop(DGResponse response) { /* cleanup */ }
-    public HandlerStatus getStatus() { return status; }
-}
-```
-
-Handlers are auto-discovered by Spring at startup.
+- [Architecture](docs/architecture.md)
+- [Quick Start](docs/quickstart.md)
+- [Tutorial: Custom Handlers](docs/tutorial.md)
 
 ## License
 
-Proprietary and confidential. Unauthorized use prohibited.
+Copyright © 2025-2030, All Rights Reserved.
+Ashutosh Sinha | Email: ajsinha@gmail.com
+Proprietary and confidential. Patent Pending.

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Brokers')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-1"><i class="fas fa-server me-2"></i>Message Brokers</h2>
+                <p class="text-muted mb-0">Create, configure, and manage broker connections &mdash;
+                    Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, SQL</p>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/brokers/create}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i>New Broker
+                </a>
+            </div>
+        </div>
+
+        <!-- Broker Cards -->
+        <div th:if="${brokers != null and !brokers.isEmpty()}" class="row g-4">
+            <div th:each="b : ${brokers}" class="col-xl-4 col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">
+                                <i class="fas me-2"
+                                   th:classappend="${b['type'] == 'kafka'} ? 'fa-stream text-primary' :
+                                       (${b['type'] == 'activemq'} ? 'fa-exchange-alt text-warning' :
+                                       (${b['type'] == 'rabbitmq'} ? 'fa-rabbit text-orange' :
+                                       (${b['type'] == 'ibmmq'} ? 'fa-industry text-info' :
+                                       (${b['type'] == 'filesystem'} ? 'fa-folder text-success' :
+                                       'fa-database text-secondary'))))"></i>
+                                <span th:text="${b['_broker_id']}">broker-id</span>
+                            </h5>
+                        </div>
+                        <div class="d-flex gap-1 align-items-center">
+                            <span class="badge"
+                                  th:classappend="${b['_state'] == 'RUNNING'} ? 'bg-success' : (${b['_state'] == 'ERROR'} ? 'bg-danger' : 'bg-secondary')"
+                                  th:text="${b['_state']}">STOPPED</span>
+                            <span class="badge rounded-pill"
+                                  th:classappend="${b['enabled'] == true} ? 'bg-primary' : 'bg-dark'"
+                                  th:text="${b['enabled'] == true} ? 'Enabled' : 'Disabled'">Enabled</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p th:if="${b['description'] != null and !b['description'].toString().isBlank()}"
+                           class="text-muted small mb-3" th:text="${b['description']}">Description</p>
+
+                        <dl class="row mb-0 small">
+                            <dt class="col-sm-4 text-muted">Type</dt>
+                            <dd class="col-sm-8"><span class="badge bg-light text-dark border" th:text="${b['type']}">kafka</span></dd>
+
+                            <!-- Connection summary -->
+                            <th:block th:if="${b['connection'] != null}">
+                                <th:block th:if="${b['connection']['bootstrap_servers'] != null}">
+                                    <dt class="col-sm-4 text-muted">Servers</dt>
+                                    <dd class="col-sm-8"><code class="small" th:text="${b['connection']['bootstrap_servers']}">-</code></dd>
+                                </th:block>
+                                <th:block th:if="${b['connection']['broker_url'] != null}">
+                                    <dt class="col-sm-4 text-muted">URL</dt>
+                                    <dd class="col-sm-8"><code class="small text-break" th:text="${b['connection']['broker_url']}">-</code></dd>
+                                </th:block>
+                                <th:block th:if="${b['connection']['host'] != null}">
+                                    <dt class="col-sm-4 text-muted">Host</dt>
+                                    <dd class="col-sm-8"><code class="small" th:text="${b['connection']['host'] + ':' + (b['connection']['port'] ?: '')}">-</code></dd>
+                                </th:block>
+                                <th:block th:if="${b['connection']['directory'] != null}">
+                                    <dt class="col-sm-4 text-muted">Directory</dt>
+                                    <dd class="col-sm-8"><code class="small" th:text="${b['connection']['directory']}">-</code></dd>
+                                </th:block>
+                                <th:block th:if="${b['connection']['jdbc_url'] != null}">
+                                    <dt class="col-sm-4 text-muted">JDBC</dt>
+                                    <dd class="col-sm-8"><code class="small text-break" th:text="${b['connection']['jdbc_url']}">-</code></dd>
+                                </th:block>
+                            </th:block>
+
+                            <!-- SSL indicator -->
+                            <th:block th:if="${b['ssl'] != null and b['ssl']['enabled'] == true}">
+                                <dt class="col-sm-4 text-muted">SSL/TLS</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-success"><i class="fas fa-lock me-1"></i>
+                                        <span th:text="${b['ssl']['protocol'] ?: 'TLS'} + ' / ' + (${b['ssl']['format'] ?: 'PEM'})">TLSv1.3 / PEM</span>
+                                    </span>
+                                </dd>
+                            </th:block>
+                        </dl>
+                    </div>
+                    <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between">
+                        <div class="d-flex gap-1">
+                            <th:block th:if="${b['_state'] != 'RUNNING'}">
+                                <form th:action="@{/admin/brokers/start}" method="post" class="d-inline">
+                                    <input type="hidden" name="brokerId" th:value="${b['_broker_id']}">
+                                    <button class="btn btn-sm btn-outline-success"><i class="fas fa-play me-1"></i>Start</button>
+                                </form>
+                            </th:block>
+                            <th:block th:if="${b['_state'] == 'RUNNING'}">
+                                <form th:action="@{/admin/brokers/stop}" method="post" class="d-inline">
+                                    <input type="hidden" name="brokerId" th:value="${b['_broker_id']}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-stop me-1"></i>Stop</button>
+                                </form>
+                            </th:block>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <a th:href="@{/admin/brokers/edit/{id}(id=${b['_broker_id']})}"
+                               class="btn btn-sm btn-outline-primary"><i class="fas fa-edit me-1"></i>Edit</a>
+                            <form th:action="@{/admin/brokers/delete}" method="post" class="d-inline"
+                                  onsubmit="return confirm('Delete this broker configuration permanently?')">
+                                <input type="hidden" name="brokerId" th:value="${b['_broker_id']}">
+                                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash me-1"></i>Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${brokers == null or brokers.isEmpty()}" class="text-center py-5">
+            <i class="fas fa-server fa-4x text-muted mb-3 d-block"></i>
+            <h5 class="text-muted">No broker configurations found</h5>
+            <p class="text-muted">Broker JSON files are stored in <code>config/brokers/</code></p>
+            <a th:href="@{/admin/brokers/create}" class="btn btn-success mt-2">
+                <i class="fas fa-plus me-1"></i>Create Your First Broker
+            </a>
+        </div>
+
+        <!-- Reference -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light py-3">
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2 text-info"></i>Supported Broker Types</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light"><tr><th class="ps-4">Type</th><th>Protocol</th><th>Default Port</th><th>SSL Support</th><th>Notes</th></tr></thead>
+                                <tbody>
+                                    <tr><td class="ps-4"><i class="fas fa-stream text-primary me-2"></i><strong>Kafka</strong></td><td>TCP</td><td>9092 / 9093 (SSL)</td><td><span class="badge bg-success">PEM &amp; JKS</span></td><td>Supports mTLS, SASL/PLAIN, SASL/SCRAM</td></tr>
+                                    <tr><td class="ps-4"><i class="fas fa-exchange-alt text-warning me-2"></i><strong>ActiveMQ</strong></td><td>OpenWire / AMQP</td><td>61616 / 61617 (SSL)</td><td><span class="badge bg-success">PEM &amp; JKS</span></td><td>Supports failover:() URIs</td></tr>
+                                    <tr><td class="ps-4"><i class="fas fa-envelope text-orange me-2"></i><strong>RabbitMQ</strong></td><td>AMQP 0-9-1</td><td>5672 / 5671 (SSL)</td><td><span class="badge bg-success">PEM &amp; JKS</span></td><td>Virtual hosts, exchange routing</td></tr>
+                                    <tr><td class="ps-4"><i class="fas fa-industry text-info me-2"></i><strong>IBM MQ</strong></td><td>MQI / JMS</td><td>1414</td><td><span class="badge bg-success">PEM &amp; JKS</span></td><td>Queue Manager + SVRCONN channel</td></tr>
+                                    <tr><td class="ps-4"><i class="fas fa-folder text-success me-2"></i><strong>FileSystem</strong></td><td>Local FS</td><td>N/A</td><td><span class="badge bg-secondary">N/A</span></td><td>Directory watch with glob patterns</td></tr>
+                                    <tr><td class="ps-4"><i class="fas fa-database text-secondary me-2"></i><strong>SQL</strong></td><td>JDBC</td><td>Varies</td><td><span class="badge bg-warning text-dark">JDBC SSL</span></td><td>PostgreSQL, MySQL, Oracle, SQL Server</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

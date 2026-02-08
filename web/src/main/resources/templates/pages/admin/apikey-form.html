@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Create API Key')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a th:href="@{/admin/apikeys}">API Keys</a></li>
+                        <li class="breadcrumb-item active">Create New Key</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0"><i class="fas fa-key me-2"></i>Create New API Key</h2>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/apikeys}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back to API Keys</a>
+            </div>
+        </div>
+
+        <form th:action="@{/admin/apikeys/create}" method="post">
+
+        <div class="row g-4">
+            <!-- ════════════ LEFT COLUMN: Form ════════════ -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-user-tag me-2 text-primary"></i>Key Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Owner (User) <span class="text-danger">*</span></label>
+                                <select name="userId" class="form-select" required>
+                                    <option value="">— Select a user —</option>
+                                    <option th:each="u : ${users}" th:value="${u.userId}"
+                                            th:text="${u.displayName} + ' (' + ${u.username} + ' / ' + ${u.userId} + ')'">user</option>
+                                </select>
+                                <div class="form-text">The user account this API key will authenticate as. All requests made with this key
+                                    inherit the owner's roles and permissions.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Description</label>
+                                <input type="text" name="description" class="form-control"
+                                       placeholder="e.g. Production order-service, CI/CD pipeline, Dev testing">
+                                <div class="form-text">A human-readable label to identify this key's purpose. Helps when auditing or revoking keys.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-info"></i>What Happens Next</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="text-center p-3 border rounded h-100">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-2">
+                                        <i class="fas fa-key fa-2x text-primary"></i>
+                                    </div>
+                                    <h6>1. Key Generated</h6>
+                                    <p class="small text-muted mb-0">A unique key in the format <code>dgf-xxxxxxxxxxxxxxxx</code> is generated automatically.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 border rounded h-100">
+                                    <div class="rounded-circle bg-success bg-opacity-10 p-3 d-inline-block mb-2">
+                                        <i class="fas fa-save fa-2x text-success"></i>
+                                    </div>
+                                    <h6>2. Saved to Config</h6>
+                                    <p class="small text-muted mb-0">The key is appended to <code>config/apikeys.json</code> and immediately available for use.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 border rounded h-100">
+                                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 d-inline-block mb-2">
+                                        <i class="fas fa-paper-plane fa-2x text-warning"></i>
+                                    </div>
+                                    <h6>3. Ready to Use</h6>
+                                    <p class="small text-muted mb-0">Include <code>"api_key"</code> in your request JSON to authenticate API calls.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="d-flex gap-2 mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-1"></i>Create API Key
+                    </button>
+                    <a th:href="@{/admin/apikeys}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                </div>
+            </div>
+
+            <!-- ════════════ RIGHT COLUMN: Help ════════════ -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-4 sticky-top" style="top: 80px">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>API Key Tips</h6>
+                    </div>
+                    <div class="card-body small">
+                        <h6 class="fw-bold text-primary">Usage in REST API</h6>
+                        <p class="text-muted">Include the key in your request JSON:</p>
+                        <pre class="bg-dark text-light p-2 rounded small mb-3">{
+  "api_key": "dgf-xxxxxxxxxxxxxxxx",
+  "request_type": "ECHO",
+  "payload": { "message": "hello" }
+}</pre>
+
+                        <h6 class="fw-bold text-primary">Usage in WebSocket</h6>
+                        <p class="text-muted">Send the same JSON structure over the WebSocket connection at <code>ws://host:port/ws/gateway</code>.</p>
+
+                        <h6 class="fw-bold text-primary">Multiple Keys per User</h6>
+                        <p class="text-muted">A user can have multiple API keys for different environments (dev, staging, production) or services. Each key authenticates as the same user.</p>
+
+                        <h6 class="fw-bold text-primary">Key Revocation</h6>
+                        <p class="text-muted">Delete a key from the <a th:href="@{/admin/apikeys}">API Keys</a> list to immediately revoke access. The admin master key (<code>dgf-admin-key-0001</code>) cannot be deleted via the UI.</p>
+
+                        <h6 class="fw-bold text-primary">Security Note</h6>
+                        <p class="text-muted mb-0">Keys are stored in plaintext in <code>config/apikeys.json</code>. Protect this file with OS-level permissions. Never embed keys in source code — use environment variables or secrets managers.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </form>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

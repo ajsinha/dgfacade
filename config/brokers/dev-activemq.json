@@ -1,0 +1,16 @@
+{
+  "type": "activemq",
+  "description": "Development ActiveMQ broker",
+  "enabled": true,
+  "connection": {
+    "broker_url": "tcp://localhost:61616",
+    "username": "admin",
+    "password": "admin",
+    "client_id": "dgfacade-amq-dev"
+  },
+  "properties": {
+    "prefetch_size": "100",
+    "redelivery_delay": "5000",
+    "max_redeliveries": "3"
+  }
+}

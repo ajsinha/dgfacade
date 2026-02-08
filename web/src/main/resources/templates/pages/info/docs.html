@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('API Docs')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <div class="row mb-4"><div class="col"><h2 class="mb-0"><i class="fas fa-file-alt me-2"></i>API Documentation</h2></div></div>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3"><h5 class="mb-0"><i class="fas fa-paper-plane me-2 text-primary"></i>POST /api/v1/request</h5></div>
+            <div class="card-body">
+                <p>Submit a request for handler execution.</p>
+                <pre class="bg-dark text-light p-3 rounded"><code>{
+  "api_key": "dgf-admin-key-0001",
+  "request_type": "ECHO",
+  "payload": { ... },
+  "delivery_destination": "optional-topic",
+  "ttl_minutes": 30
+}</code></pre>
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3"><h5 class="mb-0"><i class="fas fa-list me-2 text-success"></i>GET /api/v1/handlers</h5></div>
+            <div class="card-body"><p>Returns registered request types and count.</p></div>
+        </div>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3"><h5 class="mb-0"><i class="fas fa-heartbeat me-2 text-info"></i>GET /api/v1/health</h5></div>
+            <div class="card-body"><p>Health check with handler count and recent execution count.</p></div>
+        </div>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3"><h5 class="mb-0"><i class="fas fa-history me-2 text-warning"></i>GET /api/v1/status</h5></div>
+            <div class="card-body"><p>Returns recent handler execution states.</p></div>
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3"><h5 class="mb-0"><i class="fas fa-sync me-2 text-danger"></i>POST /api/v1/reload</h5></div>
+            <div class="card-body"><p>Hot-reload handler configurations from disk.</p></div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

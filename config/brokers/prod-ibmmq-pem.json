@@ -1,0 +1,26 @@
+{
+  "type": "ibmmq",
+  "description": "Production IBM MQ with PEM-based SSL and queue manager",
+  "enabled": true,
+  "connection": {
+    "host": "ibmmq.prod.example.com",
+    "port": 1414,
+    "queue_manager": "PROD.QM1",
+    "channel": "DGFACADE.SVRCONN",
+    "username": "dgfacade-svc",
+    "password": "${IBMMQ_PASSWORD}"
+  },
+  "ssl": {
+    "enabled": true,
+    "format": "PEM",
+    "protocol": "TLSv1.3",
+    "ca_cert_path": "config/certs/ibmmq/ca-chain.pem",
+    "client_cert_path": "config/certs/ibmmq/client-cert.pem",
+    "client_key_path": "config/certs/ibmmq/client-key.pem",
+    "cipher_suite": "TLS_AES_256_GCM_SHA384"
+  },
+  "properties": {
+    "reconnect_interval_seconds": "30",
+    "backpressure_max_depth": "5000"
+  }
+}

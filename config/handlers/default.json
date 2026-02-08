@@ -1,0 +1,50 @@
+{
+  "ECHO": {
+    "handler_class": "com.dgfacade.server.handler.EchoHandler",
+    "description": "Echoes back the request payload — useful for connectivity testing",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {}
+  },
+  "ARITHMETIC": {
+    "handler_class": "com.dgfacade.server.handler.ArithmeticHandler",
+    "description": "Basic arithmetic: ADD, SUB, MUL, DIV, MOD, POW",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {
+      "precision": 10
+    }
+  },
+  "STRING_TRANSFORM": {
+    "handler_class": "com.dgfacade.server.handler.StringTransformHandler",
+    "description": "String operations via DGHandlerProxy: UPPER, LOWER, REVERSE, WORD_COUNT, REPEAT, TITLE_CASE, CHAR_COUNT",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {
+      "metadata": "POJO handler — wrapped by DGHandlerProxy at runtime"
+    }
+  },
+  "HASH": {
+    "handler_class": "com.dgfacade.server.handler.HashHandler",
+    "description": "Hashing & encoding: MD5, SHA256, SHA512, BASE64, HEX, UUID, CHECKSUM",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {}
+  },
+  "JSON_TRANSFORM": {
+    "handler_class": "com.dgfacade.server.handler.JsonTransformHandler",
+    "description": "JSON manipulation: FLATTEN, UNFLATTEN, MERGE, PICK, OMIT, RENAME_KEYS, SORT_KEYS",
+    "ttl_minutes": 10,
+    "enabled": true,
+    "config": {}
+  },
+  "DELAYED": {
+    "handler_class": "com.dgfacade.server.handler.DelayedHandler",
+    "description": "Simulates a long-running handler with configurable delay (for TTL testing)",
+    "ttl_minutes": 2,
+    "enabled": true,
+    "config": {
+      "default_delay_seconds": 5
+    }
+  }
+}

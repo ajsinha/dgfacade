@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Prometheus & Grafana')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             HERO
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-chart-line me-3" style="color:#e6522c;"></i>
+                Prometheus &amp; Grafana Integration
+            </h1>
+            <p class="lead text-muted">
+                Real-time observability for every handler, request, and JVM metric in
+                <span th:text="${appName} ?: 'DGFacade'">DGFacade</span>
+            </p>
+            <span class="badge bg-success me-1">v1.2.0</span>
+            <span class="badge bg-dark">Micrometer</span>
+            <span class="badge" style="background:#e6522c;">Prometheus</span>
+            <span class="badge" style="background:#f46800;">Grafana</span>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             OVERVIEW
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card border-0 shadow-sm mb-5">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #e6522c 0%, #f46800 100%);">
+                <h4 class="mb-0"><i class="fas fa-info-circle me-2"></i>Overview</h4>
+            </div>
+            <div class="card-body">
+                <p>
+                    DGFacade v1.2.0 ships with built-in Prometheus instrumentation powered by
+                    <strong>Micrometer</strong> and Spring Boot Actuator. Every handler execution,
+                    API call, JVM memory pool, thread, and CPU usage is automatically measured and
+                    exposed at <code>/actuator/prometheus</code> in OpenMetrics format — ready to be
+                    scraped by Prometheus and visualised in Grafana.
+                </p>
+                <div class="row g-3 mt-3">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 text-center h-100" style="background:#fff5f0;">
+                            <i class="fas fa-cogs fa-2x mb-2" style="color:#e6522c;"></i>
+                            <h6>Zero Configuration</h6>
+                            <p class="small text-muted mb-0">
+                                Metrics are registered automatically at startup. No annotations,
+                                no YAML toggles — just start DGFacade and point Prometheus at it.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 text-center h-100" style="background:#fff5f0;">
+                            <i class="fas fa-tachometer-alt fa-2x mb-2" style="color:#e6522c;"></i>
+                            <h6>13+ Custom Metrics</h6>
+                            <p class="small text-muted mb-0">
+                                Counters, timers, gauges, histograms, and distribution summaries
+                                covering every layer from HTTP to Pekko actors.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 text-center h-100" style="background:#fff5f0;">
+                            <i class="fas fa-file-import fa-2x mb-2" style="color:#f46800;"></i>
+                            <h6>Pre-built Grafana Dashboard</h6>
+                            <p class="small text-muted mb-0">
+                                A ready-to-import JSON dashboard ships in
+                                <code>config/grafana/dgfacade-dashboard.json</code>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             ARCHITECTURE DIAGRAM
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card border-0 shadow-sm mb-5" id="architecture">
+            <div class="card-header bg-dark text-white">
+                <h4 class="mb-0"><i class="fas fa-sitemap me-2"></i>Architecture</h4>
+            </div>
+            <div class="card-body">
+<pre class="bg-light p-4 rounded small" style="overflow-x:auto;">
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           DGFacade Application                               │
+│                                                                              │
+│  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐                │
+│  │  REST API      │    │  ExecutionEng  │    │  Pekko Actors │                │
+│  │  Controller    │───▶│  + MetricsSvc  │───▶│  Handlers     │                │
+│  └───────┬───────┘    └───────┬───────┘    └───────────────┘                │
+│          │                    │                                               │
+│          │         ┌──────────▼──────────┐                                   │
+│          │         │   Micrometer Core   │                                   │
+│          │         │  (MeterRegistry)    │                                   │
+│          │         └──────────┬──────────┘                                   │
+│          │                    │                                               │
+│          │         ┌──────────▼──────────┐                                   │
+│          │         │  Prometheus Registry │                                   │
+│          │         │  (micrometer-prom)   │                                   │
+│          │         └──────────┬──────────┘                                   │
+│          │                    │                                               │
+│  ┌───────▼────────────────────▼───────┐                                      │
+│  │     Spring Boot Actuator           │                                      │
+│  │     /actuator/prometheus           │                                      │
+│  └───────────────┬────────────────────┘                                      │
+└──────────────────┼───────────────────────────────────────────────────────────┘
+                   │  HTTP scrape (every 15s)
+         ┌─────────▼─────────┐
+         │    Prometheus      │
+         │    Server          │
+         └─────────┬─────────┘
+                   │  PromQL queries
+         ┌─────────▼─────────┐
+         │     Grafana        │
+         │     Dashboard      │
+         └───────────────────┘
+</pre>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             ENDPOINT & QUICK START
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card border-0 shadow-sm mb-5" id="quickstart">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #0079c1 0%, #003366 100%);">
+                <h4 class="mb-0"><i class="fas fa-rocket me-2"></i>Quick Start</h4>
+            </div>
+            <div class="card-body">
+                <h5 class="mt-2">1. Verify the Prometheus Endpoint</h5>
+                <p>DGFacade exposes metrics automatically. No extra config needed:</p>
+<pre class="bg-dark text-success p-3 rounded"><code># Fetch raw Prometheus metrics
+curl -s http://localhost:8080/actuator/prometheus
+
+# Sample output:
+# HELP dgfacade_requests_total Total requests processed
+# TYPE dgfacade_requests_total counter
+dgfacade_requests_total{application="dgfacade",channel="REST",request_type="ECHO",status="success",user="admin"} 42.0
+
+# HELP dgfacade_handler_execution_duration_seconds Handler execution duration
+# TYPE dgfacade_handler_execution_duration_seconds histogram
+dgfacade_handler_execution_duration_seconds_bucket{...,le="0.05"} 38.0
+dgfacade_handler_execution_duration_seconds_bucket{...,le="0.1"} 41.0
+...</code></pre>
+
+                <h5 class="mt-4">2. Configure Prometheus to Scrape DGFacade</h5>
+                <p>Add a scrape target to your <code>prometheus.yml</code>:</p>
+<pre class="bg-dark text-info p-3 rounded"><code># prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'dgfacade'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['localhost:8080']
+        labels:
+          instance: 'dgfacade-primary'
+          environment: 'production'</code></pre>
+
+                <h5 class="mt-4">3. Import the Grafana Dashboard</h5>
+                <ol>
+                    <li>Open Grafana → <strong>Dashboards</strong> → <strong>Import</strong></li>
+                    <li>Upload <code>config/grafana/dgfacade-dashboard.json</code></li>
+                    <li>Select your Prometheus data source when prompted</li>
+                    <li>Click <strong>Import</strong> — all 20+ panels auto-populate</li>
+                </ol>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Tip:</strong> The dashboard JSON ships inside the DGFacade distribution at
+                    <code>config/grafana/dgfacade-dashboard.json</code>. It uses the UID
+                    <code>dgfacade-main</code> so re-importing always updates the same dashboard.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             FULL METRIC CATALOGUE
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card border-0 shadow-sm mb-5" id="metrics">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <h4 class="mb-0"><i class="fas fa-list-alt me-2"></i>Metric Catalogue</h4>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Metric Name</th>
+                                <th>Type</th>
+                                <th>Tags</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Handler Metrics -->
+                            <tr class="table-warning">
+                                <td colspan="4"><strong><i class="fas fa-cogs me-1"></i>Handler Metrics</strong></td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_requests_total</code></td>
+                                <td><span class="badge bg-primary">Counter</span></td>
+                                <td><code>request_type, user, channel, status</code></td>
+                                <td>Total requests processed (submitted / success / error)</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_requests_active</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>Number of handler requests currently executing</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_handler_execution_duration_seconds</code></td>
+                                <td><span class="badge bg-info text-dark">Timer</span></td>
+                                <td><code>request_type, handler_class, status</code></td>
+                                <td>Handler execution duration with p50/p90/p95/p99 percentiles</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_handler_errors_total</code></td>
+                                <td><span class="badge bg-primary">Counter</span></td>
+                                <td><code>request_type, error_type</code></td>
+                                <td>Total handler errors by type</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_handler_timeouts_total</code></td>
+                                <td><span class="badge bg-primary">Counter</span></td>
+                                <td><code>request_type</code></td>
+                                <td>Total handler timeouts (TTL exceeded)</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_handler_execution_payload_size</code></td>
+                                <td><span class="badge bg-secondary">Summary</span></td>
+                                <td><code>request_type</code></td>
+                                <td>Estimated request payload size in bytes</td>
+                            </tr>
+
+                            <!-- HTTP API Metrics -->
+                            <tr class="table-warning">
+                                <td colspan="4"><strong><i class="fas fa-cloud me-1"></i>HTTP API Metrics</strong></td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_api_http_requests_seconds</code></td>
+                                <td><span class="badge bg-info text-dark">Timer</span></td>
+                                <td><code>method, uri, status</code></td>
+                                <td>HTTP API request duration with percentile histogram</td>
+                            </tr>
+
+                            <!-- Infrastructure Gauges -->
+                            <tr class="table-warning">
+                                <td colspan="4"><strong><i class="fas fa-server me-1"></i>Infrastructure Gauges</strong></td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_users_active</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>Number of configured user accounts</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_apikeys_total</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>Number of configured API keys</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_handlers_registered</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>Number of registered handler request types</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_brokers_configured</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>Number of configured message brokers</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_channels_configured</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>Number of configured data channels</td>
+                            </tr>
+                            <tr>
+                                <td><code>dgfacade_uptime_seconds</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>DGFacade uptime in seconds</td>
+                            </tr>
+
+                            <!-- Spring Boot Auto-Metrics -->
+                            <tr class="table-warning">
+                                <td colspan="4"><strong><i class="fab fa-java me-1"></i>JVM &amp; Spring Boot Auto-Metrics</strong> (provided by Micrometer)</td>
+                            </tr>
+                            <tr>
+                                <td><code>jvm_memory_used_bytes</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td><code>area, id</code></td>
+                                <td>JVM memory usage (heap / non-heap)</td>
+                            </tr>
+                            <tr>
+                                <td><code>jvm_threads_live_threads</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>Current live thread count</td>
+                            </tr>
+                            <tr>
+                                <td><code>jvm_gc_pause_seconds</code></td>
+                                <td><span class="badge bg-info text-dark">Timer</span></td>
+                                <td><code>action, cause</code></td>
+                                <td>Garbage collection pause duration</td>
+                            </tr>
+                            <tr>
+                                <td><code>system_cpu_usage</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>System-wide CPU usage (0..1)</td>
+                            </tr>
+                            <tr>
+                                <td><code>process_cpu_usage</code></td>
+                                <td><span class="badge bg-success">Gauge</span></td>
+                                <td>—</td>
+                                <td>JVM process CPU usage (0..1)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             PROMQL EXAMPLES
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card border-0 shadow-sm mb-5" id="promql">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);">
+                <h4 class="mb-0"><i class="fas fa-search me-2"></i>PromQL Query Examples</h4>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-tachometer-alt me-1 text-primary"></i>Request Throughput (5-min rate)</h6>
+<pre class="bg-dark text-warning p-3 rounded small"><code>rate(dgfacade_requests_total{status="submitted"}[5m])</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-exclamation-triangle me-1 text-danger"></i>Error Rate by Handler</h6>
+<pre class="bg-dark text-warning p-3 rounded small"><code>rate(dgfacade_handler_errors_total[5m])</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-clock me-1 text-info"></i>p95 Execution Latency</h6>
+<pre class="bg-dark text-warning p-3 rounded small"><code>histogram_quantile(0.95,
+  rate(dgfacade_handler_execution_duration_seconds_bucket[5m])
+)</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-percentage me-1 text-success"></i>Success Rate (%)</h6>
+<pre class="bg-dark text-warning p-3 rounded small"><code>rate(dgfacade_requests_total{status="success"}[5m])
+  /
+rate(dgfacade_requests_total{status="submitted"}[5m])
+  * 100</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-hourglass-half me-1 text-warning"></i>Timeout Rate per Handler</h6>
+<pre class="bg-dark text-warning p-3 rounded small"><code>rate(dgfacade_handler_timeouts_total[5m])</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-memory me-1 text-secondary"></i>Heap Usage %</h6>
+<pre class="bg-dark text-warning p-3 rounded small"><code>jvm_memory_used_bytes{area="heap"}
+  /
+jvm_memory_max_bytes{area="heap"}
+  * 100</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-fire me-1 text-danger"></i>Top-5 Busiest Request Types</h6>
+<pre class="bg-dark text-warning p-3 rounded small"><code>topk(5,
+  rate(dgfacade_requests_total{status="submitted"}[5m])
+)</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-weight me-1 text-primary"></i>Average Payload Size</h6>
+<pre class="bg-dark text-warning p-3 rounded small"><code>dgfacade_handler_execution_payload_size_sum
+  /
+dgfacade_handler_execution_payload_size_count</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             GRAFANA DASHBOARD PANELS
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card border-0 shadow-sm mb-5" id="grafana">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #f46800 0%, #e6522c 100%);">
+                <h4 class="mb-0"><i class="fas fa-th-large me-2"></i>Grafana Dashboard Panels</h4>
+            </div>
+            <div class="card-body">
+                <p>
+                    The bundled dashboard (<code>config/grafana/dgfacade-dashboard.json</code>) contains
+                    <strong>20+ panels</strong> organised into five rows:
+                </p>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-chart-bar me-1 text-primary"></i>Overview Row</h6>
+                                <ul class="small mb-0">
+                                    <li>Requests/sec (stat)</li>
+                                    <li>Active Requests (stat)</li>
+                                    <li>Error Rate (stat)</li>
+                                    <li>Timeout Rate (stat)</li>
+                                    <li>Uptime (stat)</li>
+                                    <li>Registered Handlers (stat)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-cogs me-1 text-success"></i>Handler Execution Row</h6>
+                                <ul class="small mb-0">
+                                    <li>Throughput by Request Type (timeseries)</li>
+                                    <li>Duration p50/p95/p99 (timeseries)</li>
+                                    <li>Duration by Type (bar chart)</li>
+                                    <li>Error Breakdown (pie)</li>
+                                    <li>Timeout Breakdown (pie)</li>
+                                    <li>Success vs Error Rate (timeseries)</li>
+                                    <li>Payload Size Distribution (timeseries)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fab fa-java me-1 text-danger"></i>JVM &amp; HTTP Rows</h6>
+                                <ul class="small mb-0">
+                                    <li>JVM Heap Used vs Max (timeseries)</li>
+                                    <li>Thread Count (live/daemon/peak)</li>
+                                    <li>System &amp; Process CPU (timeseries)</li>
+                                    <li>HTTP Request Rate by Endpoint</li>
+                                    <li>HTTP Response Latency p95</li>
+                                    <li>Infrastructure Gauges (stat panel)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             ALERTING RULES
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card border-0 shadow-sm mb-5" id="alerting">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="fas fa-bell me-2"></i>Recommended Alert Rules</h4>
+            </div>
+            <div class="card-body">
+                <p>Add these rules to your <code>prometheus/rules/dgfacade.yml</code> for production alerting:</p>
+<pre class="bg-dark text-info p-3 rounded small"><code>groups:
+  - name: dgfacade_alerts
+    rules:
+      # Fire when error rate exceeds 5% of total requests
+      - alert: DGFacadeHighErrorRate
+        expr: |
+          rate(dgfacade_handler_errors_total[5m])
+            /
+          rate(dgfacade_requests_total{status="submitted"}[5m])
+            > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DGFacade error rate above 5%"
+          description: "{{ $labels.request_type }} error rate is {{ $value | humanizePercentage }}"
+
+      # Fire when p95 latency exceeds 10 seconds
+      - alert: DGFacadeHighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(dgfacade_handler_execution_duration_seconds_bucket[5m])
+          ) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DGFacade p95 latency above 10s"
+
+      # Fire when active requests exceed 500
+      - alert: DGFacadeRequestBacklog
+        expr: dgfacade_requests_active > 500
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DGFacade request backlog exceeds 500"
+
+      # Fire when handler timeouts spike
+      - alert: DGFacadeTimeoutSpike
+        expr: rate(dgfacade_handler_timeouts_total[5m]) > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DGFacade timeout rate above 1/sec"
+
+      # Fire when heap usage exceeds 85%
+      - alert: DGFacadeHeapPressure
+        expr: |
+          jvm_memory_used_bytes{area="heap"}
+            /
+          jvm_memory_max_bytes{area="heap"}
+            > 0.85
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DGFacade JVM heap usage above 85%"</code></pre>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             DOCKER COMPOSE EXAMPLE
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card border-0 shadow-sm mb-5" id="docker">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #003366 0%, #0079c1 100%);">
+                <h4 class="mb-0"><i class="fab fa-docker me-2"></i>Docker Compose — Full Observability Stack</h4>
+            </div>
+            <div class="card-body">
+                <p>
+                    Launch DGFacade, Prometheus, and Grafana together with a single <code>docker compose up</code>:
+                </p>
+<pre class="bg-dark text-success p-3 rounded small"><code># docker-compose-observability.yml
+version: '3.8'
+services:
+
+  dgfacade:
+    image: dgfacade:1.2.0
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/app/config
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./config/grafana:/etc/grafana/provisioning/dashboards
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  grafana-data:</code></pre>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             APPLICATION PROPERTIES REFERENCE
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card border-0 shadow-sm mb-5" id="config">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuration Reference</h4>
+            </div>
+            <div class="card-body">
+                <p>These are the relevant <code>application.properties</code> entries:</p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-secondary">
+                            <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>management.endpoints.web.exposure.include</code></td>
+                                <td><code>health,info,metrics,prometheus</code></td>
+                                <td>Actuator endpoints exposed over HTTP</td>
+                            </tr>
+                            <tr>
+                                <td><code>management.endpoint.prometheus.enabled</code></td>
+                                <td><code>true</code></td>
+                                <td>Enable the <code>/actuator/prometheus</code> scrape endpoint</td>
+                            </tr>
+                            <tr>
+                                <td><code>management.metrics.export.prometheus.enabled</code></td>
+                                <td><code>true</code></td>
+                                <td>Enable Prometheus metric export</td>
+                            </tr>
+                            <tr>
+                                <td><code>management.metrics.tags.application</code></td>
+                                <td><code>dgfacade</code></td>
+                                <td>Common tag applied to all metrics</td>
+                            </tr>
+                            <tr>
+                                <td><code>management.metrics.distribution.percentiles-histogram.*</code></td>
+                                <td><code>true</code></td>
+                                <td>Publish histogram buckets for percentile calculation</td>
+                            </tr>
+                            <tr>
+                                <td><code>management.metrics.distribution.percentiles.*</code></td>
+                                <td><code>0.5, 0.9, 0.95, 0.99</code></td>
+                                <td>Client-side percentile approximations</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="d-flex justify-content-between mb-4">
+            <a href="/help" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Help
+            </a>
+            <a href="/help/architecture" class="btn btn-outline-primary">
+                Architecture<i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <footer class="py-4 mt-4 border-top">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6>
+                    <p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.2.0'">1.2.0</span></p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="text-muted small mb-0">
+                        Copyright &copy; 2025-2030 Ashutosh Sinha<br>
+                        <span class="badge bg-warning text-dark">Patent Pending</span>
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

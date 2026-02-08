@@ -1,0 +1,29 @@
+{
+  "type": "rabbitmq",
+  "description": "Production RabbitMQ cluster with PEM-based mTLS",
+  "enabled": true,
+  "connection": {
+    "host": "rabbitmq.prod.example.com",
+    "port": 5672,
+    "ssl_port": 5671,
+    "virtual_host": "/dgfacade",
+    "username": "dgfacade-svc",
+    "password": "${RABBITMQ_PASSWORD}",
+    "exchange": "dgfacade.exchange",
+    "heartbeat": 30,
+    "connection_timeout": 15000,
+    "prefetch_count": 200
+  },
+  "ssl": {
+    "enabled": true,
+    "format": "PEM",
+    "protocol": "TLSv1.3",
+    "ca_cert_path": "config/certs/rabbitmq/ca-cert.pem",
+    "client_cert_path": "config/certs/rabbitmq/client-cert.pem",
+    "client_key_path": "config/certs/rabbitmq/client-key.pem"
+  },
+  "properties": {
+    "automatic_recovery": "true",
+    "recovery_interval_ms": "5000"
+  }
+}

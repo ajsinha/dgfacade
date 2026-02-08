@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Users')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-0"><i class="fas fa-users me-2"></i>User Management</h2>
+                <p class="text-muted mb-0">Manage users and their role assignments</p>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/users/create}" class="btn btn-success">
+                    <i class="fas fa-user-plus me-1"></i> Create User
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 text-white-50">Total Users</h6>
+                                <h3 class="mb-0" th:text="${#lists.size(users)}">0</h3>
+                            </div>
+                            <i class="fas fa-users fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 text-white-50">Enabled</h6>
+                                <h3 class="mb-0" th:text="${#lists.size(users.?[enabled])}">0</h3>
+                            </div>
+                            <i class="fas fa-user-check fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 text-white-50">Admins</h6>
+                                <h3 class="mb-0" th:text="${#lists.size(users.?[roles.contains('ADMIN')])}">0</h3>
+                            </div>
+                            <i class="fas fa-user-shield fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">User ID</th>
+                                <th>Username</th>
+                                <th>Display Name</th>
+                                <th>Email</th>
+                                <th>Roles</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="user : ${users}">
+                                <td class="ps-4">
+                                    <i th:class="'fas me-2 ' + (${user.roles.contains('ADMIN')} ? 'fa-user-shield text-danger' : 'fa-user text-muted')"></i>
+                                    <strong th:text="${user.userId}">admin</strong>
+                                </td>
+                                <td th:text="${user.username}">admin</td>
+                                <td th:text="${user.displayName}">Administrator</td>
+                                <td><small class="text-muted" th:text="${user.email}">-</small></td>
+                                <td>
+                                    <span th:each="role : ${user.roles}"
+                                          th:class="'badge me-1 ' + (${role == 'ADMIN'} ? 'bg-danger' : 'bg-primary')"
+                                          th:text="${role}">ROLE</span>
+                                </td>
+                                <td>
+                                    <span th:if="${user.enabled}" class="badge bg-success">Active</span>
+                                    <span th:unless="${user.enabled}" class="badge bg-secondary">Disabled</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <th:block th:if="${user.userId == 'admin'}">
+                                        <span class="badge bg-dark" title="Protected system account — cannot be modified or deleted">
+                                            <i class="fas fa-lock me-1"></i>Protected
+                                        </span>
+                                    </th:block>
+                                    <th:block th:unless="${user.userId == 'admin'}">
+                                        <form th:action="@{/admin/users/delete}" method="post" class="d-inline"
+                                              onsubmit="return confirm('Delete this user?');">
+                                            <input type="hidden" name="userId" th:value="${user.userId}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    title="Delete this user">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </th:block>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(users)}">
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="fas fa-users fa-3x mb-3 d-block"></i>No users found
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Protection Note -->
+        <div class="card border-0 shadow-sm bg-light mt-4">
+            <div class="card-body">
+                <h6 class="card-title text-muted mb-3"><i class="fas fa-lock me-2"></i>Protected System Account</h6>
+                <p class="small text-muted mb-2">
+                    The built-in <strong>admin</strong> account is a protected system account and cannot be edited or deleted
+                    through the User Management interface. This ensures that at least one administrator account is always
+                    available for system recovery and configuration.
+                </p>
+                <p class="small text-muted mb-0">
+                    The admin account's credentials and API key (<code>dgf-admin-key-0001</code>) can only be changed
+                    by directly editing <code>config/users.json</code> and <code>config/apikeys.json</code>.
+                </p>
+            </div>
+        </div>
+
+        <!-- RBAC Glossary -->
+        <div class="card border-0 shadow-sm bg-light mt-4">
+            <div class="card-body">
+                <h6 class="card-title text-muted mb-3"><i class="fas fa-shield-alt me-2"></i>Role-Based Access Control</h6>
+                <div class="row small">
+                    <div class="col-md-4">
+                        <dl class="mb-0"><dt><span class="badge bg-danger">ADMIN</span></dt>
+                        <dd class="text-muted">Full system access: manage users, API keys, and all configurations.</dd></dl>
+                    </div>
+                    <div class="col-md-4">
+                        <dl class="mb-0"><dt><span class="badge bg-primary">USER</span></dt>
+                        <dd class="text-muted">Standard access: view dashboard, submit requests via API.</dd></dl>
+                    </div>
+                    <div class="col-md-4">
+                        <dl class="mb-0"><dt>API Key</dt>
+                        <dd class="text-muted">Each user can have one or more API keys for programmatic access.</dd></dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

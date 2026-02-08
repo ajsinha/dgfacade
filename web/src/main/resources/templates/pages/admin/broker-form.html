@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Broker Configuration')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a th:href="@{/admin/brokers}">Brokers</a></li>
+                        <li class="breadcrumb-item active" th:text="${editMode} ? 'Edit: ' + ${brokerId} : 'New Broker'">New Broker</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0">
+                    <i class="fas me-2" th:classappend="${editMode} ? 'fa-edit' : 'fa-plus-circle'"></i>
+                    <span th:text="${editMode} ? 'Edit Broker' : 'Create New Broker'">Create New Broker</span>
+                </h2>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/brokers}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back to Brokers</a>
+            </div>
+        </div>
+
+        <form th:action="${editMode} ? @{/admin/brokers/edit/{id}(id=${brokerId})} : @{/admin/brokers/create}" method="post">
+
+        <div class="row g-4">
+            <!-- ════════════ LEFT COLUMN: Form Fields ════════════ -->
+            <div class="col-lg-8">
+
+                <!-- Basic Info -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-tag me-2 text-primary"></i>Basic Information</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6" th:if="${!editMode}">
+                                <label class="form-label fw-semibold">Broker ID <span class="text-danger">*</span></label>
+                                <input type="text" name="brokerId" class="form-control" required
+                                       placeholder="e.g. prod-kafka, dev-activemq"
+                                       pattern="[a-zA-Z0-9\-_]+" title="Letters, numbers, hyphens, underscores only"
+                                       th:value="${brokerId}">
+                                <div class="form-text">Unique identifier. Becomes the config filename. Lowercase letters, numbers, hyphens only.</div>
+                            </div>
+                            <div class="col-md-6" th:if="${editMode}">
+                                <label class="form-label fw-semibold">Broker ID</label>
+                                <input type="text" class="form-control" disabled th:value="${brokerId}">
+                                <div class="form-text">Cannot be changed after creation.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Broker Type <span class="text-danger">*</span></label>
+                                <select name="type" id="brokerType" class="form-select" onchange="toggleTypeFields()">
+                                    <option value="kafka" th:selected="${broker['type'] == 'kafka'}">Kafka</option>
+                                    <option value="activemq" th:selected="${broker['type'] == 'activemq'}">ActiveMQ</option>
+                                    <option value="rabbitmq" th:selected="${broker['type'] == 'rabbitmq'}">RabbitMQ</option>
+                                    <option value="ibmmq" th:selected="${broker['type'] == 'ibmmq'}">IBM MQ</option>
+                                    <option value="filesystem" th:selected="${broker['type'] == 'filesystem'}">FileSystem</option>
+                                    <option value="sql" th:selected="${broker['type'] == 'sql'}">SQL (JDBC)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Description</label>
+                                <input type="text" name="description" class="form-control"
+                                       placeholder="e.g. Production Kafka cluster for order events"
+                                       th:value="${broker['description']}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Enabled</label>
+                                <select name="enabled" class="form-select">
+                                    <option value="true" th:selected="${broker['enabled'] == true}">Yes — Enabled</option>
+                                    <option value="false" th:selected="${broker['enabled'] == false}">No — Disabled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ Kafka Connection ═══ -->
+                <div id="conn-kafka" class="card border-0 shadow-sm mb-4 conn-section">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-stream me-2 text-primary"></i>Kafka Connection</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Bootstrap Servers <span class="text-danger">*</span></label>
+                                <input type="text" name="conn_bootstrap_servers" class="form-control"
+                                       placeholder="localhost:9092"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['bootstrap_servers']} : 'localhost:9092'">
+                                <div class="form-text">Comma-separated list. Example: <code>kafka-1.prod.example.com:9093,kafka-2.prod.example.com:9093</code></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Client ID</label>
+                                <input type="text" name="conn_client_id" class="form-control"
+                                       placeholder="dgfacade-client"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['client_id']} : 'dgfacade-client'">
+                                <div class="form-text">Identifies this client to the Kafka cluster</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Consumer Group ID</label>
+                                <input type="text" name="conn_group_id" class="form-control"
+                                       placeholder="dgfacade-consumer-group"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['group_id']} : 'dgfacade-consumer-group'">
+                                <div class="form-text">Consumer group for offset management</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Auto Offset Reset</label>
+                                <select name="conn_auto_offset_reset" class="form-select">
+                                    <option value="latest" th:selected="${broker['connection'] != null and broker['connection']['auto_offset_reset'] == 'latest'}">latest — Start from newest</option>
+                                    <option value="earliest" th:selected="${broker['connection'] != null and broker['connection']['auto_offset_reset'] == 'earliest'}">earliest — Start from beginning</option>
+                                    <option value="none" th:selected="${broker['connection'] != null and broker['connection']['auto_offset_reset'] == 'none'}">none — Throw error if no offset</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Max Poll Records</label>
+                                <input type="number" name="conn_max_poll_records" class="form-control"
+                                       placeholder="500" min="1" max="10000"
+                                       th:value="${broker['connection'] != null and broker['connection']['max_poll_records'] != null} ? ${broker['connection']['max_poll_records']} : '500'">
+                                <div class="form-text">Max records per poll() call. Typical: 100–1000</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ ActiveMQ Connection ═══ -->
+                <div id="conn-activemq" class="card border-0 shadow-sm mb-4 conn-section" style="display:none">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-exchange-alt me-2 text-warning"></i>ActiveMQ Connection</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Broker URL <span class="text-danger">*</span></label>
+                                <input type="text" name="conn_broker_url" class="form-control"
+                                       placeholder="tcp://localhost:61616"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['broker_url']} : 'tcp://localhost:61616'">
+                                <div class="form-text">Supports failover URIs: <code>failover:(ssl://host1:61617,ssl://host2:61617)?maxReconnectDelay=5000</code></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Username</label>
+                                <input type="text" name="conn_username" class="form-control" placeholder="admin"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['username']} : ''">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Password</label>
+                                <input type="password" name="conn_password" class="form-control" placeholder="••••"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['password']} : ''">
+                                <div class="form-text">Use <code>${ENV_VAR}</code> syntax for secrets</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Client ID</label>
+                                <input type="text" name="conn_client_id" class="form-control" placeholder="dgfacade-amq"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['client_id']} : 'dgfacade-amq'">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ RabbitMQ Connection ═══ -->
+                <div id="conn-rabbitmq" class="card border-0 shadow-sm mb-4 conn-section" style="display:none">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-envelope me-2" style="color:#ff6600"></i>RabbitMQ Connection</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">Host <span class="text-danger">*</span></label>
+                                <input type="text" name="conn_host" class="form-control" placeholder="localhost"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['host']} : 'localhost'">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Port</label>
+                                <input type="number" name="conn_port" class="form-control" placeholder="5672"
+                                       th:value="${broker['connection'] != null and broker['connection']['port'] != null} ? ${broker['connection']['port']} : '5672'">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">SSL Port</label>
+                                <input type="number" name="conn_ssl_port" class="form-control" placeholder="5671"
+                                       th:value="${broker['connection'] != null and broker['connection']['ssl_port'] != null} ? ${broker['connection']['ssl_port']} : '5671'">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Virtual Host</label>
+                                <input type="text" name="conn_virtual_host" class="form-control" placeholder="/"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['virtual_host']} : '/'">
+                                <div class="form-text">Example: <code>/dgfacade</code></div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Username</label>
+                                <input type="text" name="conn_username" class="form-control" placeholder="guest"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['username']} : ''">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Password</label>
+                                <input type="password" name="conn_password" class="form-control"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['password']} : ''">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Exchange</label>
+                                <input type="text" name="conn_exchange" class="form-control" placeholder="dgfacade.exchange"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['exchange']} : ''">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label fw-semibold">HB</label>
+                                <input type="number" name="conn_heartbeat" class="form-control" placeholder="30"
+                                       th:value="${broker['connection'] != null and broker['connection']['heartbeat'] != null} ? ${broker['connection']['heartbeat']} : '30'">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Prefetch</label>
+                                <input type="number" name="conn_prefetch_count" class="form-control" placeholder="200"
+                                       th:value="${broker['connection'] != null and broker['connection']['prefetch_count'] != null} ? ${broker['connection']['prefetch_count']} : '200'">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ IBM MQ Connection ═══ -->
+                <div id="conn-ibmmq" class="card border-0 shadow-sm mb-4 conn-section" style="display:none">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-industry me-2 text-info"></i>IBM MQ Connection</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Host <span class="text-danger">*</span></label>
+                                <input type="text" name="conn_host" class="form-control" placeholder="ibmmq.prod.example.com"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['host']} : 'localhost'">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Port</label>
+                                <input type="number" name="conn_port" class="form-control" placeholder="1414"
+                                       th:value="${broker['connection'] != null and broker['connection']['port'] != null} ? ${broker['connection']['port']} : '1414'">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Queue Manager <span class="text-danger">*</span></label>
+                                <input type="text" name="conn_queue_manager" class="form-control" placeholder="QM1"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['queue_manager']} : 'QM1'">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Channel</label>
+                                <input type="text" name="conn_channel" class="form-control" placeholder="DEV.APP.SVRCONN"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['channel']} : 'DEV.APP.SVRCONN'">
+                                <div class="form-text">SVRCONN channel name</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Username</label>
+                                <input type="text" name="conn_username" class="form-control"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['username']} : ''">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Password</label>
+                                <input type="password" name="conn_password" class="form-control"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['password']} : ''">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ FileSystem Connection ═══ -->
+                <div id="conn-filesystem" class="card border-0 shadow-sm mb-4 conn-section" style="display:none">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-folder me-2 text-success"></i>FileSystem Connection</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Watch Directory <span class="text-danger">*</span></label>
+                                <input type="text" name="conn_directory" class="form-control" placeholder="/tmp/dgfacade/inbox"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['directory']} : '/tmp/dgfacade/inbox'">
+                                <div class="form-text">Absolute path to the directory to watch for new files</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Poll Interval (s)</label>
+                                <input type="number" name="conn_poll_interval" class="form-control" placeholder="10" min="1"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['poll_interval_seconds']} : '10'">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">File Pattern</label>
+                                <input type="text" name="conn_file_pattern" class="form-control" placeholder="*.json"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['file_pattern']} : '*.json'">
+                                <div class="form-text">Glob: <code>*.json</code>, <code>*.xml</code>, <code>*.*</code></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ SQL Connection ═══ -->
+                <div id="conn-sql" class="card border-0 shadow-sm mb-4 conn-section" style="display:none">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-database me-2 text-secondary"></i>SQL (JDBC) Connection</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">JDBC URL <span class="text-danger">*</span></label>
+                                <input type="text" name="conn_jdbc_url" class="form-control"
+                                       placeholder="jdbc:postgresql://localhost:5432/dgfacade"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['jdbc_url']} : 'jdbc:postgresql://localhost:5432/dgfacade'">
+                                <div class="form-text">
+                                    PostgreSQL: <code>jdbc:postgresql://host:5432/db</code> &nbsp;|&nbsp;
+                                    MySQL: <code>jdbc:mysql://host:3306/db</code> &nbsp;|&nbsp;
+                                    Oracle: <code>jdbc:oracle:thin:@host:1521:SID</code>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Username</label>
+                                <input type="text" name="conn_username" class="form-control"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['username']} : ''">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Password</label>
+                                <input type="password" name="conn_password" class="form-control"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['password']} : ''">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Table Name</label>
+                                <input type="text" name="conn_table_name" class="form-control" placeholder="dg_messages"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['table_name']} : 'dg_messages'">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Poll Interval (s)</label>
+                                <input type="number" name="conn_poll_interval" class="form-control" placeholder="10" min="1"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['poll_interval_seconds']} : '10'">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ SSL / TLS Configuration ═══ -->
+                <div class="card border-0 shadow-sm mb-4" id="sslSection">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-lock me-2 text-success"></i>SSL / TLS Configuration</h5>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="sslToggle" name="ssl_enabled" value="true"
+                                   onchange="toggleSsl()"
+                                   th:checked="${broker['ssl'] != null and broker['ssl']['enabled'] == true}">
+                            <label class="form-check-label" for="sslToggle">Enable SSL/TLS</label>
+                        </div>
+                    </div>
+                    <div class="card-body" id="sslFields" style="display:none">
+                        <div class="alert alert-info border-0 mb-3">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            SSL/TLS enables encrypted and optionally mutual-authenticated connections.
+                            DGFacade supports both PEM certificate files and Java KeyStore (JKS) format.
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Format</label>
+                                <select name="ssl_format" id="sslFormat" class="form-select" onchange="toggleSslFormat()">
+                                    <option value="PEM" th:selected="${broker['ssl'] != null and broker['ssl']['format'] == 'PEM'}">PEM (Certificate Files)</option>
+                                    <option value="JKS" th:selected="${broker['ssl'] != null and broker['ssl']['format'] == 'JKS'}">JKS (Java KeyStore)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Protocol</label>
+                                <select name="ssl_protocol" class="form-select">
+                                    <option value="TLSv1.3" th:selected="${broker['ssl'] != null and broker['ssl']['protocol'] == 'TLSv1.3'}">TLSv1.3 (Recommended)</option>
+                                    <option value="TLSv1.2" th:selected="${broker['ssl'] != null and broker['ssl']['protocol'] == 'TLSv1.2'}">TLSv1.2</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Cipher Suite</label>
+                                <input type="text" name="ssl_cipher_suite" class="form-control" placeholder="(optional)"
+                                       th:value="${broker['ssl'] != null} ? ${broker['ssl']['cipher_suite']} : ''">
+                                <div class="form-text">e.g. <code>TLS_AES_256_GCM_SHA384</code></div>
+                            </div>
+
+                            <!-- PEM Fields -->
+                            <div id="sslPemFields">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">CA Certificate Path</label>
+                                        <input type="text" name="ssl_ca_cert_path" class="form-control"
+                                               placeholder="config/certs/ca-chain.pem"
+                                               th:value="${broker['ssl'] != null} ? ${broker['ssl']['ca_cert_path']} : ''">
+                                        <div class="form-text">CA trust chain file</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Client Certificate Path</label>
+                                        <input type="text" name="ssl_client_cert_path" class="form-control"
+                                               placeholder="config/certs/client-cert.pem"
+                                               th:value="${broker['ssl'] != null} ? ${broker['ssl']['client_cert_path']} : ''">
+                                        <div class="form-text">Client cert for mTLS</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Client Key Path</label>
+                                        <input type="text" name="ssl_client_key_path" class="form-control"
+                                               placeholder="config/certs/client-key.pem"
+                                               th:value="${broker['ssl'] != null} ? ${broker['ssl']['client_key_path']} : ''">
+                                        <div class="form-text">Private key (PKCS#8)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- JKS Fields -->
+                            <div id="sslJksFields" style="display:none">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">KeyStore Path</label>
+                                        <input type="text" name="ssl_keystore_path" class="form-control"
+                                               placeholder="config/certs/keystore.jks"
+                                               th:value="${broker['ssl'] != null} ? ${broker['ssl']['keystore_path']} : ''">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">KeyStore Password</label>
+                                        <input type="password" name="ssl_keystore_password" class="form-control"
+                                               th:value="${broker['ssl'] != null} ? ${broker['ssl']['keystore_password']} : ''">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">TrustStore Path</label>
+                                        <input type="text" name="ssl_truststore_path" class="form-control"
+                                               placeholder="config/certs/truststore.jks"
+                                               th:value="${broker['ssl'] != null} ? ${broker['ssl']['truststore_path']} : ''">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">TrustStore Password</label>
+                                        <input type="password" name="ssl_truststore_password" class="form-control"
+                                               th:value="${broker['ssl'] != null} ? ${broker['ssl']['truststore_password']} : ''">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ Extra Properties ═══ -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-sliders-h me-2 text-secondary"></i>Additional Properties</h5></div>
+                    <div class="card-body">
+                        <label class="form-label fw-semibold">Key=Value Pairs (one per line)</label>
+                        <textarea name="extra_properties" class="form-control font-monospace" rows="5"
+                                  placeholder="request.timeout.ms=30000&#10;session.timeout.ms=10000&#10;security.protocol=SSL"
+                                  th:text="${broker['properties'] != null} ? ${#strings.listJoin(broker['properties'].entrySet().![key + '=' + value], '&#10;')} : ''"></textarea>
+                        <div class="form-text">These are passed directly to the underlying client library. One <code>key=value</code> pair per line.</div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="d-flex gap-2 mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas me-1" th:classappend="${editMode} ? 'fa-save' : 'fa-plus'"></i>
+                        <span th:text="${editMode} ? 'Save Changes' : 'Create Broker'">Create Broker</span>
+                    </button>
+                    <a th:href="@{/admin/brokers}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                </div>
+            </div>
+
+            <!-- ════════════ RIGHT COLUMN: Help Sidebar ════════════ -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-4 sticky-top" style="top: 80px">
+                    <div class="card-header bg-primary text-white py-3"><h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Configuration Tips</h6></div>
+                    <div class="card-body small">
+                        <h6 class="fw-bold text-primary">Broker ID Naming</h6>
+                        <p class="text-muted">Use a descriptive name like <code>prod-kafka</code>, <code>dev-activemq</code>, or <code>staging-rabbitmq-ssl</code>. This becomes the JSON filename.</p>
+
+                        <h6 class="fw-bold text-primary">Environment Variables</h6>
+                        <p class="text-muted">Use <code>${ENV_VAR}</code> syntax for sensitive values like passwords. Example: <code>${KAFKA_PASSWORD}</code> will be resolved at runtime.</p>
+
+                        <h6 class="fw-bold text-primary">SSL Certificates</h6>
+                        <p class="text-muted">Place certificate files in <code>config/certs/&lt;broker&gt;/</code>. PEM format is recommended for modern deployments. JKS is available for legacy Java-based systems.</p>
+
+                        <h6 class="fw-bold text-primary">Kafka SSL</h6>
+                        <p class="text-muted">For Kafka mTLS, enable SSL and set all three PEM paths. Add <code>security.protocol=SSL</code> in Additional Properties.</p>
+
+                        <h6 class="fw-bold text-primary">ActiveMQ Failover</h6>
+                        <p class="text-muted">For HA, use failover URI:
+                        <code class="d-block mt-1">failover:(ssl://host1:61617,ssl://host2:61617)?maxReconnectDelay=5000</code></p>
+
+                        <h6 class="fw-bold text-primary">IBM MQ</h6>
+                        <p class="text-muted">The SVRCONN channel must be configured on the queue manager to allow client connections. Default dev channel: <code>DEV.APP.SVRCONN</code></p>
+
+                        <hr>
+                        <p class="text-muted mb-0"><i class="fas fa-file-alt me-1"></i>
+                            Config files are saved to <code>config/brokers/&lt;id&gt;.json</code> and can also be edited directly on disk.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </form>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+function toggleTypeFields() {
+    document.querySelectorAll('.conn-section').forEach(function(el) {
+        el.style.display = 'none';
+        // Disable inputs in hidden sections to prevent name collisions on submit
+        el.querySelectorAll('input, select, textarea').forEach(function(inp) { inp.disabled = true; });
+    });
+    var type = document.getElementById('brokerType').value;
+    var target = document.getElementById('conn-' + type);
+    if (target) {
+        target.style.display = '';
+        target.querySelectorAll('input, select, textarea').forEach(function(inp) { inp.disabled = false; });
+    }
+    // Hide SSL for filesystem
+    var sslSection = document.getElementById('sslSection');
+    if (sslSection) sslSection.style.display = (type === 'filesystem') ? 'none' : '';
+}
+function toggleSsl() {
+    var checked = document.getElementById('sslToggle').checked;
+    document.getElementById('sslFields').style.display = checked ? '' : 'none';
+}
+function toggleSslFormat() {
+    var fmt = document.getElementById('sslFormat').value;
+    document.getElementById('sslPemFields').style.display = (fmt === 'PEM') ? '' : 'none';
+    document.getElementById('sslJksFields').style.display = (fmt === 'JKS') ? '' : 'none';
+}
+document.addEventListener('DOMContentLoaded', function() {
+    toggleTypeFields();
+    toggleSsl();
+    toggleSslFormat();
+});
+</script>
+</body>
+</html>

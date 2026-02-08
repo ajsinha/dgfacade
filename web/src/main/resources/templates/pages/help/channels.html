@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Channel Configuration')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/help"><i class="fas fa-book me-1"></i>Help</a></li>
+                <li class="breadcrumb-item active">Channel Configuration</li>
+            </ol>
+        </nav>
+        <div class="row">
+            <div class="col-lg-11 mx-auto">
+                <h1 class="display-5 mb-4"><i class="fas fa-exchange-alt me-3" style="color: #8b5cf6;"></i>Channel Configuration</h1>
+
+                <p class="lead">Channels are the logical data pipes connecting broker topics/queues to application listeners.
+                Each channel references a broker, subscribes to topics or queues, buffers messages in an internal queue with
+                backpressure management, and distributes every message to all registered listeners via fan-out.</p>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Convention:</strong> The JSON filename (minus <code>.json</code>) becomes the channel's logical name.
+                    For example, <code>config/channels/order-events.json</code> creates a channel named <strong>order-events</strong>.
+                </div>
+
+                <!-- How It Works -->
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-folder-open me-2"></i>How It Works</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr><th>Aspect</th><th>Detail</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>Config Directory</strong></td><td>Default: <code>config/channels/</code> &mdash; configurable via <code>dgfacade.channels.config-dir</code></td></tr>
+                                <tr><td><strong>File Format</strong></td><td>JSON with <code>.json</code> extension. One file per channel.</td></tr>
+                                <tr><td><strong>Naming</strong></td><td>Filename = channel name. <code>order-events.json</code> → channel <code>order-events</code></td></tr>
+                                <tr><td><strong>Broker Reference</strong></td><td>Each channel references a broker by name (the broker's JSON filename). The broker must exist.</td></tr>
+                                <tr><td><strong>Internal Queue</strong></td><td>Each subscribed topic/queue gets its own bounded internal queue for backpressure control.</td></tr>
+                                <tr><td><strong>Fan-Out</strong></td><td>Every message from the internal queue is delivered to ALL registered listeners. Multiple listeners can subscribe to the same topic.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Application Properties -->
+                <div class="card mb-4">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-cog me-2"></i>Application Properties</h5></div>
+                    <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded"><code># Channel configuration directory (default: config/channels)
+dgfacade.channels.config-dir=config/channels
+
+# Default internal queue depth (if not specified per channel)
+dgfacade.channels.default-queue-depth=10000
+
+# Default backpressure warning threshold (%)
+dgfacade.channels.backpressure-warning-pct=70
+
+# Default backpressure critical threshold (%)
+dgfacade.channels.backpressure-critical-pct=90
+
+# Fan-out thread pool size
+dgfacade.channels.fanout-thread-pool-size=16</code></pre>
+                    </div>
+                </div>
+
+                <!-- JSON Schema -->
+                <div class="card mb-4">
+                    <div class="card-header" style="background-color: #8b5cf6; color: white;">
+                        <h5 class="mb-0"><i class="fas fa-file-code me-2"></i>JSON Schema</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>type</code></td><td>string</td><td><span class="badge bg-danger">Yes</span></td><td>Channel type: <code>kafka</code>, <code>jms</code>, <code>rest</code>, <code>websocket</code>, <code>filesystem</code>, <code>sql</code></td></tr>
+                                <tr><td><code>description</code></td><td>string</td><td>No</td><td>Human-readable description</td></tr>
+                                <tr><td><code>enabled</code></td><td>boolean</td><td>No</td><td>Enable/disable this channel (default: <code>true</code>)</td></tr>
+                                <tr><td><code>broker</code></td><td>string</td><td><span class="badge bg-danger">Yes*</span></td><td>Broker name to use (filename of broker JSON). Required for <code>kafka</code> and <code>jms</code> types.</td></tr>
+                                <tr><td><code>subscriptions</code></td><td>array</td><td><span class="badge bg-danger">Yes</span></td><td>List of topic/queue subscriptions (see below)</td></tr>
+                                <tr><td><code>queue</code></td><td>object</td><td>No</td><td>Internal queue configuration (depth, backpressure thresholds)</td></tr>
+                                <tr><td><code>retry</code></td><td>object</td><td>No</td><td>Retry policy for failed listener deliveries</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h6 class="mt-4">Subscription Object</h6>
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>name</code></td><td>string</td><td><span class="badge bg-danger">Yes</span></td><td>Topic or queue name on the broker</td></tr>
+                                <tr><td><code>type</code></td><td>string</td><td>No</td><td><code>topic</code> or <code>queue</code> (default: <code>topic</code>)</td></tr>
+                                <tr><td><code>pattern</code></td><td>boolean</td><td>No</td><td>If <code>true</code>, treat name as a wildcard/regex pattern (Kafka: regex subscribe)</td></tr>
+                                <tr><td><code>group_id</code></td><td>string</td><td>No</td><td>Override consumer group for this subscription (Kafka only)</td></tr>
+                                <tr><td><code>durable</code></td><td>boolean</td><td>No</td><td>Durable subscription for JMS topics (default: <code>true</code>)</td></tr>
+                                <tr><td><code>selector</code></td><td>string</td><td>No</td><td>JMS message selector filter expression</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h6 class="mt-4">Queue (Internal) Object</h6>
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>depth</code></td><td>integer</td><td>10000</td><td>Maximum internal queue capacity (bounded blocking queue)</td></tr>
+                                <tr><td><code>warning_threshold_pct</code></td><td>integer</td><td>70</td><td>Queue depth % to trigger warning logs</td></tr>
+                                <tr><td><code>critical_threshold_pct</code></td><td>integer</td><td>90</td><td>Queue depth % to trigger broker consumer pause</td></tr>
+                                <tr><td><code>drain_resume_pct</code></td><td>integer</td><td>70</td><td>Queue depth % below which paused consumers resume</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Kafka Channel Example -->
+                <div class="card mb-4">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-stream me-2"></i>Kafka Channel &mdash; <code>config/channels/order-events.json</code></h5></div>
+                    <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded"><code>{
+  "type": "kafka",
+  "description": "Order lifecycle events from Kafka",
+  "broker": "prod-kafka",
+  "subscriptions": [
+    {
+      "name": "orders.created",
+      "type": "topic"
+    },
+    {
+      "name": "orders.updated",
+      "type": "topic"
+    },
+    {
+      "name": "orders\\.cancelled\\..*",
+      "type": "topic",
+      "pattern": true
+    }
+  ],
+  "queue": {
+    "depth": 10000,
+    "warning_threshold_pct": 70,
+    "critical_threshold_pct": 90,
+    "drain_resume_pct": 60
+  },
+  "retry": {
+    "max_attempts": 3,
+    "backoff_ms": 1000,
+    "backoff_multiplier": 2.0
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- JMS Channel Example -->
+                <div class="card mb-4">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-envelope me-2"></i>JMS Channel &mdash; <code>config/channels/trade-queue.json</code></h5></div>
+                    <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded"><code>{
+  "type": "jms",
+  "description": "Trade execution queue from ActiveMQ",
+  "broker": "prod-activemq",
+  "subscriptions": [
+    {
+      "name": "TRADE.INPUT",
+      "type": "queue"
+    },
+    {
+      "name": "TRADE.NOTIFICATIONS",
+      "type": "topic",
+      "durable": true,
+      "selector": "tradeType = 'EQUITY' AND amount > 10000"
+    }
+  ],
+  "queue": {
+    "depth": 5000,
+    "warning_threshold_pct": 75,
+    "critical_threshold_pct": 95
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- REST Channel Example -->
+                <div class="card mb-4">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-cloud me-2"></i>REST Channel &mdash; <code>config/channels/webhook-ingest.json</code></h5></div>
+                    <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded"><code>{
+  "type": "rest",
+  "description": "Webhook ingestion endpoint",
+  "subscriptions": [
+    {
+      "name": "/api/v1/webhook/orders",
+      "type": "endpoint"
+    },
+    {
+      "name": "/api/v1/webhook/events",
+      "type": "endpoint"
+    }
+  ],
+  "queue": {
+    "depth": 20000
+  }
+}</code></pre>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            REST channels do not require a <code>broker</code> field. They create HTTP endpoints that accept POST requests
+                            and feed messages into the internal queue for fan-out distribution.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FileSystem Channel Example -->
+                <div class="card mb-4">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>FileSystem Channel &mdash; <code>config/channels/file-ingest.json</code></h5></div>
+                    <div class="card-body">
+<pre class="bg-dark text-light p-3 rounded"><code>{
+  "type": "filesystem",
+  "description": "Watch directory for incoming data files",
+  "subscriptions": [
+    {
+      "name": "/data/inbox",
+      "type": "directory",
+      "file_pattern": "*.json",
+      "poll_interval_ms": 5000
+    }
+  ],
+  "queue": {
+    "depth": 1000
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Fan-Out Section -->
+                <section id="fanout" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-broadcast-tower me-2 text-info"></i>Fan-Out Distribution</h2>
+                    <p>The core distribution model in DGFacade is <strong>fan-out</strong>: every message dequeued from the internal
+                    queue is delivered to <strong>all</strong> registered listeners for that channel. This enables multiple independent
+                    consumers to process the same data stream concurrently.</p>
+
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.75rem; overflow-x: auto;">
+  Channel: "order-events"
+  Subscription: "orders.created"
+
+  ┌──────────────┐     ┌───────────────────┐     ┌─────────────────────────┐
+  │ Kafka Topic  │────►│ Internal Queue    │────►│ Fan-Out Engine          │
+  │ orders.created│    │ [m1][m2][m3]...   │     │                         │
+  └──────────────┘     └───────────────────┘     │  Message m1 arrives:    │
+                                                  │  ├─► Listener 1 (m1) ✓ │
+                                                  │  ├─► Listener 2 (m1) ✓ │
+                                                  │  └─► Listener 3 (m1) ✓ │
+                                                  │                         │
+                                                  │  Message m2 arrives:    │
+                                                  │  ├─► Listener 1 (m2) ✓ │
+                                                  │  ├─► Listener 2 (m2) ✗ │ ← retried
+                                                  │  └─► Listener 3 (m2) ✓ │
+                                                  └─────────────────────────┘</pre>
+
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-copy fa-2x text-primary mb-3"></i>
+                                    <h6>Every Listener Gets Every Message</h6>
+                                    <p class="small text-muted mb-0">Unlike competing consumers, fan-out delivers each message to ALL listeners. N listeners = N deliveries per message.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-shield-alt fa-2x text-success mb-3"></i>
+                                    <h6>Failure Isolation</h6>
+                                    <p class="small text-muted mb-0">If Listener A fails, Listener B and C still receive the message. Each listener has independent error handling and retry.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-sort-amount-down fa-2x text-warning mb-3"></i>
+                                    <h6>Order Preserved</h6>
+                                    <p class="small text-muted mb-0">Messages are delivered FIFO to each listener. Processing order matches the order dequeued from the internal queue.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Backpressure Detail -->
+                <section id="backpressure" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-tachometer-alt me-2 text-danger"></i>Backpressure in Channels</h2>
+
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.75rem; overflow-x: auto;">
+  Internal Queue Depth Visualization
+  ═══════════════════════════════════════════════════════════════════════
+
+  0%        25%       50%       70%       90%      100%
+  ├─────────┼─────────┼─────────┼─────────┼─────────┤
+  │░░░░░░░░░░░░░░░░░░░│▓▓▓▓▓▓▓▓▓│████████ │█████████│
+  │     NORMAL         │ NORMAL  │ WARNING │CRITICAL │
+  │     (free flow)    │         │ (logged)│(paused) │
+  └─────────────────────────────────────────────────────
+
+  ▲ Consumer reads at full speed
+  ▲ No intervention needed          ▲ Alerts fired      ▲ Consumer paused
+                                      Metrics exposed     Resumes at drain_resume_pct</pre>
+
+                    <div class="alert alert-success mt-3">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Self-Healing:</strong> When a paused consumer resumes (queue drains below <code>drain_resume_pct</code>),
+                        it automatically catches up on messages that accumulated on the broker side. No manual intervention required.
+                    </div>
+                </section>
+
+                <div class="mt-5 text-center">
+                    <a href="/help/brokers" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Brokers</a>
+                    <a href="/help" class="btn btn-outline-secondary ms-2"><i class="fas fa-home me-2"></i>Help Index</a>
+                    <a href="/help/configuration" class="btn btn-primary ms-2">Configuration<i class="fas fa-arrow-right ms-2"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <footer class="py-4 mt-5 border-top">
+            <div class="row">
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.2.0'">1.2.0</span></p></div>
+                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br><span class="badge bg-warning text-dark">Patent Pending</span></p></div>
+            </div>
+        </footer>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

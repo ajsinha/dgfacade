@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Handler Detail')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a th:href="@{/monitoring/handlers}">Handlers</a></li>
+                        <li class="breadcrumb-item active" th:text="${state != null} ? ${state.handlerId} : (${handlerId} ?: 'Not Found')">ID</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0"><i class="fas fa-cog me-2"></i>Handler Detail</h2>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/monitoring/handlers}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+
+        <!-- Handler Found -->
+        <div th:if="${state != null}" class="row">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i>Execution Info</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Handler ID</dt><dd class="col-sm-8"><code th:text="${state.handlerId}">-</code></dd>
+                            <dt class="col-sm-4">Request ID</dt><dd class="col-sm-8"><code th:text="${state.requestId}">-</code></dd>
+                            <dt class="col-sm-4">Request Type</dt><dd class="col-sm-8"><code th:text="${state.requestType}">-</code></dd>
+                            <dt class="col-sm-4">Status</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge"
+                                    th:classappend="${state.status == 'COMPLETED'} ? 'bg-success' : (${state.status == 'FAILED'} ? 'bg-danger' : (${state.status == 'RUNNING'} ? 'bg-primary' : (${state.status == 'TIMED_OUT'} ? 'bg-dark' : 'bg-warning')))"
+                                    th:text="${state.status}">-</span>
+                            </dd>
+                            <dt class="col-sm-4">User</dt><dd class="col-sm-8" th:text="${state.userId} ?: '-'">-</dd>
+                            <dt class="col-sm-4">Source Channel</dt><dd class="col-sm-8" th:text="${state.sourceChannel} ?: '-'">-</dd>
+                            <dt class="col-sm-4">Handler Class</dt><dd class="col-sm-8"><small th:text="${state.handlerClass} ?: '-'">-</small></dd>
+                            <dt class="col-sm-4">Duration</dt><dd class="col-sm-8" th:text="${state.durationMs != null} ? ${state.durationMs} + ' ms' : '-'">-</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0"><i class="fas fa-clock me-2 text-info"></i>Timing</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Queued At</dt><dd class="col-sm-8" th:text="${state.queuedAt} ?: '-'">-</dd>
+                            <dt class="col-sm-4">Started At</dt><dd class="col-sm-8" th:text="${state.startedAt} ?: '-'">-</dd>
+                            <dt class="col-sm-4">Completed At</dt><dd class="col-sm-8" th:text="${state.completedAt} ?: '-'">-</dd>
+                        </dl>
+                    </div>
+                </div>
+                <div th:if="${state.errorMessage != null}" class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2 text-danger"></i>Error</h5>
+                    </div>
+                    <div class="card-body">
+                        <pre class="bg-dark text-danger p-3 rounded mb-0 small" style="white-space: pre-wrap;" th:text="${state.errorMessage}">-</pre>
+                    </div>
+                </div>
+                <div th:if="${state.exceptionStackTrace != null}" class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0"><i class="fas fa-code me-2 text-secondary"></i>Stack Trace</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre class="bg-dark text-warning p-3 mb-0 small" style="max-height: 400px; overflow-y: auto; white-space: pre-wrap;" th:text="${state.exceptionStackTrace}">-</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Handler Not Found -->
+        <div th:if="${state == null}" class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-md-3 text-center py-5 bg-warning text-dark">
+                                <i class="fas fa-search fa-4x mb-2"></i>
+                                <div class="fw-bold fs-5">Not Found</div>
+                            </div>
+                            <div class="col-md-9 p-4">
+                                <h4 class="mb-3">Handler Execution Record Not Found</h4>
+                                <p class="text-muted">
+                                    The handler with ID <code th:text="${handlerId} ?: 'unknown'">unknown</code>
+                                    was not found in the in-memory execution buffer.
+                                </p>
+                                <div class="alert alert-info border-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Why this happens:</strong>
+                                    Handler execution records are stored in a circular buffer that holds a maximum of
+                                    <strong>1,000 entries</strong> for up to <strong>1 hour</strong>.
+                                    Older entries are automatically evicted. These records are not persisted to disk.
+                                </div>
+                                <h6 class="mt-3">Possible reasons:</h6>
+                                <ul class="text-muted small">
+                                    <li>The execution record expired from the buffer (older than 1 hour)</li>
+                                    <li>The buffer is full and this entry was evicted by newer executions</li>
+                                    <li>The application was restarted since this handler executed</li>
+                                    <li>The handler ID in the URL is incorrect or was manually entered</li>
+                                </ul>
+                                <div class="d-flex gap-2 mt-3">
+                                    <a th:href="@{/monitoring/handlers}" class="btn btn-primary">
+                                        <i class="fas fa-list me-1"></i>View All Handlers
+                                    </a>
+                                    <a th:href="@{/}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-home me-1"></i>Dashboard
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

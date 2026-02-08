@@ -1,0 +1,18 @@
+{
+  "type": "jms",
+  "description": "Trade execution queue from ActiveMQ",
+  "enabled": true,
+  "broker": "dev-activemq",
+  "subscriptions": [
+    {
+      "name": "TRADE.INPUT",
+      "type": "queue"
+    }
+  ],
+  "queue": {
+    "depth": 5000,
+    "warning_threshold_pct": 75,
+    "critical_threshold_pct": 95,
+    "drain_resume_pct": 70
+  }
+}

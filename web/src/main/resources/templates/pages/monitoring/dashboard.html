@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+                <p class="text-muted mb-0" th:text="'DGFacade v' + ${version} + ' — Data Gateway Facade'">DGFacade</p>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 text-white-50">Registered Handlers</h6>
+                                <h3 class="mb-0" th:text="${handlerCount}">0</h3>
+                            </div>
+                            <i class="fas fa-cogs fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 text-white-50">Recent Executions</h6>
+                                <h3 class="mb-0" th:text="${#lists.size(recentStates)}">0</h3>
+                            </div>
+                            <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 text-white-50">Kafka</h6>
+                                <h3 class="mb-0" th:text="${kafkaEnabled} ? 'ON' : 'OFF'">OFF</h3>
+                            </div>
+                            <i class="fas fa-stream fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm bg-warning text-dark">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 opacity-75">ActiveMQ</h6>
+                                <h3 class="mb-0" th:text="${activemqEnabled} ? 'ON' : 'OFF'">OFF</h3>
+                            </div>
+                            <i class="fas fa-exchange-alt fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Registered Handler Types -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0"><i class="fas fa-list me-2 text-primary"></i>Registered Request Types</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light"><tr><th class="ps-4">Request Type</th></tr></thead>
+                                <tbody>
+                                    <tr th:each="h : ${handlers}">
+                                        <td class="ps-4"><code th:text="${h}">ECHO</code></td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(handlers)}">
+                                        <td class="text-center py-4 text-muted">No handlers registered</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Executions -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-history me-2 text-success"></i>Recent Executions</h5>
+                            <a th:href="@{/monitoring/handlers}" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Handler ID</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Channel</th>
+                                        <th>Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="s : ${recentStates}">
+                                        <td class="ps-4">
+                                            <a th:href="@{/monitoring/handlers/{id}(id=${s.handlerId})}"
+                                               th:text="${#strings.abbreviate(s.handlerId, 12)}">id</a>
+                                        </td>
+                                        <td><code th:text="${s.requestType}">ECHO</code></td>
+                                        <td>
+                                            <span class="badge"
+                                                th:classappend="${s.status == 'COMPLETED'} ? 'bg-success' : (${s.status == 'FAILED'} ? 'bg-danger' : (${s.status == 'RUNNING'} ? 'bg-primary' : 'bg-warning'))"
+                                                th:text="${s.status}">OK</span>
+                                        </td>
+                                        <td th:text="${s.sourceChannel}">REST</td>
+                                        <td th:text="${s.durationMs != null} ? ${s.durationMs} + 'ms' : '-'">-</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(recentStates)}">
+                                        <td colspan="5" class="text-center py-4 text-muted">
+                                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No executions yet
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Test Card -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0"><i class="fas fa-paper-plane me-2 text-warning"></i>Quick API Test</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Request JSON</label>
+                                <textarea id="testPayload" class="form-control" rows="6">{
+  "api_key": "dgf-admin-key-0001",
+  "request_type": "ECHO",
+  "payload": {"message": "Hello, DGFacade!"}
+}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Response</label>
+                                <div id="testResult" style="display:none;">
+                                    <pre class="bg-dark text-light p-3 rounded" id="testResponse" style="max-height:200px;overflow:auto;"></pre>
+                                </div>
+                                <div id="testPlaceholder" class="border rounded p-3 text-muted text-center" style="min-height:140px;display:flex;align-items:center;justify-content:center;">
+                                    <span><i class="fas fa-arrow-left me-2"></i>Send a request to see the response</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary mt-3" onclick="sendTestRequest()">
+                            <i class="fas fa-paper-plane me-1"></i> Send Request
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Glossary -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title text-muted mb-3"><i class="fas fa-question-circle me-2"></i>Glossary</h6>
+                        <div class="row small">
+                            <div class="col-md-4">
+                                <dl class="mb-0">
+                                    <dt>Handler</dt><dd class="text-muted">A pluggable Java class that processes a specific request type.</dd>
+                                    <dt>Request Type</dt><dd class="text-muted">Unique identifier for the kind of operation (e.g., ECHO, ARITHMETIC).</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-4">
+                                <dl class="mb-0">
+                                    <dt>Source Channel</dt><dd class="text-muted">How the request arrived: REST, WebSocket, Kafka, or ActiveMQ.</dd>
+                                    <dt>TTL</dt><dd class="text-muted">Time-to-live in minutes before a handler execution times out.</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-4">
+                                <dl class="mb-0">
+                                    <dt>API Key</dt><dd class="text-muted">Authentication token used to identify the calling user.</dd>
+                                    <dt>Execution Engine</dt><dd class="text-muted">Core Pekko actor-based system that dispatches and runs handlers.</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+function sendTestRequest() {
+    var payload = document.getElementById('testPayload');
+    var resultDiv = document.getElementById('testResult');
+    var placeholder = document.getElementById('testPlaceholder');
+    var responseBox = document.getElementById('testResponse');
+    fetch('/api/v1/request', { method:'POST', headers:{'Content-Type':'application/json'}, body:payload.value })
+    .then(function(r){ return r.json(); })
+    .then(function(data){ placeholder.style.display='none'; resultDiv.style.display='block'; responseBox.textContent=JSON.stringify(data,null,2); })
+    .catch(function(err){ placeholder.style.display='none'; resultDiv.style.display='block'; responseBox.textContent='Error: '+err.message; });
+}
+</script>
+</body>
+</html>

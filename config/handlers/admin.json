@@ -1,0 +1,76 @@
+{
+  "ECHO": {
+    "handler_class": "com.dgfacade.server.handler.EchoHandler",
+    "description": "Admin echo handler with extended 60-minute TTL",
+    "ttl_minutes": 60,
+    "enabled": true,
+    "config": {}
+  },
+  "ARITHMETIC": {
+    "handler_class": "com.dgfacade.server.handler.ArithmeticHandler",
+    "description": "Admin arithmetic with extended precision and 30-minute TTL",
+    "ttl_minutes": 30,
+    "enabled": true,
+    "config": {
+      "precision": 20
+    }
+  },
+  "STRING_TRANSFORM": {
+    "handler_class": "com.dgfacade.server.handler.StringTransformHandler",
+    "description": "Admin string transform (DGHandlerProxy) — 30-minute TTL",
+    "ttl_minutes": 30,
+    "enabled": true,
+    "config": {
+      "metadata": "Admin POJO handler via DGHandlerProxy"
+    }
+  },
+  "HASH": {
+    "handler_class": "com.dgfacade.server.handler.HashHandler",
+    "description": "Admin hashing & encoding with 30-minute TTL",
+    "ttl_minutes": 30,
+    "enabled": true,
+    "config": {}
+  },
+  "JSON_TRANSFORM": {
+    "handler_class": "com.dgfacade.server.handler.JsonTransformHandler",
+    "description": "Admin JSON transform with extended 60-minute TTL",
+    "ttl_minutes": 60,
+    "enabled": true,
+    "config": {}
+  },
+  "DELAYED": {
+    "handler_class": "com.dgfacade.server.handler.DelayedHandler",
+    "description": "Admin delayed handler — 30-minute TTL for extended testing",
+    "ttl_minutes": 30,
+    "enabled": true,
+    "config": {
+      "default_delay_seconds": 10
+    }
+  },
+  "SYSTEM_INFO": {
+    "handler_class": "com.dgfacade.server.handler.SystemInfoHandler",
+    "description": "ADMIN ONLY — JVM metrics, memory, CPU, threads, uptime diagnostics",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {}
+  },
+  "HTTP_PROBE": {
+    "handler_class": "com.dgfacade.server.handler.HttpProbeHandler",
+    "description": "ADMIN ONLY — HTTP health probe for upstream URL testing",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {
+      "max_timeout_seconds": 30
+    }
+  },
+  "BATCH_ARITHMETIC": {
+    "handler_class": "com.dgfacade.server.handler.BatchArithmeticHandler",
+    "description": "ADMIN ONLY — Bulk arithmetic operations via DGHandlerProxy (POJO)",
+    "ttl_minutes": 15,
+    "enabled": true,
+    "config": {
+      "precision": 20,
+      "metadata": "Admin-only POJO handler via DGHandlerProxy"
+    }
+  }
+}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Error')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+
+        <!-- Status Hero -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-sm overflow-hidden">
+                    <div class="card-body p-0">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-md-3 text-center py-5"
+                                 th:classappend="${statusCode != null and statusCode >= 500} ? 'bg-danger text-white' : (${statusCode != null and statusCode >= 400} ? 'bg-warning text-dark' : 'bg-secondary text-white')"
+                                 style="min-height: 200px;">
+                                <div class="display-1 fw-bold" th:text="${statusCode} ?: (${status} ?: '500')">500</div>
+                                <div class="fs-5 mt-1" th:text="${statusPhrase} ?: (${error} ?: 'Server Error')">Internal Server Error</div>
+                            </div>
+                            <div class="col-md-9 p-4">
+                                <h3 class="mb-3">
+                                    <i class="fas fa-exclamation-circle me-2"
+                                       th:classappend="${statusCode != null and statusCode >= 500} ? 'text-danger' : 'text-warning'"></i>
+                                    Something went wrong
+                                </h3>
+                                <p class="text-muted mb-3" th:text="${explanation} ?: 'An unexpected error occurred while processing your request.'">
+                                    An unexpected error occurred.
+                                </p>
+                                <div th:if="${message}" class="alert alert-light border mb-3">
+                                    <strong>Error Message:</strong>
+                                    <span th:text="${message}">Unknown error</span>
+                                </div>
+                                <div th:if="${suggestion}" class="alert alert-info border-0 mb-3">
+                                    <i class="fas fa-lightbulb me-2"></i><strong>Suggestion:</strong>
+                                    <span th:text="${suggestion}">Try again later.</span>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a th:href="@{/}" class="btn btn-primary"><i class="fas fa-home me-1"></i>Dashboard</a>
+                                    <a href="javascript:history.back()" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Go Back</a>
+                                    <a th:href="@{/help}" class="btn btn-outline-info"><i class="fas fa-book me-1"></i>Help</a>
+                                    <button class="btn btn-outline-dark" onclick="window.location.reload()"><i class="fas fa-redo me-1"></i>Retry</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Details -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Request Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-5 text-muted">Timestamp</dt>
+                                    <dd class="col-sm-7"><code th:text="${timestamp} ?: '-'">-</code></dd>
+                                    <dt class="col-sm-5 text-muted">HTTP Method</dt>
+                                    <dd class="col-sm-7"><code th:text="${httpMethod} ?: '-'">GET</code></dd>
+                                    <dt class="col-sm-5 text-muted">Request URI</dt>
+                                    <dd class="col-sm-7"><code th:text="${requestUri} ?: (${path} ?: '-')">/unknown</code></dd>
+                                    <dt th:if="${queryString}" class="col-sm-5 text-muted">Query String</dt>
+                                    <dd th:if="${queryString}" class="col-sm-7"><code th:text="${queryString}">-</code></dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-5 text-muted">Status Code</dt>
+                                    <dd class="col-sm-7">
+                                        <span class="badge"
+                                              th:classappend="${statusCode != null and statusCode >= 500} ? 'bg-danger' : (${statusCode != null and statusCode >= 400} ? 'bg-warning text-dark' : 'bg-info')"
+                                              th:text="(${statusCode} ?: (${status} ?: '500')) + ' ' + (${statusPhrase} ?: (${error} ?: ''))">500</span>
+                                    </dd>
+                                    <dt th:if="${exceptionType}" class="col-sm-5 text-muted">Exception Type</dt>
+                                    <dd th:if="${exceptionType}" class="col-sm-7"><code th:text="${exceptionType}">-</code></dd>
+                                    <dt class="col-sm-5 text-muted">Server</dt>
+                                    <dd class="col-sm-7"><small class="text-muted" th:text="${serverInfo} ?: '-'">-</small></dd>
+                                    <dt class="col-sm-5 text-muted">Application</dt>
+                                    <dd class="col-sm-7"><small class="text-muted" th:text="(${appName} ?: 'DGFacade') + ' v' + (${version} ?: '1.2.0')">DGFacade v1.2.0</small></dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stack Trace -->
+        <div th:if="${stackTrace}" class="row justify-content-center mb-4">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-code me-2"></i>Stack Trace</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-light me-2" onclick="copyTrace()"><i class="fas fa-copy me-1"></i>Copy</button>
+                            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#stackTraceBlock"><i class="fas fa-chevron-down me-1"></i>Toggle</button>
+                        </div>
+                    </div>
+                    <div id="stackTraceBlock" class="collapse show">
+                        <div class="card-body p-0">
+                            <pre id="stackTraceContent" class="bg-dark text-danger p-4 mb-0 small"
+                                 style="max-height: 500px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;"
+                                 th:text="${stackTrace}">-</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Common Errors Reference -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light py-3">
+                        <h5 class="mb-0"><i class="fas fa-question-circle me-2 text-info"></i>Common DGFacade Errors</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <h6><span class="badge bg-warning text-dark me-1">404</span> Handler Not Found</h6>
+                                    <p class="small text-muted mb-0">Handler execution records expire from the circular buffer (max 1000 entries, 1 hour). States are transient and not persisted to disk.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <h6><span class="badge bg-danger me-1">500</span> Internal Error</h6>
+                                    <p class="small text-muted mb-0">Check the stack trace above. Common causes: misconfigured handler class, missing broker, malformed JSON config, or classpath issues.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <h6><span class="badge bg-warning text-dark me-1">403</span> Access Denied</h6>
+                                    <p class="small text-muted mb-0">Admin pages require the ADMIN role. Log in as admin / admin123 or contact your administrator.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+function copyTrace() {
+    var el = document.getElementById('stackTraceContent');
+    if (el) {
+        navigator.clipboard.writeText(el.textContent).then(function() {
+            var btn = event.target.closest('button');
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+            setTimeout(function(){ btn.innerHTML = orig; }, 2000);
+        });
+    }
+}
+</script>
+</body>
+</html>

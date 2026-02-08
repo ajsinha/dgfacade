@@ -2,49 +2,79 @@
 <!--
   ~ Copyright © 2025-2030, All Rights Reserved
   ~ Ashutosh Sinha | Email: ajsinha@gmail.com
-  ~
-  ~ This software is proprietary and confidential. Unauthorized copying,
-  ~ distribution, modification, or use is strictly prohibited without
-  ~ explicit written permission from the copyright holder.
-  ~ Patent Pending.
+  ~ Proprietary and confidential. Patent Pending.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.dgfacade</groupId>
-    <artifactId>dgfacade-parent</artifactId>
-    <version>1.1.0</version>
+    <artifactId>dgfacade</artifactId>
+    <version>1.2.0</version>
     <packaging>pom</packaging>
 
-    <name>DGFacade Parent</name>
-    <description>Configuration-driven facade service with REST API, Kafka, ActiveMQ support and Apache Pekko actor-based handler execution</description>
-
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
-        <relativePath/>
-    </parent>
+    <name>DGFacade - Data Gateway Facade</name>
+    <description>
+        A high-performance, configuration-driven data gateway facade that accepts requests
+        via REST, WebSocket, Apache Kafka, ActiveMQ, and FileSystem. Handlers are managed
+        using Apache Pekko actor system for massive concurrency and scalability.
+    </description>
 
     <modules>
-        <module>dgfacade-common</module>
-        <module>dgfacade-messaging</module>
-        <module>dgfacade-server</module>
-        <module>dgfacade-web</module>
+        <module>common</module>
+        <module>messaging</module>
+        <module>server</module>
+        <module>web</module>
+        <module>docs</module>
     </modules>
 
     <properties>
         <java.version>17</java.version>
-        <pekko.version>1.0.2</pekko.version>
-        <scala.binary.version>2.13</scala.binary.version>
-        <jackson.version>2.17.0</jackson.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Spring Boot -->
+        <spring-boot.version>3.2.5</spring-boot.version>
+
+        <!-- Apache Pekko -->
+        <pekko.version>1.0.2</pekko.version>
+
+        <!-- Scala -->
+        <scala.version>2.13.12</scala.version>
+        <scala.binary.version>2.13</scala.binary.version>
+
+        <!-- Messaging -->
+        <kafka-clients.version>3.7.0</kafka-clients.version>
+        <activemq-client.version>6.1.0</activemq-client.version>
+        <amqp-client.version>5.21.0</amqp-client.version>
+        <ibmmq-client.version>9.3.5.1</ibmmq-client.version>
+
+        <!-- Logging -->
+        <slf4j.version>2.0.12</slf4j.version>
+        <logback.version>1.5.3</logback.version>
+
+        <!-- Bootstrap WebJars -->
+        <bootstrap.version>5.3.3</bootstrap.version>
+        <fontawesome.version>6.5.1</fontawesome.version>
+        <jquery.version>3.7.1</jquery.version>
+
+        <!-- Testing -->
+        <junit.version>5.10.2</junit.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- Spring Boot BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Internal Modules -->
             <dependency>
                 <groupId>com.dgfacade</groupId>
@@ -70,34 +100,124 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.pekko</groupId>
+                <artifactId>pekko-stream_${scala.binary.version}</artifactId>
+                <version>${pekko.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pekko</groupId>
                 <artifactId>pekko-slf4j_${scala.binary.version}</artifactId>
                 <version>${pekko.version}</version>
             </dependency>
 
-            <!-- Jackson -->
+            <!-- Scala -->
             <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
+
+            <!-- Kafka -->
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>${kafka-clients.version}</version>
+            </dependency>
+
+            <!-- ActiveMQ -->
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-client</artifactId>
+                <version>${activemq-client.version}</version>
+            </dependency>
+
+            <!-- RabbitMQ AMQP Client -->
+            <dependency>
+                <groupId>com.rabbitmq</groupId>
+                <artifactId>amqp-client</artifactId>
+                <version>${amqp-client.version}</version>
+            </dependency>
+
+            <!-- IBM MQ Jakarta Client -->
+            <dependency>
+                <groupId>com.ibm.mq</groupId>
+                <artifactId>com.ibm.mq.jakarta.client</artifactId>
+                <version>${ibmmq-client.version}</version>
+            </dependency>
+
+            <!-- WebJars -->
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>bootstrap</artifactId>
+                <version>${bootstrap.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${jackson.version}</version>
+                <groupId>org.webjars</groupId>
+                <artifactId>font-awesome</artifactId>
+                <version>${fontawesome.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>jquery</artifactId>
+                <version>${jquery.version}</version>
+            </dependency>
+
+            <!-- Prometheus Metrics -->
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-registry-prometheus</artifactId>
+                <version>1.12.5</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+        <!-- Shared across all modules -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <release>${java.version}</release>
-                </configuration>
-            </plugin>
-        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.12.1</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <parameters>true</parameters>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <version>4.9.1</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>compile</goal>
+                                <goal>testCompile</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <scalaVersion>${scala.version}</scalaVersion>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 </project>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Channels')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-1"><i class="fas fa-exchange-alt me-2"></i>Delivery Channels</h2>
+                <p class="text-muted mb-0">Create and manage ingestion/delivery channels bound to brokers &mdash;
+                    Kafka topics, JMS queues, FileSystem watchers, SQL pollers</p>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/channels/create}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i>New Channel
+                </a>
+            </div>
+        </div>
+
+        <!-- Channel Table -->
+        <div th:if="${channels != null and !channels.isEmpty()}" class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Channel ID</th>
+                                <th>Type</th>
+                                <th>Broker</th>
+                                <th>Description</th>
+                                <th>Subscriptions</th>
+                                <th>Queue Depth</th>
+                                <th>State</th>
+                                <th>Enabled</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="c : ${channels}">
+                                <td class="ps-4 fw-semibold">
+                                    <a th:href="@{/admin/channels/edit/{id}(id=${c['_channel_id']})}" th:text="${c['_channel_id']}">id</a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border" th:text="${c['type']}">kafka</span>
+                                </td>
+                                <td>
+                                    <code class="small" th:text="${c['broker'] ?: '-'}">dev-kafka</code>
+                                </td>
+                                <td class="text-muted small" th:text="${c['description'] ?: '-'}">-</td>
+                                <td>
+                                    <th:block th:if="${c['subscriptions'] != null}">
+                                        <span th:each="s,iter : ${c['subscriptions']}" class="badge bg-light text-dark border me-1 mb-1">
+                                            <span th:text="${s['name']}">topic</span>
+                                            <small class="text-muted" th:text="'(' + ${s['type']} + ')'"></small>
+                                        </span>
+                                    </th:block>
+                                    <span th:if="${c['subscriptions'] == null}" class="text-muted">-</span>
+                                </td>
+                                <td>
+                                    <span th:if="${c['queue'] != null}" th:text="${c['queue']['depth'] ?: '-'}">10000</span>
+                                    <span th:if="${c['queue'] == null}">-</span>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${c['_state'] == 'RUNNING'} ? 'bg-success' : (${c['_state'] == 'ERROR'} ? 'bg-danger' : 'bg-secondary')"
+                                          th:text="${c['_state']}">STOPPED</span>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill"
+                                          th:classappend="${c['enabled'] == true} ? 'bg-primary' : 'bg-dark'"
+                                          th:text="${c['enabled'] == true} ? 'Yes' : 'No'">Yes</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <th:block th:if="${c['_state'] != 'RUNNING'}">
+                                            <form th:action="@{/admin/channels/start}" method="post" class="d-inline">
+                                                <input type="hidden" name="channelId" th:value="${c['_channel_id']}">
+                                                <button class="btn btn-sm btn-outline-success" title="Start"><i class="fas fa-play"></i></button>
+                                            </form>
+                                        </th:block>
+                                        <th:block th:if="${c['_state'] == 'RUNNING'}">
+                                            <form th:action="@{/admin/channels/stop}" method="post" class="d-inline">
+                                                <input type="hidden" name="channelId" th:value="${c['_channel_id']}">
+                                                <button class="btn btn-sm btn-outline-warning" title="Stop"><i class="fas fa-stop"></i></button>
+                                            </form>
+                                        </th:block>
+                                        <a th:href="@{/admin/channels/edit/{id}(id=${c['_channel_id']})}"
+                                           class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
+                                        <form th:action="@{/admin/channels/delete}" method="post" class="d-inline"
+                                              onsubmit="return confirm('Delete this channel configuration permanently?')">
+                                            <input type="hidden" name="channelId" th:value="${c['_channel_id']}">
+                                            <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${channels == null or channels.isEmpty()}" class="text-center py-5">
+            <i class="fas fa-exchange-alt fa-4x text-muted mb-3 d-block"></i>
+            <h5 class="text-muted">No channel configurations found</h5>
+            <p class="text-muted">Channel JSON files are stored in <code>config/channels/</code></p>
+            <a th:href="@{/admin/channels/create}" class="btn btn-success mt-2">
+                <i class="fas fa-plus me-1"></i>Create Your First Channel
+            </a>
+        </div>
+
+        <!-- Built-in Channels Info -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light py-3">
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2 text-info"></i>Built-in Channels (Always Active)</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="border rounded p-3 text-center">
+                                    <i class="fas fa-globe fa-2x text-primary mb-2"></i>
+                                    <h6>REST API</h6>
+                                    <span class="badge bg-success mb-1">Active</span>
+                                    <p class="small text-muted mb-0"><code>POST /api/v1/request</code></p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border rounded p-3 text-center">
+                                    <i class="fas fa-plug fa-2x text-info mb-2"></i>
+                                    <h6>WebSocket</h6>
+                                    <span class="badge bg-success mb-1">Active</span>
+                                    <p class="small text-muted mb-0"><code>ws://host:port/ws/gateway</code></p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border rounded p-3 text-center">
+                                    <i class="fas fa-terminal fa-2x text-secondary mb-2"></i>
+                                    <h6>Dashboard UI</h6>
+                                    <span class="badge bg-success mb-1">Active</span>
+                                    <p class="small text-muted mb-0">Browser-based testing</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border rounded p-3 text-center">
+                                    <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
+                                    <h6>Prometheus</h6>
+                                    <span class="badge bg-success mb-1">Active</span>
+                                    <p class="small text-muted mb-0"><code>/actuator/prometheus</code></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

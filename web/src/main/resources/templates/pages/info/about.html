@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Patent Pending
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('About')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container py-5">
+        <!-- Hero Section -->
+        <div class="row mb-5">
+            <div class="col-lg-8 mx-auto text-center">
+                <div class="mb-4">
+                    <i class="fas fa-network-wired fa-4x text-primary"></i>
+                </div>
+                <h1 class="display-4 fw-bold mb-3"><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h1>
+                <p class="lead text-muted">
+                    A high-performance, configuration-driven data gateway facade built on Apache Pekko actors
+                    and Spring Boot. Multi-channel request ingestion, pluggable handler dispatch, dynamic proxy support,
+                    SSL/TLS with PEM certificates, and enterprise-grade messaging across 6 broker types.
+                </p>
+                <div class="mt-4">
+                    <span class="badge bg-primary fs-6 me-2">Version <span th:text="${version} ?: '1.2.0'">1.2.0</span></span>
+                    <span class="badge bg-success fs-6 me-2">Production Ready</span>
+                    <span class="badge bg-info fs-6">Patent Pending</span>
+                </div>
+                <div class="mt-4 pt-3 border-top">
+                    <p class="text-muted fst-italic mb-1">
+                        <i class="fas fa-om me-2 text-warning"></i>
+                        The name <strong>DGFacade</strong> combines <strong>DG</strong> (<em>Data Gateway</em>) with
+                        <strong>Facade</strong> — a unified interface that conceals the complexity of handler dispatch,
+                        actor orchestration, multi-broker messaging, and authentication behind a clean, consistent API.
+                        Inspired by the GoF <em>Facade Pattern</em>, DGFacade lets consumers interact with a single
+                        gateway while sophisticated routing, TTL enforcement, and result delivery happen transparently.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-3">
+                            <i class="fas fa-satellite-dish fa-2x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Multi-Channel Ingestion</h5>
+                        <p class="card-text text-muted">
+                            Accept requests via REST API, WebSocket, Kafka, ActiveMQ, RabbitMQ, or IBM MQ.
+                            Every request is normalized into a canonical DGRequest for uniform processing.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 d-inline-block mb-3">
+                            <i class="fas fa-puzzle-piece fa-2x text-success"></i>
+                        </div>
+                        <h5 class="card-title">Pluggable Handlers</h5>
+                        <p class="card-text text-muted">
+                            Drop-in handler JARs for custom request types. Implement the DGHandler interface
+                            or use any POJO — the dynamic proxy wraps it automatically.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 d-inline-block mb-3">
+                            <i class="fas fa-atom fa-2x text-warning"></i>
+                        </div>
+                        <h5 class="card-title">Pekko Actor Engine</h5>
+                        <p class="card-text text-muted">
+                            Apache Pekko actors for concurrent, resilient handler execution. Millions of
+                            handlers can run simultaneously with per-request TTL enforcement.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 d-inline-block mb-3">
+                            <i class="fas fa-cogs fa-2x text-info"></i>
+                        </div>
+                        <h5 class="card-title">Configuration-Driven</h5>
+                        <p class="card-text text-muted">
+                            JSON-based handler, broker, channel, user, and API key configuration.
+                            Hot-reload support — no server restart required for config changes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-danger bg-opacity-10 p-3 d-inline-block mb-3">
+                            <i class="fas fa-magic fa-2x text-danger"></i>
+                        </div>
+                        <h5 class="card-title">Dynamic Proxy</h5>
+                        <p class="card-text text-muted">
+                            Register any POJO as a handler — DGHandlerProxy discovers init/process/stop/cleanup
+                            methods via reflection and wraps them into the DGHandler lifecycle.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-secondary bg-opacity-10 p-3 d-inline-block mb-3">
+                            <i class="fas fa-lock fa-2x text-secondary"></i>
+                        </div>
+                        <h5 class="card-title">SSL/TLS &amp; PEM</h5>
+                        <p class="card-text text-muted">
+                            Full SSL/TLS support with PEM certificates, JKS/PKCS12 keystores, and mTLS.
+                            Auto-detects format and handles PKCS#1, PKCS#8, and EC private keys.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-broadcast-tower fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">6 Broker Types</h5>
+                        <p class="card-text opacity-75">
+                            Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, and SQL — all with
+                            unified publish/subscribe abstraction and SSL support.
+                        </p>
+                        <span class="badge bg-light text-dark">v1.2.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-exchange-alt fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Fan-Out Channels</h5>
+                        <p class="card-text opacity-75">
+                            Data channels with multi-listener fan-out distribution and backpressure control.
+                            Decouple producers from consumers with bounded queues.
+                        </p>
+                        <span class="badge bg-light text-dark">v1.2.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #0891b2 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-stream fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Streaming Handlers</h5>
+                        <p class="card-text opacity-75">
+                            Handlers can emit multiple streaming updates via WebSocket.
+                            Sequence-numbered partial results with final completion signals.
+                        </p>
+                        <span class="badge bg-light text-dark">v1.2.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-rocket fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Phased Startup</h5>
+                        <p class="card-text opacity-75">
+                            Orchestrated startup and graceful shutdown with dependency ordering.
+                            Each subsystem initializes in sequence for guaranteed consistency.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 d-inline-block mb-3">
+                            <i class="fas fa-key fa-2x text-warning"></i>
+                        </div>
+                        <h5 class="card-title">API Key Authentication</h5>
+                        <p class="card-text text-muted">
+                            Secure programmatic access with API keys. Per-key request type restrictions,
+                            rate limiting, and user resolution from the API key.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-3">
+                            <i class="fas fa-tachometer-alt fa-2x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Web Dashboard</h5>
+                        <p class="card-text text-muted">
+                            Real-time monitoring dashboard with handler states, execution metrics,
+                            user management, and comprehensive help documentation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #e6522c 0%, #f46800 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Prometheus &amp; Grafana</h5>
+                        <p class="card-text opacity-75">
+                            Built-in Micrometer instrumentation with 13+ custom metrics, percentile
+                            histograms, and a pre-built Grafana dashboard. Scrape via /actuator/prometheus.
+                        </p>
+                        <span class="badge bg-light text-dark">v1.2.0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-tools fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Broker &amp; Channel Admin</h5>
+                        <p class="card-text opacity-75">
+                            Full-page admin UI for creating, editing, and managing broker connections
+                            and delivery channels with SSL/TLS config, start/stop controls, and live status.
+                        </p>
+                        <span class="badge bg-light text-dark">v1.2.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Competitive Advantage Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #003366 0%, #005a8e 50%, #0079c1 100%);">
+                    <div class="card-header border-0 pt-4 pb-0" style="background: transparent;">
+                        <h3 class="text-white text-center mb-0">
+                            <i class="fas fa-trophy me-2"></i>Competitive Advantage
+                        </h3>
+                        <p class="text-white-50 text-center mt-2 mb-0">Why <span th:text="${appName} ?: 'DGFacade'">DGFacade</span> Outperforms Alternatives</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4 mb-4">
+                            <!-- vs Spring Integration -->
+                            <div class="col-lg-4">
+                                <div class="card h-100 border-0 shadow">
+                                    <div class="card-header bg-danger text-white text-center py-3">
+                                        <i class="fas fa-greater-than me-2"></i>vs Spring Integration
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Actor Concurrency</strong> — Pekko actors vs thread pools
+                                            </li>
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>TTL Enforcement</strong> — per-request timeout with auto-suspension
+                                            </li>
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Dynamic Proxy</strong> — register any POJO as a handler
+                                            </li>
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>JSON Config</strong> — no XML, no annotations, pure config files
+                                            </li>
+                                            <li class="mb-0">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Built-in UI</strong> — monitoring dashboard included
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- vs Apache Camel -->
+                            <div class="col-lg-4">
+                                <div class="card h-100 border-0 shadow">
+                                    <div class="card-header bg-warning text-dark text-center py-3">
+                                        <i class="fas fa-greater-than me-2"></i>vs Apache Camel
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Simpler Model</strong> — request → handler → response, no route DSL
+                                            </li>
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Lower Footprint</strong> — no 300+ component dependencies
+                                            </li>
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>User Isolation</strong> — per-user handler configs and API keys
+                                            </li>
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>PEM Support</strong> — native PEM certs without Java keytool
+                                            </li>
+                                            <li class="mb-0">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Handler Streaming</strong> — native streaming response support
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- vs MuleSoft -->
+                            <div class="col-lg-4">
+                                <div class="card h-100 border-0 shadow">
+                                    <div class="card-header bg-info text-white text-center py-3">
+                                        <i class="fas fa-greater-than me-2"></i>vs MuleSoft / Kong
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>No Licensing</strong> — single JAR, no per-node fees
+                                            </li>
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Embeddable</strong> — runs as Spring Boot app, not a platform
+                                            </li>
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Custom Logic</strong> — full Java handlers vs flow designers
+                                            </li>
+                                            <li class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Multi-Broker</strong> — 6 broker types with unified API
+                                            </li>
+                                            <li class="mb-0">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>Self-Hosted</strong> — full control, no vendor lock-in
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Key Differentiators -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card border-0 bg-white bg-opacity-10">
+                                    <div class="card-body">
+                                        <h5 class="text-white text-center mb-4">
+                                            <i class="fas fa-star me-2"></i>Key Differentiators
+                                        </h5>
+                                        <div class="row g-3">
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="text-center p-3 rounded" style="background: rgba(255,255,255,0.1);">
+                                                    <i class="fas fa-server fa-2x text-white mb-2"></i>
+                                                    <h6 class="text-white mb-1">6 Broker Types</h6>
+                                                    <small class="text-white-50">Kafka &bull; ActiveMQ &bull; RabbitMQ &bull; IBM MQ &bull; FileSystem &bull; SQL</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="text-center p-3 rounded" style="background: rgba(255,255,255,0.1);">
+                                                    <i class="fas fa-satellite-dish fa-2x text-white mb-2"></i>
+                                                    <h6 class="text-white mb-1">4 Ingestion Channels</h6>
+                                                    <small class="text-white-50">REST &bull; WebSocket &bull; Kafka &bull; MQ Brokers</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="text-center p-3 rounded" style="background: rgba(255,255,255,0.1);">
+                                                    <i class="fas fa-shield-alt fa-2x text-white mb-2"></i>
+                                                    <h6 class="text-white mb-1">3 SSL Formats</h6>
+                                                    <small class="text-white-50">PEM &bull; JKS &bull; PKCS12 + mTLS</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="text-center p-3 rounded" style="background: rgba(255,255,255,0.1);">
+                                                    <i class="fas fa-magic fa-2x text-white mb-2"></i>
+                                                    <h6 class="text-white mb-1">2 Handler Modes</h6>
+                                                    <small class="text-white-50">DGHandler Interface &bull; POJO via Dynamic Proxy</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enterprise Features -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card border-0 bg-white">
+                                    <div class="card-body">
+                                        <h5 class="text-center mb-4">
+                                            <i class="fas fa-building me-2 text-primary"></i>Enterprise-Grade Features Included
+                                        </h5>
+                                        <div class="row g-2 text-center">
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-key text-success mb-1 d-block"></i>
+                                                    <small>API Key Auth</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-lock text-success mb-1 d-block"></i>
+                                                    <small>SSL / TLS / mTLS</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-stopwatch text-success mb-1 d-block"></i>
+                                                    <small>TTL Enforcement</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-stream text-success mb-1 d-block"></i>
+                                                    <small>Streaming</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-tachometer-alt text-success mb-1 d-block"></i>
+                                                    <small>Backpressure</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-desktop text-success mb-1 d-block"></i>
+                                                    <small>Web Dashboard</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-chart-line text-success mb-1 d-block"></i>
+                                                    <small>Prometheus</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-tools text-info mb-1 d-block"></i>
+                                                    <small>Broker Admin</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-exclamation-triangle text-danger mb-1 d-block"></i>
+                                                    <small>Error Pages</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="text-center">
+                                            <span class="badge bg-primary fs-6 me-2">
+                                                <i class="fas fa-dollar-sign me-1"></i>No Per-Node Licensing
+                                            </span>
+                                            <span class="badge bg-success fs-6 me-2">
+                                                <i class="fas fa-infinity me-1"></i>Unlimited Handlers
+                                            </span>
+                                            <span class="badge bg-info fs-6">
+                                                <i class="fas fa-users me-1"></i>Unlimited Connections
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Stats -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="row g-3 text-center">
+                                    <div class="col-6 col-lg-3">
+                                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.15);">
+                                            <h2 class="text-white mb-0">6</h2>
+                                            <small class="text-white-50">Broker Types</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-lg-3">
+                                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.15);">
+                                            <h2 class="text-white mb-0">∞</h2>
+                                            <small class="text-white-50">Concurrent Actors</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-lg-3">
+                                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.15);">
+                                            <h2 class="text-white mb-0">0</h2>
+                                            <small class="text-white-50">Lines of XML Config</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-lg-3">
+                                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.15);">
+                                            <h2 class="text-white mb-0">1</h2>
+                                            <small class="text-white-50">JAR to Deploy</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-lg-3">
+                                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.15);">
+                                            <h2 class="text-white mb-0">13+</h2>
+                                            <small class="text-white-50">Prometheus Metrics</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h4 class="mb-0"><i class="fas fa-sitemap me-2"></i>Architecture</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <h5>System Components</h5>
+                                <ul class="list-unstyled">
+                                    <li class="mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>Execution Engine</strong> — Pekko actor-based handler dispatch &amp; TTL management
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>Handler Supervisor</strong> — Actor lifecycle, crash recovery, backpressure
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>DGHandlerProxy</strong> — Reflection-based dynamic proxy for POJO handlers
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>REST API</strong> — Spring Boot REST &amp; WebSocket endpoints
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>Messaging Layer</strong> — Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, SQL
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>SSL Helper</strong> — PEM, JKS, PKCS12 context builder with mTLS
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>Config Registry</strong> — JSON-based handler and broker config with hot-reload
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-check-circle text-warning me-2"></i>
+                                        <strong>Channel Manager</strong> — Fan-out data channels with backpressure
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>User &amp; API Key Service</strong> — Authentication, role-based access, rate limiting
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-6">
+                                <h5>Technology Stack</h5>
+                                <table class="table table-sm">
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Runtime</strong></td>
+                                            <td>Java 17+, Spring Boot 3.2</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Actor System</strong></td>
+                                            <td>Apache Pekko (Akka fork)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Messaging</strong></td>
+                                            <td>Kafka, ActiveMQ, RabbitMQ, IBM MQ</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Security</strong></td>
+                                            <td>Spring Security 6.x, API Keys, SSL/TLS, PEM, mTLS</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>JSON Processing</strong></td>
+                                            <td>Jackson (ObjectMapper)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Web UI</strong></td>
+                                            <td>Thymeleaf, Bootstrap 5, Font Awesome</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Build</strong></td>
+                                            <td>Maven multi-module (common, messaging, server, web)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Protocols</strong></td>
+                                            <td>HTTP/REST, WebSocket, AMQP 0-9-1, JMS, Kafka Protocol</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Observability</strong></td>
+                                            <td>Micrometer 1.12, Prometheus, Grafana</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <h5 class="mt-4">Module Structure</h5>
+                                <table class="table table-sm">
+                                    <tbody>
+                                        <tr><td><code>dgfacade-common</code></td><td>Models, DTOs, shared utilities</td></tr>
+                                        <tr><td><code>dgfacade-messaging</code></td><td>Publisher/subscriber abstractions &amp; SSL</td></tr>
+                                        <tr><td><code>dgfacade-server</code></td><td>Pekko engine, handlers, handler proxy</td></tr>
+                                        <tr><td><code>dgfacade-web</code></td><td>Spring Boot app, REST/WS, UI, security</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Built-in Request Types -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h4 class="mb-0"><i class="fas fa-list-check me-2"></i>Built-in Request Types</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-primary"><i class="fas fa-users me-2"></i>All Users (default.json)</h6>
+                                <table class="table table-sm small">
+                                    <thead class="table-light"><tr><th>Request Type</th><th>Handler</th><th>TTL</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code>ECHO</code></td><td>EchoHandler</td><td>5 min</td></tr>
+                                        <tr><td><code>ARITHMETIC</code></td><td>ArithmeticHandler</td><td>5 min</td></tr>
+                                        <tr><td><code>STRING_TRANSFORM</code></td><td>StringTransformHandler <span class="badge bg-secondary">Proxy</span></td><td>5 min</td></tr>
+                                        <tr><td><code>HASH</code></td><td>HashHandler</td><td>5 min</td></tr>
+                                        <tr><td><code>JSON_TRANSFORM</code></td><td>JsonTransformHandler</td><td>10 min</td></tr>
+                                        <tr><td><code>DELAYED</code></td><td>DelayedHandler</td><td>2 min</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-danger"><i class="fas fa-user-shield me-2"></i>Admin Only (admin.json)</h6>
+                                <table class="table table-sm small">
+                                    <thead class="table-light"><tr><th>Request Type</th><th>Handler</th><th>TTL</th></tr></thead>
+                                    <tbody>
+                                        <tr class="table-warning"><td><code>SYSTEM_INFO</code></td><td>SystemInfoHandler</td><td>5 min</td></tr>
+                                        <tr class="table-warning"><td><code>HTTP_PROBE</code></td><td>HttpProbeHandler</td><td>5 min</td></tr>
+                                        <tr class="table-warning"><td><code>BATCH_ARITHMETIC</code></td><td>BatchArithmeticHandler <span class="badge bg-secondary">Proxy</span></td><td>15 min</td></tr>
+                                    </tbody>
+                                </table>
+                                <div class="alert alert-info small mt-2 mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Admin also inherits all default types with elevated TTLs (up to 60 min) and higher precision settings.
+                                    Admin handlers override defaults when both exist for the same request type.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6 class="text-muted"><i class="fas fa-terminal me-2"></i>Quick Test — Admin API Key</h6>
+                                <div class="bg-dark text-light p-3 rounded small" style="font-family: 'Courier New', monospace;">
+                                    <div class="mb-2 text-success"># Echo test</div>
+                                    <div class="mb-3">curl -X POST http://localhost:8080/api/request \<br>
+                                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                                    &nbsp;&nbsp;-d '{"request_type":"ECHO","api_key":"dgf-admin-key-0001","payload":{"message":"hello"}}'</div>
+
+                                    <div class="mb-2 text-success"># System info (admin only)</div>
+                                    <div class="mb-3">curl -X POST http://localhost:8080/api/request \<br>
+                                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                                    &nbsp;&nbsp;-d '{"request_type":"SYSTEM_INFO","api_key":"dgf-admin-key-0001","payload":{"section":"MEMORY"}}'</div>
+
+                                    <div class="mb-2 text-success"># Hash SHA-256</div>
+                                    <div class="mb-3">curl -X POST http://localhost:8080/api/request \<br>
+                                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                                    &nbsp;&nbsp;-d '{"request_type":"HASH","api_key":"dgf-admin-key-0001","payload":{"operation":"SHA256","input":"hello world"}}'</div>
+
+                                    <div class="mb-2 text-success"># HTTP probe (admin only)</div>
+                                    <div>curl -X POST http://localhost:8080/api/request \<br>
+                                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                                    &nbsp;&nbsp;-d '{"request_type":"HTTP_PROBE","api_key":"dgf-admin-key-0001","payload":{"url":"https://httpbin.org/get"}}'</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version History -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h4 class="mb-0"><i class="fas fa-history me-2"></i>Version History</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6 class="mb-1">
+                                <span class="badge bg-primary me-2">v1.2.0</span>
+                                <span class="text-muted small">Current Release</span>
+                            </h6>
+                            <ul class="small text-muted mb-0">
+                                <li><strong>Prometheus Metrics</strong>: 13+ custom Micrometer metrics (counters, timers, gauges, histograms)</li>
+                                <li><strong>Grafana Dashboard</strong>: Pre-built 20+ panel dashboard JSON for instant import</li>
+                                <li><strong>Actuator Endpoint</strong>: <code>/actuator/prometheus</code> OpenMetrics scrape target</li>
+                                <li><strong>Execution Instrumentation</strong>: Every handler submit/success/error/timeout tracked</li>
+                                <li><strong>Percentile Histograms</strong>: p50/p90/p95/p99 for handler execution duration</li>
+                                <li><strong>Alert Rules</strong>: Recommended Prometheus alerting rules for production</li>
+                                <li><strong>Docker Compose</strong>: Full observability stack (DGFacade + Prometheus + Grafana)</li>
+                                <li><strong>Broker Admin UI</strong>: Full-page CRUD for all 6 broker types with SSL/TLS config, start/stop controls</li>
+                                <li><strong>Channel Admin UI</strong>: Full-page CRUD for channels with queue, backpressure, retry configuration</li>
+                                <li><strong>Global Error Handler</strong>: Detailed error pages with stack traces, explanations, and suggestions</li>
+                                <li><strong>Handler Detail Fix</strong>: Graceful handling of expired/missing handler execution records</li>
+                            </ul>
+                        </div>
+                        <div class="mb-4">
+                            <h6 class="mb-1">
+                                <span class="badge bg-secondary me-2">v1.1.0</span>
+                                <span class="text-muted small">Previous Release</span>
+                            </h6>
+                            <ul class="small text-muted mb-0">
+                                <li><strong>RabbitMQ &amp; IBM MQ</strong>: Full publisher/subscriber with AMQP 0-9-1 and JMS</li>
+                                <li><strong>PEM SSL/TLS</strong>: Native PEM certificate support (PKCS#1, PKCS#8, EC keys)</li>
+                                <li><strong>Dynamic Proxy</strong>: DGHandlerProxy wraps any POJO into DGHandler lifecycle</li>
+                                <li><strong>New Handlers</strong>: SystemInfo, JsonTransform, Hash, HttpProbe, BatchArithmetic</li>
+                                <li><strong>Admin Protection</strong>: Built-in admin user/key locked from UI modification</li>
+                                <li><strong>Request Processing Guide</strong>: End-to-end documentation with 5 runnable examples</li>
+                                <li><strong>Fan-Out Channels</strong>: Data channels with backpressure and multi-listener support</li>
+                                <li><strong>Streaming Handlers</strong>: Multi-update WebSocket responses with sequence numbers</li>
+                            </ul>
+                        </div>
+                        <div class="mb-4">
+                            <h6 class="mb-1">
+                                <span class="badge bg-secondary me-2">v1.0.0</span>
+                                <span class="text-muted small">Initial Release</span>
+                            </h6>
+                            <ul class="small text-muted mb-0">
+                                <li><strong>Core Engine</strong>: Apache Pekko actor-based handler dispatch</li>
+                                <li><strong>REST &amp; WebSocket</strong>: Request ingestion and result delivery</li>
+                                <li><strong>Kafka &amp; ActiveMQ</strong>: Publish/subscribe messaging</li>
+                                <li><strong>SSL/TLS</strong>: JKS and PKCS12 keystore support</li>
+                                <li><strong>Web Dashboard</strong>: Monitoring, user management, help system</li>
+                                <li><strong>Built-in Handlers</strong>: Echo, Arithmetic, Delayed, StringTransform</li>
+                                <li><strong>Phased Startup</strong>: Orchestrated initialization and graceful shutdown</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h4 class="mb-0"><i class="fas fa-road me-2"></i>Roadmap</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled small">
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2" style="font-size: 0.8em; vertical-align: middle;"></i>
+                                <strong>v1.2.0</strong> — <del>Prometheus metrics and Grafana dashboard</del> <span class="badge bg-success">Done</span>
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-circle text-warning me-2" style="font-size: 0.6em; vertical-align: middle;"></i>
+                                <strong>v1.3.0</strong> — Handler chaining and pipeline composition
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-circle text-secondary me-2" style="font-size: 0.6em; vertical-align: middle;"></i>
+                                <strong>v1.4.0</strong> — Distributed execution across multiple nodes
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-circle text-secondary me-2" style="font-size: 0.6em; vertical-align: middle;"></i>
+                                <strong>v1.5.0</strong> — gRPC ingestion channel
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-circle text-secondary me-2" style="font-size: 0.6em; vertical-align: middle;"></i>
+                                <strong>v2.0.0</strong> — Multi-tenant isolation and handler marketplace
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- License & Contact -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h4 class="mb-0"><i class="fas fa-file-contract me-2"></i>License</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">
+                            This software is proprietary and confidential. Unauthorized copying,
+                            distribution, modification, or use is strictly prohibited without
+                            explicit written permission from the copyright holder.
+                        </p>
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Patent Pending:</strong> Certain architectural patterns and
+                            implementations described in this software may be subject to patent applications.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h4 class="mb-0"><i class="fas fa-envelope me-2"></i>Contact</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <i class="fas fa-user fa-fw text-primary me-2"></i>
+                                <strong>Author:</strong> Ashutosh Sinha
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-envelope fa-fw text-primary me-2"></i>
+                                <strong>Email:</strong>
+                                <a href="mailto:ajsinha@gmail.com">ajsinha@gmail.com</a>
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-calendar fa-fw text-primary me-2"></i>
+                                <strong>Copyright:</strong> &copy; 2025-2030, All Rights Reserved
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-code-branch fa-fw text-primary me-2"></i>
+                                <strong>Version:</strong> <span th:text="${version} ?: '1.2.0'">1.2.0</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright Footer -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-4">
+                        <p class="mb-2">
+                            <i class="fas fa-network-wired fa-2x text-primary mb-3 d-block"></i>
+                        </p>
+                        <h5 class="mb-1"><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h5>
+                        <p class="text-muted mb-2">Data Gateway Facade &mdash; Configuration-Driven Handler Dispatch</p>
+                        <p class="small text-muted mb-0">
+                            Copyright &copy; 2025-2030, All Rights Reserved | Ashutosh Sinha |
+                            <a href="mailto:ajsinha@gmail.com">ajsinha@gmail.com</a>
+                        </p>
+                        <p class="small text-muted mt-1 mb-0">
+                            <em>Patent Pending</em>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Help')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-book me-3 text-primary"></i>
+                <span th:text="${appName} ?: 'DGFacade'">DGFacade</span> Documentation
+            </h1>
+            <p class="lead text-muted">Complete reference guide for the high-performance data gateway facade</p>
+        </div>
+
+        <!-- Getting Started Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-12">
+                <h3 class="mb-3"><i class="fas fa-rocket me-2 text-warning"></i>Getting Started</h3>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/architecture" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #0079c1 0%, #003366 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-sitemap fa-3x mb-3"></i>
+                            <h5 class="card-title">Architecture</h5>
+                            <p class="card-text opacity-75 small">System design, data flow &amp; component overview</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/request-processing" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-project-diagram fa-3x mb-3"></i>
+                            <h5 class="card-title">Request Processing</h5>
+                            <p class="card-text opacity-75 small">End-to-end flow, handlers, TTL, dynamic proxy</p>
+                            <span class="badge bg-light text-dark mt-1">v1.2.0</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/configuration" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card">
+                        <div class="card-body text-center py-4">
+                            <i class="fas fa-cog fa-3x text-secondary mb-3"></i>
+                            <h5 class="card-title">Configuration</h5>
+                            <p class="card-text text-muted small">Application properties &amp; server settings</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/brokers" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-server fa-3x mb-3"></i>
+                            <h5 class="card-title">Brokers</h5>
+                            <p class="card-text opacity-75 small">Kafka, ActiveMQ, RabbitMQ, IBM MQ &amp; SSL/PEM</p>
+                            <span class="badge bg-light text-dark mt-1">v1.2.0</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/channels" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-exchange-alt fa-3x mb-3"></i>
+                            <h5 class="card-title">Channels</h5>
+                            <p class="card-text opacity-75 small">Data channels with fan-out &amp; backpressure</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/prometheus" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #e6522c 0%, #f46800 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-chart-line fa-3x mb-3"></i>
+                            <h5 class="card-title">Prometheus &amp; Grafana</h5>
+                            <p class="card-text opacity-75 small">Metrics, dashboards &amp; alerting</p>
+                            <span class="badge bg-light text-dark mt-1">v1.2.0</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/admin/brokers" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-server fa-3x mb-3"></i>
+                            <h5 class="card-title">Broker Management</h5>
+                            <p class="card-text opacity-75 small">Create, edit, start/stop brokers</p>
+                            <span class="badge bg-light text-dark mt-1">v1.2.0</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/admin/channels" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-exchange-alt fa-3x mb-3"></i>
+                            <h5 class="card-title">Channel Management</h5>
+                            <p class="card-text opacity-75 small">Create, edit, start/stop channels</p>
+                            <span class="badge bg-light text-dark mt-1">v1.2.0</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Core Concepts Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-12">
+                <h3 class="mb-3"><i class="fas fa-cubes me-2 text-success"></i>Core Concepts</h3>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/request-processing#proxy" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-magic fa-3x mb-3"></i>
+                            <h5 class="card-title">Dynamic Proxy</h5>
+                            <p class="card-text opacity-75 small">Non-DGHandler classes via reflection</p>
+                            <span class="badge bg-light text-dark mt-1">v1.2.0</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/request-processing#execution" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card">
+                        <div class="card-body text-center py-4">
+                            <i class="fas fa-cogs fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">Handlers &amp; TTL</h5>
+                            <p class="card-text text-muted small">DGHandler lifecycle &amp; timeout suspension</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/architecture#backpressure" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-tachometer-alt fa-3x mb-3"></i>
+                            <h5 class="card-title">Backpressure</h5>
+                            <p class="card-text opacity-75 small">Internal queue depth management</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/channels#fanout" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-broadcast-tower fa-3x mb-3"></i>
+                            <h5 class="card-title">Fan-Out Distribution</h5>
+                            <p class="card-text opacity-75 small">Multi-listener message delivery</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/help/brokers#ssl" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-lock fa-3x mb-3"></i>
+                            <h5 class="card-title">SSL / TLS &amp; PEM</h5>
+                            <p class="card-text opacity-75 small">PEM certs, JKS keystores &amp; mTLS</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- API & Admin Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-12">
+                <h3 class="mb-3"><i class="fas fa-plug me-2 text-info"></i>API &amp; Administration</h3>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/docs" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card">
+                        <div class="card-body text-center py-4">
+                            <i class="fas fa-cloud fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">REST API</h5>
+                            <p class="card-text text-muted small">HTTP endpoints &amp; handler invocation</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/admin/users" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card">
+                        <div class="card-body text-center py-4">
+                            <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">User Management</h5>
+                            <p class="card-text text-muted small">RBAC, users &amp; API keys</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/glossary" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                        <div class="card-body text-center py-4 text-white">
+                            <i class="fas fa-book-open fa-3x mb-3"></i>
+                            <h5 class="card-title">Glossary</h5>
+                            <p class="card-text opacity-75 small">A-Z reference of all terms &amp; concepts</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <a href="/about" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card">
+                        <div class="card-body text-center py-4">
+                            <i class="fas fa-info-circle fa-3x text-secondary mb-3"></i>
+                            <h5 class="card-title">About</h5>
+                            <p class="card-text text-muted small">Version info &amp; system details</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="py-4 mt-4 border-top">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6>
+                    <p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.2.0'">1.2.0</span></p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="text-muted small mb-0">
+                        Copyright &copy; 2025-2030 Ashutosh Sinha<br>
+                        <span class="badge bg-warning text-dark">Patent Pending</span>
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<style>
+.hover-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+</body>
+</html>

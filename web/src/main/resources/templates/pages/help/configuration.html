@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Configuration')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/help"><i class="fas fa-book me-1"></i>Help</a></li>
+                <li class="breadcrumb-item active">Configuration</li>
+            </ol>
+        </nav>
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <h1 class="display-5 mb-4"><i class="fas fa-cog text-secondary me-3"></i>Configuration</h1>
+
+                <p class="lead">All DGFacade settings are configured through <code>application.properties</code> (or <code>application.yml</code>).
+                Brokers and channels use JSON file-based configuration in separate directories.</p>
+
+                <!-- Server & Network -->
+                <h3 class="mt-4">Server &amp; Network</h3>
+<pre class="bg-dark text-light p-3 rounded"><code># Spring Boot server port
+server.port=8080
+
+# Application name displayed in UI
+dgfacade.app-name=DGFacade
+
+# Application version
+dgfacade.version=1.2.0</code></pre>
+
+                <!-- Broker Configuration -->
+                <h3 class="mt-4">Broker Configuration</h3>
+<pre class="bg-dark text-light p-3 rounded"><code># Directory containing broker JSON files (one file per broker)
+# Each .json file defines a broker connection (Kafka, ActiveMQ, RabbitMQ, IBM MQ)
+dgfacade.brokers.config-dir=config/brokers
+
+# Connection timeout for broker connections (milliseconds)
+dgfacade.brokers.connection-timeout=30000
+
+# Maximum reconnection attempts on connection failure
+dgfacade.brokers.max-reconnect-attempts=10
+
+# Initial backoff between reconnection attempts (milliseconds)
+dgfacade.brokers.reconnect-backoff-ms=1000</code></pre>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-folder-open me-2"></i>
+                    <strong>File-Based Brokers:</strong> Drop a <code>.json</code> file into the broker config directory to define a new broker.
+                    The filename becomes the broker name. See <a href="/help/brokers">Broker Configuration</a> for JSON schema and examples.
+                </div>
+
+                <!-- Channel Configuration -->
+                <h3 class="mt-4">Channel Configuration</h3>
+<pre class="bg-dark text-light p-3 rounded"><code># Directory containing channel JSON files (one file per channel)
+# Each .json file defines a data channel with broker reference, subscriptions, and queue settings
+dgfacade.channels.config-dir=config/channels
+
+# Default internal queue depth when not specified per channel
+dgfacade.channels.default-queue-depth=10000
+
+# Backpressure warning threshold (% of queue depth)
+dgfacade.channels.backpressure-warning-pct=70
+
+# Backpressure critical threshold - broker consumer paused at this level
+dgfacade.channels.backpressure-critical-pct=90
+
+# Thread pool size for fan-out message distribution
+dgfacade.channels.fanout-thread-pool-size=16</code></pre>
+
+                <div class="alert alert-success mt-3">
+                    <i class="fas fa-broadcast-tower me-2"></i>
+                    <strong>Fan-Out Distribution:</strong> Each message from a channel's internal queue is delivered to ALL registered listeners.
+                    The fan-out thread pool processes deliveries concurrently. Increase <code>fanout-thread-pool-size</code> for high-throughput scenarios.
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    <strong>Backpressure:</strong> When a channel's internal queue fills to the critical threshold, the broker consumer
+                    is automatically paused. It resumes when the queue drains below the warning threshold. This prevents memory exhaustion
+                    while maintaining data delivery guarantees.
+                </div>
+
+                <!-- Execution Engine -->
+                <h3 class="mt-4">Execution Engine</h3>
+<pre class="bg-dark text-light p-3 rounded"><code># Handler execution thread pool size
+dgfacade.engine.thread-pool-size=32
+
+# Maximum execution time per handler (milliseconds)
+dgfacade.engine.execution-timeout-ms=60000
+
+# Number of recent handler states to retain in memory
+dgfacade.engine.max-recent-states=1000
+
+# Enable execution state persistence
+dgfacade.engine.persist-states=true</code></pre>
+
+                <!-- Security -->
+                <h3 class="mt-4">Security</h3>
+<pre class="bg-dark text-light p-3 rounded"><code># User configuration file
+dgfacade.security.users-file=config/users.json
+
+# Session timeout for web UI
+server.servlet.session.timeout=30m
+
+# Remember-me token validity (seconds) - 24 hours default
+dgfacade.security.remember-me-seconds=86400</code></pre>
+
+                <div class="alert alert-primary mt-3">
+                    <i class="fas fa-users me-2"></i>
+                    <strong>User Management:</strong> Users are defined in <code>config/users.json</code> with roles (<code>ADMIN</code>, <code>USER</code>)
+                    and API keys. The default admin account is <code>admin</code> / <code>admin123</code>.
+                </div>
+
+                <!-- Logging -->
+                <h3 class="mt-4">Logging</h3>
+<pre class="bg-dark text-light p-3 rounded"><code># Root logging level
+logging.level.root=INFO
+
+# DGFacade component logging
+logging.level.com.dgfacade=INFO
+logging.level.com.dgfacade.server.engine=DEBUG
+logging.level.com.dgfacade.messaging=INFO
+
+# Log broker connection events
+logging.level.com.dgfacade.messaging.broker=DEBUG
+
+# Log channel backpressure events
+logging.level.com.dgfacade.messaging.channel=INFO</code></pre>
+
+                <!-- Directory Structure -->
+                <h3 class="mt-4">Directory Structure</h3>
+<pre class="bg-dark text-light p-3 rounded"><code>dgfacade/
+├── application.properties          # Main configuration
+├── config/
+│   ├── users.json                  # User accounts &amp; API keys
+│   ├── brokers/                    # One JSON file per broker
+│   │   ├── prod-kafka.json         # → broker name: "prod-kafka"
+│   │   ├── prod-activemq.json      # → broker name: "prod-activemq"
+│   │   └── dev-rabbitmq.json       # → broker name: "dev-rabbitmq"
+│   └── channels/                   # One JSON file per channel
+│       ├── order-events.json       # → channel name: "order-events"
+│       ├── trade-queue.json        # → channel name: "trade-queue"
+│       └── webhook-ingest.json     # → channel name: "webhook-ingest"
+├── logs/
+│   └── dgfacade.log
+└── lib/
+    └── dgfacade-1.2.0.jar</code></pre>
+
+                <div class="mt-5 text-center">
+                    <a href="/help/channels" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Channels</a>
+                    <a href="/help" class="btn btn-outline-secondary ms-2"><i class="fas fa-home me-2"></i>Help Index</a>
+                    <a href="/glossary" class="btn btn-primary ms-2">Glossary<i class="fas fa-arrow-right ms-2"></i></a>
+                </div>
+            </div>
+        </div>
+        <footer class="py-4 mt-5 border-top">
+            <div class="row">
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.2.0'">1.2.0</span></p></div>
+                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br><span class="badge bg-warning text-dark">Patent Pending</span></p></div>
+            </div>
+        </footer>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

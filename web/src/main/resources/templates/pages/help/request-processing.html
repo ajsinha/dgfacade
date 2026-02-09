@@ -223,7 +223,7 @@ ws.onmessage = (e) =&gt; console.log(JSON.parse(e.data));</code></pre>
 }</code></pre>
                         </div>
                     </div>
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-dark"><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
                         <tbody>
                             <tr><td><code>request_type</code></td><td><span class="badge bg-danger">Yes</span></td><td>Matches the handler config key in <code>config/handlers/*.json</code></td></tr>
@@ -382,7 +382,7 @@ public class LegacyPaymentProcessor {
                     </div>
 
                     <h5 class="mt-4">Return Value Handling</h5>
-                    <table class="table table-bordered table-sm">
+                    <table class="table dg-table table-bordered table-sm">
                         <thead class="table-light"><tr><th>Execute Method Returns</th><th>DGResponse Mapping</th></tr></thead>
                         <tbody>
                             <tr><td><code>DGResponse</code></td><td>Used directly</td></tr>
@@ -484,7 +484,7 @@ private Behavior&lt;Command&gt; onTimeout(Timeout cmd) {
                     <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-paper-plane me-2" style="color: #06b6d4;"></i>8. Result Delivery &amp; Publication</h2>
                     <p>After handler execution completes (success, error, or timeout), the <code>DGResponse</code> is delivered back through the originating channel or to a specified <code>delivery_destination</code>.</p>
 
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-dark"><tr><th>Source Channel</th><th>Default Delivery</th><th>With delivery_destination</th></tr></thead>
                         <tbody>
                             <tr><td><strong>REST</strong></td><td>HTTP 200 JSON response body</td><td>Also publishes to specified Kafka/MQ topic</td></tr>
@@ -788,7 +788,7 @@ INFO  DGHandlerProxy - Resolved: construct=initialize(), execute=handle()(MAP_TO
                 <!-- ═══════════════════ 10. ERRORS ═══════════════════ -->
                 <section id="errors" class="mb-5">
                     <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-exclamation-circle me-2 text-danger"></i>10. Error Handling &amp; Edge Cases</h2>
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-dark"><tr><th>Scenario</th><th>Status</th><th>Error Message</th></tr></thead>
                         <tbody>
                             <tr><td>Invalid API key</td><td><code>ERROR</code></td><td>"Invalid or disabled API key"</td></tr>

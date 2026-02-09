@@ -75,7 +75,7 @@
                     pipelines using handler chaining.</p>
 
                     <h4 class="mt-4">Key Architectural Principles</h4>
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-light">
                             <tr><th>Principle</th><th>Description</th></tr>
                         </thead>
@@ -281,7 +281,7 @@
                             <div class="card h-100">
                                 <div class="card-header bg-primary text-white">Supported Broker Types</div>
                                 <div class="card-body">
-                                    <table class="table table-sm mb-0">
+                                    <table class="table dg-table table-sm mb-0">
                                         <thead class="table-light">
                                             <tr><th>Type</th><th>Protocol</th><th>Use Case</th></tr>
                                         </thead>
@@ -299,7 +299,7 @@
                             <div class="card h-100">
                                 <div class="card-header bg-success text-white">Configuration Lifecycle</div>
                                 <div class="card-body">
-                                    <table class="table table-sm mb-0">
+                                    <table class="table dg-table table-sm mb-0">
                                         <thead class="table-light">
                                             <tr><th>Event</th><th>Behavior</th></tr>
                                         </thead>
@@ -364,7 +364,7 @@
 └─────────────────────────────────────────────────────────────────────────────┘</pre>
 
                     <h4 class="mt-4">Input Channel Properties</h4>
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-light"><tr><th>Property</th><th>Description</th></tr></thead>
                         <tbody>
                             <tr><td><strong>Direction</strong></td><td>Inbound — subscribes to broker topics/queues and consumes messages</td></tr>
@@ -429,7 +429,7 @@
 └─────────────────────────────────────────────────────────────────────────────┘</pre>
 
                     <h4 class="mt-4">Output Channel Properties</h4>
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-light"><tr><th>Property</th><th>Description</th></tr></thead>
                         <tbody>
                             <tr><td><strong>Direction</strong></td><td>Outbound — publishes messages to broker destinations</td></tr>
@@ -442,7 +442,7 @@
                     </table>
 
                     <h4 class="mt-4">Input vs Output Channel Comparison</h4>
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-light"><tr><th>Aspect</th><th>Input Channel</th><th>Output Channel</th></tr></thead>
                         <tbody>
                             <tr><td><strong>Direction</strong></td><td>Inbound (subscribe/consume)</td><td>Outbound (publish/produce)</td></tr>
@@ -468,7 +468,7 @@
                     The depth of this queue is the primary mechanism for backpressure management. When the queue fills up,
                     the broker consumer pauses until capacity is available.</p>
 
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-light">
                             <tr><th>Queue State</th><th>Depth %</th><th>Behavior</th></tr>
                         </thead>
@@ -553,7 +553,7 @@ session.start();</pre>
                   └───────┘ └───────┘ └───────┘</pre>
 
                     <h4 class="mt-4">Fan-Out Guarantees</h4>
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-light">
                             <tr><th>Guarantee</th><th>Description</th></tr>
                         </thead>
@@ -577,7 +577,7 @@ session.start();</pre>
                             <div class="card h-100">
                                 <div class="card-header bg-primary text-white">Handler Lifecycle</div>
                                 <div class="card-body">
-                                    <table class="table table-sm mb-0">
+                                    <table class="table dg-table table-sm mb-0">
                                         <thead class="table-light">
                                             <tr><th>Phase</th><th>Description</th></tr>
                                         </thead>
@@ -596,7 +596,7 @@ session.start();</pre>
                             <div class="card h-100">
                                 <div class="card-header bg-success text-white">Handler State Tracking</div>
                                 <div class="card-body">
-                                    <table class="table table-sm mb-0">
+                                    <table class="table dg-table table-sm mb-0">
                                         <thead class="table-light">
                                             <tr><th>Field</th><th>Description</th></tr>
                                         </thead>
@@ -661,7 +661,7 @@ session.start();</pre>
                             <div class="card h-100">
                                 <div class="card-header bg-primary text-white">Three Execution Phases</div>
                                 <div class="card-body">
-                                    <table class="table table-sm mb-0">
+                                    <table class="table dg-table table-sm mb-0">
                                         <tbody>
                                             <tr><td><strong>Phase 1: Linear</strong></td><td>Sequential steps with payload mapping and 4 merge strategies (REPLACE, MERGE_PREV, APPEND, PASSTHROUGH)</td></tr>
                                             <tr><td><strong>Phase 2: Conditional</strong></td><td><code>when</code> expressions: <code>==</code>, <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>contains</code>, <code>exists</code>. Steps SKIPPED when false.</td></tr>
@@ -675,7 +675,7 @@ session.start();</pre>
                             <div class="card h-100">
                                 <div class="card-header bg-success text-white">Variable Scopes</div>
                                 <div class="card-body">
-                                    <table class="table table-sm mb-0">
+                                    <table class="table dg-table table-sm mb-0">
                                         <tbody>
                                             <tr><td><code>${payload}</code></td><td>Original request payload</td></tr>
                                             <tr><td><code>${payload.field}</code></td><td>Specific field from original (dot-path)</td></tr>
@@ -701,7 +701,7 @@ session.start();</pre>
                 <!-- 11. Security Architecture -->
                 <section id="security" class="mb-5">
                     <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-shield-alt me-2 text-danger"></i>11. Security Architecture</h2>
-                    <table class="table table-bordered">
+                    <table class="table dg-table table-bordered">
                         <thead class="table-light">
                             <tr><th>Layer</th><th>Mechanism</th><th>Description</th></tr>
                         </thead>
@@ -793,7 +793,7 @@ session.start();</pre>
 
                     <h4 class="mt-4">Node Roles</h4>
                     <div class="table-responsive">
-                        <table class="table table-bordered table-sm">
+                        <table class="table dg-table table-bordered table-sm">
                             <thead class="table-dark">
                                 <tr><th>Role</th><th>Ingestion</th><th>Execution</th><th>Forwarding</th><th>Notes</th></tr>
                             </thead>

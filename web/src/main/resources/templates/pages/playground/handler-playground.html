@@ -602,7 +602,7 @@ function renderChainTrace(data) {
     let trace = null;
     if (data && data.data && data.data.chain_trace) trace = data.data.chain_trace;
     if (!trace || !trace.length) { viz.innerHTML = '<p class="text-muted small mb-0">No trace data available.</p>'; return; }
-    let html = '<div class="table-responsive"><table class="table table-sm table-bordered mb-0" style="font-size:0.78rem;">';
+    let html = '<div class="table-responsive"><table class="table dg-table table-sm table-bordered mb-0" style="font-size:0.78rem;">';
     html += '<thead class="table-dark"><tr><th>Step</th><th>Alias</th><th>Handler</th><th>Status</th><th>Duration</th><th>Details</th></tr></thead><tbody>';
     trace.forEach(t => {
         const statusBadge = t.status === 'SUCCESS' ? '<span class="badge bg-success">SUCCESS</span>'

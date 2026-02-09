@@ -1,0 +1,129 @@
+/* ─── DGFacade Table Enhancement Styles ─────────────────────────────── */
+
+.dg-table-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 0 2px;
+}
+
+.dg-table-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dg-table-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.dg-table-label {
+    font-size: 0.82rem;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.dg-table-pagesize {
+    width: auto !important;
+    display: inline-block;
+    min-width: 65px;
+    font-size: 0.82rem !important;
+    padding: 2px 28px 2px 8px !important;
+}
+
+.dg-table-info {
+    font-size: 0.8rem;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.dg-table-nav {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.dg-table-nav-btn {
+    padding: 2px 7px !important;
+    font-size: 0.78rem !important;
+    line-height: 1.4;
+    min-width: 28px;
+    text-align: center;
+}
+
+.dg-table-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.dg-table-page-indicator {
+    font-size: 0.8rem;
+    color: #495057;
+    min-width: 50px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Search row */
+.dg-table-search-row th {
+    background-color: #f8f9fa !important;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.dg-table-search-input {
+    font-size: 0.78rem !important;
+    padding: 2px 6px !important;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    background: #fff;
+    min-width: 50px;
+}
+
+.dg-table-search-input:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+    outline: none;
+}
+
+.dg-table-search-input::placeholder {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+/* Sortable headers */
+.dg-table-sortable {
+    position: relative;
+    padding-right: 22px !important;
+}
+
+.dg-sort-icon {
+    margin-left: 6px;
+    font-size: 0.7rem;
+    color: #adb5bd;
+    vertical-align: middle;
+}
+
+.dg-table-sortable:hover .dg-sort-icon {
+    color: #495057;
+}
+
+.fa-sort-up, .fa-sort-down {
+    color: #0d6efd !important;
+}
+
+/* Responsive: stack toolbar on mobile */
+@media (max-width: 576px) {
+    .dg-table-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .dg-table-toolbar-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+}

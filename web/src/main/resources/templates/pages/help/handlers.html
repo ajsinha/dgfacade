@@ -49,7 +49,7 @@ Content-Type: application/json
   -d '{"api_key":"dgf-admin-key-0001","request_type":"ARITHMETIC","payload":{"operation":"ADD","operands":[10,20,30]}}' \
   | python3 -m json.tool</pre>
                     <h5>Available REST Handlers</h5>
-                    <table class="table table-sm table-bordered small"><thead class="table-light"><tr><th>Request Type</th><th>Description</th><th>Example Payload</th></tr></thead>
+                    <table class="table dg-table table-sm table-bordered small"><thead class="table-light"><tr><th>Request Type</th><th>Description</th><th>Example Payload</th></tr></thead>
                     <tbody>
                         <tr><td><code>ECHO</code></td><td>Echoes back the payload</td><td><code>{"message": "test"}</code></td></tr>
                         <tr><td><code>ARITHMETIC</code></td><td>Math: ADD, SUB, MUL, DIV, POW</td><td><code>{"operation":"MUL","operands":[6,7]}</code></td></tr>
@@ -97,7 +97,7 @@ ws.onmessage = (e) => console.log('Response:', JSON.parse(e.data));</pre>
 }</pre>
                     <div class="alert alert-info small"><i class="fas fa-lightbulb me-1"></i><strong>When to use WebSocket:</strong> Real-time dashboards, streaming data, interactive probes, multiple rapid requests without connection overhead. The connection stays open — send as many requests as you want.</div>
                     <h5>WS_DEMO Operations</h5>
-                    <table class="table table-sm table-bordered small"><thead class="table-light"><tr><th>Operation</th><th>Description</th><th>Payload</th></tr></thead>
+                    <table class="table dg-table table-sm table-bordered small"><thead class="table-light"><tr><th>Operation</th><th>Description</th><th>Payload</th></tr></thead>
                     <tbody>
                         <tr><td><code>SYSTEM_PROBE</code></td><td>Live JVM memory, CPU, threads, uptime</td><td><code>{"operation":"SYSTEM_PROBE"}</code></td></tr>
                         <tr><td><code>MARKET_TICK</code></td><td>Simulated market data with bid/ask</td><td><code>{"operation":"MARKET_TICK","symbols":["AAPL"]}</code></td></tr>
@@ -143,7 +143,7 @@ Continue until TTL expires → stop &amp; return summary
   }
 }</pre>
                     <h5>Configuration Fields</h5>
-                    <table class="table table-sm table-bordered small"><thead class="table-light"><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+                    <table class="table dg-table table-sm table-bordered small"><thead class="table-light"><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
                     <tbody>
                         <tr><td><code>rest_endpoint</code></td><td>Yes</td><td>URL where DGRequest payload is POSTed. Must return JSON with a <code>"topic"</code> field.</td></tr>
                         <tr><td><code>rest_timeout_seconds</code></td><td>No</td><td>HTTP timeout for the REST call (default: 30)</td></tr>
@@ -231,7 +231,7 @@ Continue until TTL expires → stop &amp; return summary
                 </div>
                 <div class="card-body border-top small">
                     <h6 class="fw-bold">REST vs WebSocket</h6>
-                    <table class="table table-sm small mb-0"><tbody>
+                    <table class="table dg-table table-sm small mb-0"><tbody>
                         <tr><td></td><td><strong>REST</strong></td><td><strong>WebSocket</strong></td></tr>
                         <tr><td>Connection</td><td>Per-request</td><td>Persistent</td></tr>
                         <tr><td>Pattern</td><td>Request/Response</td><td>Bidirectional</td></tr>

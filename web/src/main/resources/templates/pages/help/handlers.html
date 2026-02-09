@@ -44,7 +44,7 @@ Content-Type: application/json
 }</pre>
                     <div class="alert alert-success small"><i class="fas fa-lightbulb me-1"></i><strong>Key point:</strong> REST is <strong>synchronous</strong> — the HTTP response is the handler result. The client blocks until the handler completes (or TTL expires). Ideal for quick operations under 30 seconds.</div>
                     <h5>curl Example</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">curl -s -X POST http://localhost:8080/api/v1/request \
+                    <pre class="bg-dark text-light p-3 rounded small">curl -s -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{"api_key":"dgf-admin-key-0001","request_type":"ARITHMETIC","payload":{"operation":"ADD","operands":[10,20,30]}}' \
   | python3 -m json.tool</pre>
@@ -67,7 +67,7 @@ Content-Type: application/json
                     <p>WebSocket provides a persistent connection for real-time, bidirectional communication. Send requests and receive responses without creating new HTTP connections.</p>
                     <h5>Step 1: Connect</h5>
                     <pre class="bg-dark text-light p-3 rounded small">// JavaScript
-const ws = new WebSocket('ws://localhost:8080/ws/gateway');
+const ws = new WebSocket('ws://localhost:8090/ws/gateway');
 ws.onopen = () => console.log('Connected!');
 ws.onmessage = (e) => console.log('Response:', JSON.parse(e.data));</pre>
                     <h5>Step 2: Send a Request</h5>

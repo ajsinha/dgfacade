@@ -134,7 +134,7 @@
                                     <p><strong>Content-Type:</strong> <code>application/json</code></p>
                                     <p><strong>Handler:</strong> <code>ApiController.submitRequest()</code></p>
                                     <p><strong>Response:</strong> Synchronous HTTP 200 with <code>DGResponse</code> JSON body</p>
-<pre class="bg-dark text-light p-2 rounded small"><code>curl -X POST http://localhost:8080/api/v1/request \
+<pre class="bg-dark text-light p-2 rounded small"><code>curl -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{
     "request_type": "ECHO",
@@ -154,7 +154,7 @@
                                     <p><strong>Handler:</strong> <code>DGFacadeWebSocketHandler</code></p>
                                     <p><strong>Response:</strong> Async JSON message on same WebSocket session</p>
 <pre class="bg-dark text-light p-2 rounded small"><code>// JavaScript
-const ws = new WebSocket("ws://localhost:8080/ws/gateway");
+const ws = new WebSocket("ws://localhost:8090/ws/gateway");
 ws.onopen = () =&gt; ws.send(JSON.stringify({
     request_type: "ARITHMETIC",
     api_key: "dg-api-admin-001",
@@ -521,7 +521,7 @@ private Behavior&lt;Command&gt; onTimeout(Timeout cmd) {
                         </div>
                         <div class="card-body">
                             <h6>Step 1: Send Request (curl)</h6>
-<pre class="bg-dark text-light p-3 rounded"><code>curl -s -X POST http://localhost:8080/api/v1/request \
+<pre class="bg-dark text-light p-3 rounded"><code>curl -s -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{
     "request_type": "ARITHMETIC",
@@ -653,7 +653,7 @@ ws.onclose = (e) => console.log("WebSocket closed:", e.code);</code></pre>
   "enabled": true
 }</code></pre>
                             <h6 class="mt-3">Step 4: Send REST Request with Kafka Delivery</h6>
-<pre class="bg-dark text-light p-3 rounded"><code>curl -s -X POST http://localhost:8080/api/v1/request \
+<pre class="bg-dark text-light p-3 rounded"><code>curl -s -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{
     "request_type": "ECHO",
@@ -690,7 +690,7 @@ kafka-console-consumer --bootstrap-server kafka-1:9092 \
                         </div>
                         <div class="card-body">
                             <p>The <code>DELAYED</code> handler simulates long-running work. Set a short TTL to see the timeout mechanism in action.</p>
-<pre class="bg-dark text-light p-3 rounded"><code>curl -s -X POST http://localhost:8080/api/v1/request \
+<pre class="bg-dark text-light p-3 rounded"><code>curl -s -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{
     "request_type": "DELAYED",
@@ -758,7 +758,7 @@ public class WeatherLookup {
   }
 }</code></pre>
                             <h6 class="mt-3">Step 3: Call It</h6>
-<pre class="bg-dark text-light p-3 rounded"><code>curl -s -X POST http://localhost:8080/api/v1/request \
+<pre class="bg-dark text-light p-3 rounded"><code>curl -s -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{
     "request_type": "WEATHER",

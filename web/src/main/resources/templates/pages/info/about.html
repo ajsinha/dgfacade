@@ -691,22 +691,22 @@
                                 <h6 class="text-muted"><i class="fas fa-terminal me-2"></i>Quick Test — Admin API Key</h6>
                                 <div class="bg-dark text-light p-3 rounded small" style="font-family: 'Courier New', monospace;">
                                     <div class="mb-2 text-success"># Echo test</div>
-                                    <div class="mb-3">curl -X POST http://localhost:8080/api/request \<br>
+                                    <div class="mb-3">curl -X POST http://localhost:8090/api/request \<br>
                                     &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
                                     &nbsp;&nbsp;-d '{"request_type":"ECHO","api_key":"dgf-admin-key-0001","payload":{"message":"hello"}}'</div>
 
                                     <div class="mb-2 text-success"># System info (admin only)</div>
-                                    <div class="mb-3">curl -X POST http://localhost:8080/api/request \<br>
+                                    <div class="mb-3">curl -X POST http://localhost:8090/api/request \<br>
                                     &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
                                     &nbsp;&nbsp;-d '{"request_type":"SYSTEM_INFO","api_key":"dgf-admin-key-0001","payload":{"section":"MEMORY"}}'</div>
 
                                     <div class="mb-2 text-success"># Hash SHA-256</div>
-                                    <div class="mb-3">curl -X POST http://localhost:8080/api/request \<br>
+                                    <div class="mb-3">curl -X POST http://localhost:8090/api/request \<br>
                                     &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
                                     &nbsp;&nbsp;-d '{"request_type":"HASH","api_key":"dgf-admin-key-0001","payload":{"operation":"SHA256","input":"hello world"}}'</div>
 
                                     <div class="mb-2 text-success"># HTTP probe (admin only)</div>
-                                    <div>curl -X POST http://localhost:8080/api/request \<br>
+                                    <div>curl -X POST http://localhost:8090/api/request \<br>
                                     &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
                                     &nbsp;&nbsp;-d '{"request_type":"HTTP_PROBE","api_key":"dgf-admin-key-0001","payload":{"url":"https://httpbin.org/get"}}'</div>
                                 </div>

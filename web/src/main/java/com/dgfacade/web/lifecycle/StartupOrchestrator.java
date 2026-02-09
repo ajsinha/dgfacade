@@ -61,7 +61,7 @@ public class StartupOrchestrator {
     @Value("${dgfacade.version:1.2.0}")
     private String version;
 
-    @Value("${server.port:8080}")
+    @Value("${server.port:8090}")
     private int serverPort;
 
     @Value("${server.servlet.context-path:/}")

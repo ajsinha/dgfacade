@@ -68,7 +68,7 @@ Add to `config/handlers/default.json`:
 ## Step 4: Test
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/request \
+curl -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "dgf-test-key-0001",

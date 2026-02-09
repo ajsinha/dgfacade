@@ -6,7 +6,7 @@
 
 JAR="dgfacade.jar"
 if [ ! -f "$JAR" ]; then
-    JAR="web/target/dgfacade-web-1.1.0.jar"
+    JAR="web/target/dgfacade-web-1.3.0.jar"
 fi
 
 if [ ! -f "$JAR" ]; then
@@ -14,7 +14,7 @@ if [ ! -f "$JAR" ]; then
     exit 1
 fi
 
-echo "Starting DGFacade v1.1.0..."
+echo "Starting DGFacade v1.3.0..."
 echo "Config dir: config/"
 echo "Libs dir:   libs/"
 echo "Logs dir:   logs/"

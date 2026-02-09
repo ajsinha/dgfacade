@@ -1,6 +1,6 @@
 # DGFacade — Data Gateway Facade
 
-**Version:** 1.1.0
+**Version:** 1.3.0
 **Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.**
 **Patent Pending:** Certain architectural patterns and implementations may be subject to patent applications.
 
@@ -72,22 +72,22 @@ chmod +x build.sh run.sh
 
 ```bash
 # Health check
-curl http://localhost:8080/api/v1/health
+curl http://localhost:8090/api/v1/health
 
 # Echo request
-curl -X POST http://localhost:8080/api/v1/request \
+curl -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{"api_key":"dgf-test-key-0001","request_type":"ECHO","payload":{"message":"Hello!"}}'
 
 # Arithmetic
-curl -X POST http://localhost:8080/api/v1/request \
+curl -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{"api_key":"dgf-test-key-0001","request_type":"ARITHMETIC","payload":{"operation":"MUL","operands":[7,6]}}'
 ```
 
 ### Web Dashboard
 
-Open `http://localhost:8080` — Login: `admin` / `password`
+Open `http://localhost:8090` — Login: `admin` / `password`
 
 ## API Endpoints
 

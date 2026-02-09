@@ -28,17 +28,17 @@ mvn clean package -DskipTests
 mvn spring-boot:run -pl web
 
 # Or using the JAR directly
-java -jar web/target/dgfacade-web-1.1.0.jar
+java -jar web/target/dgfacade-web-1.3.0.jar
 ```
 
 ## Verify
 
 ```bash
 # Health check
-curl http://localhost:8080/api/v1/health
+curl http://localhost:8090/api/v1/health
 
 # Submit an ECHO request
-curl -X POST http://localhost:8080/api/v1/request \
+curl -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "dgf-test-key-0001",
@@ -47,7 +47,7 @@ curl -X POST http://localhost:8080/api/v1/request \
   }'
 
 # Submit an ARITHMETIC request
-curl -X POST http://localhost:8080/api/v1/request \
+curl -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "dgf-test-key-0001",
@@ -58,7 +58,7 @@ curl -X POST http://localhost:8080/api/v1/request \
 
 ## Web UI
 
-Open `http://localhost:8080` in your browser.
+Open `http://localhost:8090` in your browser.
 
 Default credentials:
 - **Admin**: username=`admin`, password=`password`

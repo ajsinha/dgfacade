@@ -6,6 +6,8 @@
 package com.dgfacade.web.config;
 
 import com.dgfacade.common.util.ConfigPropertyResolver;
+import com.dgfacade.server.channel.ChannelAccessor;
+import com.dgfacade.server.cluster.ClusterService;
 import com.dgfacade.server.config.ExternalJarLoader;
 import com.dgfacade.server.config.HandlerConfigRegistry;
 import com.dgfacade.server.engine.ExecutionEngine;
@@ -18,6 +20,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.net.InetAddress;
 
 @Configuration
 public class AppConfig {
@@ -42,6 +46,22 @@ public class AppConfig {
 
     @Value("${dgfacade.output-channels.config-dir:config/output-channels}")
     private String outputChannelsConfigDir;
+
+    // --- Cluster Configuration ---
+    @Value("${dgfacade.cluster.seed-nodes:}")
+    private String clusterSeedNodes;
+
+    @Value("${dgfacade.cluster.node-role:BOTH}")
+    private String clusterNodeRole;
+
+    @Value("${dgfacade.cluster.heartbeat-seconds:15}")
+    private int clusterHeartbeatSeconds;
+
+    @Value("${server.port:8090}")
+    private int serverPort;
+
+    @Value("${dgfacade.version:1.4.0}")
+    private String version;
 
     @Bean
     public ConfigPropertyResolver configPropertyResolver() {
@@ -94,11 +114,34 @@ public class AppConfig {
     }
 
     @Bean
+    public ChannelAccessor channelAccessor(BrokerService brokerService,
+                                           InputChannelService inputChannelService,
+                                           OutputChannelService outputChannelService) {
+        return new ChannelAccessor(brokerService, inputChannelService, outputChannelService);
+    }
+
+    @Bean
+    public ClusterService clusterService() {
+        String host;
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        } catch (Exception e) {
+            host = "localhost";
+        }
+        return new ClusterService(host, serverPort, version,
+                clusterNodeRole, clusterSeedNodes, clusterHeartbeatSeconds);
+    }
+
+    @Bean
     public ExecutionEngine executionEngine(HandlerConfigRegistry registry,
                                            UserService userService,
-                                           MetricsService metricsService) {
+                                           MetricsService metricsService,
+                                           ChannelAccessor channelAccessor,
+                                           ClusterService clusterService) {
         ExecutionEngine engine = new ExecutionEngine(registry, userService);
         engine.setMetricsService(metricsService);
+        engine.setChannelAccessor(channelAccessor);
+        engine.setClusterService(clusterService);
         return engine;
     }
 }

@@ -1,0 +1,66 @@
+{
+  "chain_id": "SECURITY_AUDIT",
+  "description": "Security audit pipeline: capture → classify → hash PII → generate audit record",
+  "ttl_minutes": 10,
+  "error_strategy": "ABORT",
+  "enabled": true,
+  "steps": [
+    {
+      "step": 1,
+      "handler": "ECHO",
+      "alias": "capture",
+      "description": "Capture raw input for audit trail — immutable snapshot",
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2,
+      "handler": "STRING_TRANSFORM",
+      "alias": "classify",
+      "description": "Uppercase the sensitivity classification tag",
+      "payload_mapping": {
+        "operation": "UPPER",
+        "input": "${payload.classification}"
+      },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 3,
+      "handler": "HASH",
+      "alias": "pii_hash",
+      "description": "Hash the PII field (email/SSN) with SHA512 for secure storage",
+      "payload_mapping": {
+        "operation": "SHA512",
+        "input": "${payload.pii_data}"
+      },
+      "merge_strategy": "APPEND",
+      "when": "${payload.pii_data} exists"
+    },
+    {
+      "step": 4,
+      "handler": "HASH",
+      "alias": "record_checksum",
+      "description": "MD5 checksum of the entire enriched record for integrity verification",
+      "payload_mapping": {
+        "operation": "MD5",
+        "input": "${prev}"
+      },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 5,
+      "handler": "ECHO",
+      "alias": "audit_record",
+      "description": "Assemble the final audit record with all hashes and classification",
+      "payload_mapping": {
+        "audit_type": "SECURITY_AUDIT",
+        "original_input": "${steps.capture}",
+        "classification": "${steps.classify.result}",
+        "pii_hash": "${steps.pii_hash.hash}",
+        "record_checksum": "${steps.record_checksum.hash}",
+        "entity": "${payload.entity_name}",
+        "auditor": "${payload.auditor}"
+      },
+      "merge_strategy": "REPLACE"
+    }
+  ]
+}

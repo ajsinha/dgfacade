@@ -1,0 +1,79 @@
+{
+  "chain_id": "DATA_CONVERTER",
+  "description": "Multi-format converter: normalize keys → transform values → generate checksums → produce output manifest",
+  "ttl_minutes": 10,
+  "error_strategy": "SKIP",
+  "enabled": true,
+  "steps": [
+    {
+      "step": 1,
+      "handler": "JSON_TRANSFORM",
+      "alias": "sort_keys",
+      "description": "Sort all JSON keys alphabetically for deterministic output",
+      "payload_mapping": {
+        "operation": "SORT_KEYS",
+        "input": "${payload.record}"
+      },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2,
+      "handler": "STRING_TRANSFORM",
+      "alias": "normalize_id",
+      "description": "Uppercase the record ID for consistency",
+      "payload_mapping": {
+        "operation": "UPPER",
+        "input": "${payload.record_id}"
+      },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 3,
+      "handler": "STRING_TRANSFORM",
+      "alias": "char_count",
+      "description": "Count characters in description field for validation",
+      "payload_mapping": {
+        "operation": "CHAR_COUNT",
+        "input": "${payload.description}"
+      },
+      "merge_strategy": "APPEND",
+      "when": "${payload.description} exists"
+    },
+    {
+      "step": 4,
+      "alias": "dual_hash",
+      "description": "Generate both MD5 and SHA256 hashes in parallel for integrity",
+      "parallel": [
+        {
+          "handler": "HASH",
+          "alias": "md5",
+          "payload_mapping": { "operation": "MD5", "input": "${prev}" }
+        },
+        {
+          "handler": "HASH",
+          "alias": "sha256",
+          "payload_mapping": { "operation": "SHA256", "input": "${prev}" }
+        }
+      ],
+      "join_strategy": "KEYED"
+    },
+    {
+      "step": 5,
+      "handler": "ECHO",
+      "alias": "manifest",
+      "description": "Produce the final output manifest with all transformations",
+      "payload_mapping": {
+        "converter": "DATA_CONVERTER",
+        "record_id": "${steps.normalize_id.result}",
+        "sorted_data": "${steps.sort_keys}",
+        "description_length": "${steps.char_count.count}",
+        "integrity": {
+          "md5": "${steps.md5.hash}",
+          "sha256": "${steps.sha256.hash}"
+        },
+        "output_format": "${payload.output_format}"
+      },
+      "merge_strategy": "REPLACE"
+    }
+  ]
+}

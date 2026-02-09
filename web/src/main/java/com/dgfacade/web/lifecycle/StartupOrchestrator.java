@@ -5,6 +5,8 @@
  */
 package com.dgfacade.web.lifecycle;
 
+import com.dgfacade.server.channel.ChannelAccessor;
+import com.dgfacade.server.cluster.ClusterService;
 import com.dgfacade.server.config.HandlerConfigRegistry;
 import com.dgfacade.server.engine.ExecutionEngine;
 import com.dgfacade.server.metrics.MetricsService;
@@ -41,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Phase 5: Broker configuration scanning
  * Phase 6: Input Channel configuration scanning
  * Phase 7: WebSocket server verification
+ * Phase 8: Cluster initialization
  * FINAL:   System Ready announcement with all URLs
  * </pre>
  */
@@ -54,11 +57,13 @@ public class StartupOrchestrator {
     private final HandlerConfigRegistry handlerConfigRegistry;
     private final UserService userService;
     private final MetricsService metricsService;
+    private final ClusterService clusterService;
+    private final ChannelAccessor channelAccessor;
 
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.3.0}")
+    @Value("${dgfacade.version:1.4.0}")
     private String version;
 
     @Value("${server.port:8090}")
@@ -105,11 +110,15 @@ public class StartupOrchestrator {
     public StartupOrchestrator(ExecutionEngine executionEngine,
                                HandlerConfigRegistry handlerConfigRegistry,
                                UserService userService,
-                               MetricsService metricsService) {
+                               MetricsService metricsService,
+                               ClusterService clusterService,
+                               ChannelAccessor channelAccessor) {
         this.executionEngine = executionEngine;
         this.handlerConfigRegistry = handlerConfigRegistry;
         this.userService = userService;
         this.metricsService = metricsService;
+        this.clusterService = clusterService;
+        this.channelAccessor = channelAccessor;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -190,6 +199,19 @@ public class StartupOrchestrator {
                     "WebSocket endpoint: ws://localhost:" + serverPort + "/ws/gateway",
                     "Status: ACCEPTING CONNECTIONS");
 
+            // Phase 8: Cluster Initialization
+            phaseDelay();
+            logPhase(8, "Cluster Initialization",
+                    "Starting cluster service...");
+            clusterService.start();
+            String clusterMode = clusterService.isClusterEnabled() ? "CLUSTER" : "STANDALONE";
+            String clusterRole = clusterService.getSelf().getRole().name();
+            logPhaseComplete(8, "Cluster Initialization",
+                    "Mode: " + clusterMode,
+                    "Node ID: " + clusterService.getSelf().getNodeId(),
+                    "Role: " + clusterRole,
+                    "Cluster size: " + clusterService.getClusterSize() + " node(s)");
+
             // Final delay before system ready
             phaseDelay();
 
@@ -205,7 +227,7 @@ public class StartupOrchestrator {
             metricsService.updateChannelCount(channelCount);
 
             // Final System Ready Announcement
-            logSystemReady(userCount, apiKeyCount, handlerCount, brokerCount, channelCount, elapsed);
+            logSystemReady(userCount, apiKeyCount, handlerCount, brokerCount, channelCount, clusterMode, clusterRole, elapsed);
 
         } catch (Exception e) {
             log.error("╔════════════════════════════════════════════════════════════════════╗");
@@ -248,7 +270,8 @@ public class StartupOrchestrator {
     }
 
     private void logSystemReady(int users, int apiKeys, int handlers,
-                                int brokers, int channels, Duration elapsed) {
+                                int brokers, int channels,
+                                String clusterMode, String clusterRole, Duration elapsed) {
         String hostname;
         try {
             hostname = InetAddress.getLocalHost().getHostName();
@@ -303,6 +326,8 @@ public class StartupOrchestrator {
                 pad("✓ Execution Eng. : Pekko actor system RUNNING", 52));
         log.info("║   ✓ WebSocket      : ACCEPTING CONNECTIONS{}║",
                 pad("✓ WebSocket      : ACCEPTING CONNECTIONS", 52));
+        String clusterStr = "✓ Cluster        : " + clusterMode + " (" + clusterRole + ")";
+        log.info("║   {}{}║", clusterStr, pad(clusterStr, 52));
         log.info("║                                                                    ║");
         log.info("╠════════════════════════════════════════════════════════════════════╣");
         log.info("║                                                                    ║");

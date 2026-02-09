@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -39,12 +40,20 @@ public class GlobalExceptionHandler implements ErrorController {
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.3.0}")
+    @Value("${dgfacade.version:1.4.0}")
     private String version;
 
     /**
      * Handle all exceptions thrown by controllers.
      */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public String handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request, Model model) {
+        log.debug("Static resource not found: {} {}", request.getMethod(), request.getRequestURI());
+        populateModel(model, 404, "Not Found",
+                "The requested resource was not found.", null, request);
+        return "error";
+    }
+
     @ExceptionHandler(Exception.class)
     public String handleException(Exception ex, HttpServletRequest request, Model model) {
         log.error("Unhandled exception at {} {}: {}", request.getMethod(),

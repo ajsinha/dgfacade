@@ -34,6 +34,10 @@ public class HandlerState {
     private String errorMessage;
     private String exceptionStackTrace;
     private Map<String, Object> artifacts;
+    private Map<String, Object> requestPayload;
+    private Map<String, Object> responseData;
+    private String requestJson;
+    private String responseJson;
 
     public HandlerState() {}
 
@@ -118,4 +122,12 @@ public class HandlerState {
     public void setExceptionStackTrace(String exceptionStackTrace) { this.exceptionStackTrace = exceptionStackTrace; }
     public Map<String, Object> getArtifacts() { return artifacts; }
     public void setArtifacts(Map<String, Object> artifacts) { this.artifacts = artifacts; }
+    public Map<String, Object> getRequestPayload() { return requestPayload; }
+    public void setRequestPayload(Map<String, Object> requestPayload) { this.requestPayload = requestPayload; }
+    public Map<String, Object> getResponseData() { return responseData; }
+    public void setResponseData(Map<String, Object> responseData) { this.responseData = responseData; }
+    public String getRequestJson() { return requestJson; }
+    public void setRequestJson(String requestJson) { this.requestJson = requestJson; }
+    public String getResponseJson() { return responseJson; }
+    public void setResponseJson(String responseJson) { this.responseJson = responseJson; }
 }

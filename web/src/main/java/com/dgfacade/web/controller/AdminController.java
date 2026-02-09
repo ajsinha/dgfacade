@@ -33,7 +33,7 @@ public class AdminController {
     private final OutputChannelService outputChannelService;
 
     @Value("${dgfacade.app-name:DGFacade}") private String appName;
-    @Value("${dgfacade.version:1.3.0}") private String version;
+    @Value("${dgfacade.version:1.4.0}") private String version;
 
     public AdminController(UserService userService, BrokerService brokerService,
                            InputChannelService inputChannelService,

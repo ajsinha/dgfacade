@@ -7,13 +7,17 @@
     <div class="container-fluid py-4">
         <div class="row mb-3">
             <div class="col"><h2 class="mb-0"><i class="fas fa-flask me-2"></i>Handler Playground</h2>
-                <p class="text-muted mb-0">Test handlers via REST API or WebSocket in real-time. <a th:href="@{/help/handlers}" class="small">View tutorials &rarr;</a></p></div>
+                <p class="text-muted mb-0">Test handlers via REST, WebSocket, Kafka, and Handler Chains in real-time.
+                    <a th:href="@{/help/handlers}" class="small">Handler tutorials &rarr;</a>
+                    <a th:href="@{/help/handler-chaining}" class="small ms-2">Chaining guide &rarr;</a></p></div>
         </div>
 
-        <!-- Tabs -->
+        <!-- ═══════════════════ TABS ═══════════════════ -->
         <ul class="nav nav-tabs mb-3" id="pgTabs" role="tablist">
             <li class="nav-item"><a class="nav-link active" id="rest-tab" data-bs-toggle="tab" href="#restPane" role="tab"><i class="fas fa-globe me-1"></i>REST API</a></li>
             <li class="nav-item"><a class="nav-link" id="ws-tab" data-bs-toggle="tab" href="#wsPane" role="tab"><i class="fas fa-plug me-1"></i>WebSocket</a></li>
+            <li class="nav-item"><a class="nav-link" id="kafka-tab" data-bs-toggle="tab" href="#kafkaPane" role="tab"><i class="fas fa-stream me-1"></i>Kafka</a></li>
+            <li class="nav-item"><a class="nav-link" id="chain-tab" data-bs-toggle="tab" href="#chainPane" role="tab"><i class="fas fa-link me-1"></i>Handler Chains</a></li>
         </ul>
 
         <div class="tab-content">
@@ -23,38 +27,38 @@
                     <div class="col-lg-5">
                         <div class="card border-0 shadow-sm"><div class="card-header bg-success text-white py-2"><h6 class="mb-0"><i class="fas fa-paper-plane me-2"></i>REST Request Builder</h6></div>
                         <div class="card-body">
-                            <div class="mb-3"><label class="form-label fw-semibold small">API Key</label>
-                                <input type="text" id="restApiKey" class="form-control form-control-sm" value="dgf-admin-key-0001"></div>
-                            <div class="mb-3"><label class="form-label fw-semibold small">Request Type</label>
-                                <select id="restRequestType" class="form-select form-select-sm" onchange="loadRestTemplate()">
-                                    <option value="">— Select Handler —</option>
-                                    <option value="ECHO">ECHO — Echo back payload</option>
-                                    <option value="ARITHMETIC">ARITHMETIC — Math operations</option>
-                                    <option value="STRING_TRANSFORM">STRING_TRANSFORM — Text ops</option>
-                                    <option value="HASH">HASH — Hashing &amp; encoding</option>
-                                    <option value="JSON_TRANSFORM">JSON_TRANSFORM — JSON ops</option>
-                                    <option value="SYSTEM_INFO">SYSTEM_INFO — JVM diagnostics</option>
-                                    <option value="HTTP_PROBE">HTTP_PROBE — URL health check</option>
-                                    <option value="PDC_PROCESS">PDC_PROCESS — Publish-Deliver-Consume</option>
-                                </select></div>
-                            <div class="mb-3"><label class="form-label fw-semibold small">Payload (JSON)</label>
-                                <textarea id="restPayload" class="form-control font-monospace" rows="10" style="font-size:0.8rem;">{}</textarea></div>
-                            <div class="d-flex gap-2">
-                                <button id="restSendBtn" class="btn btn-success btn-sm" onclick="sendRestRequest()"><i class="fas fa-play me-1"></i>Send Request</button>
-                                <button class="btn btn-outline-secondary btn-sm" onclick="clearRestResult()"><i class="fas fa-eraser me-1"></i>Clear</button>
+                            <div class="mb-2 d-flex justify-content-between align-items-center">
+                                <label class="form-label fw-semibold small mb-0">Full Request JSON</label>
+                                <code class="small text-muted">POST /api/v1/request</code>
                             </div>
-                            <div class="form-text mt-2"><code>POST /api/v1/request</code> — synchronous response</div>
+                            <textarea id="restPayload" class="form-control font-monospace" rows="16" style="font-size:0.78rem;">{
+  "api_key": "dgf-admin-key-0001",
+  "request_type": "ECHO",
+  "payload": {
+    "message": "Hello DGFacade!",
+    "number": 42
+  }
+}</textarea>
+                            <div class="d-flex gap-2 mt-2">
+                                <button id="restSendBtn" class="btn btn-success btn-sm" onclick="sendRestRequest()"><i class="fas fa-play me-1"></i>Send Request</button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('restPayload').value='{}'; clearRestResult()"><i class="fas fa-eraser me-1"></i>Clear</button>
+                                <button class="btn btn-outline-info btn-sm" onclick="formatRestJson()"><i class="fas fa-align-left me-1"></i>Format</button>
+                            </div>
                         </div></div>
                         <!-- Quick templates -->
                         <div class="card border-0 shadow-sm mt-3"><div class="card-header bg-light py-2"><h6 class="mb-0 small"><i class="fas fa-magic me-2"></i>Quick Templates</h6></div>
                         <div class="card-body p-2">
                             <div class="d-flex flex-wrap gap-1">
-                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('ECHO',{message:'Hello DGFacade!',number:42})">Echo</button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('ARITHMETIC',{operation:'ADD',operands:[10,20,30]})">Add 10+20+30</button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('STRING_TRANSFORM',{operation:'REVERSE',input:'DGFacade rocks'})">Reverse String</button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('HASH',{operation:'SHA256',input:'Hello World'})">SHA256</button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('SYSTEM_INFO',{})">System Info</button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('HTTP_PROBE',{url:'https://httpbin.org/get',method:'GET'})">HTTP Probe</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('ECHO',{message:'Hello DGFacade!',number:42})">Echo</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('ARITHMETIC',{operation:'ADD',operands:[10,20,30]})">Add 10+20+30</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('ARITHMETIC',{operation:'MUL',operands:[5,6,7]})">Mul 5*6*7</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('STRING_TRANSFORM',{operation:'REVERSE',input:'DGFacade rocks'})">Reverse String</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('STRING_TRANSFORM',{operation:'UPPER',input:'hello world'})">Uppercase</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('HASH',{operation:'SHA256',input:'Hello World'})">SHA256</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('JSON_TRANSFORM',{operation:'FLATTEN',data:{a:{b:{c:1}},d:2}})">Flatten JSON</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('SYSTEM_INFO',{})">System Info</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('HTTP_PROBE',{url:'https://httpbin.org/get',method:'GET'})">HTTP Probe</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestFull('CHAIN',{chain_id:'ORDER_PROCESS',order_id:'ord-7891',customer:'Acme Corp',items:[{sku:'WIDGET-A',qty:10,price:12.50}]})">Chain: Order</button>
                             </div>
                         </div></div>
                     </div>
@@ -62,7 +66,7 @@
                         <div class="card border-0 shadow-sm h-100"><div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="fas fa-terminal me-2"></i>REST Response</h6>
                             <span id="restStatus" class="badge bg-secondary">Ready</span></div>
-                        <div class="card-body p-0"><pre id="restResult" class="p-3 mb-0 bg-dark text-light" style="min-height:450px;max-height:600px;overflow-y:auto;font-size:0.78rem;white-space:pre-wrap;">Send a request to see the response here...</pre></div></div>
+                        <div class="card-body p-0"><pre id="restResult" class="p-3 mb-0 bg-dark text-light" style="min-height:500px;max-height:650px;overflow-y:auto;font-size:0.78rem;white-space:pre-wrap;">Send a request to see the response here...</pre></div></div>
                     </div>
                 </div>
             </div>
@@ -80,37 +84,311 @@
                             </div>
                             <div class="mb-2"><span class="small fw-semibold">Status: </span><span id="wsStatus" class="badge bg-secondary">Disconnected</span></div>
                             <hr>
-                            <div class="mb-3"><label class="form-label fw-semibold small">API Key</label>
-                                <input type="text" id="wsApiKey" class="form-control form-control-sm" value="dgf-admin-key-0001"></div>
-                            <div class="mb-3"><label class="form-label fw-semibold small">Request Type</label>
-                                <select id="wsRequestType" class="form-select form-select-sm">
-                                    <option value="WS_DEMO">WS_DEMO — WebSocket Demo</option>
-                                    <option value="ECHO">ECHO — Echo Handler</option>
-                                    <option value="ARITHMETIC">ARITHMETIC — Math</option>
-                                    <option value="SYSTEM_INFO">SYSTEM_INFO — JVM</option>
-                                </select></div>
-                            <div class="mb-3"><label class="form-label fw-semibold small">Payload (JSON)</label>
-                                <textarea id="wsPayload" class="form-control font-monospace" rows="8" style="font-size:0.8rem;">{"operation": "SYSTEM_PROBE"}</textarea></div>
-                            <div class="d-flex gap-2">
+                            <div class="mb-2 d-flex justify-content-between align-items-center">
+                                <label class="form-label fw-semibold small mb-0">Full Request JSON</label>
+                                <code class="small text-muted">WebSocket frame</code>
+                            </div>
+                            <textarea id="wsPayload" class="form-control font-monospace" rows="10" style="font-size:0.78rem;">{
+  "api_key": "dgf-admin-key-0001",
+  "request_type": "WS_DEMO",
+  "payload": {
+    "operation": "SYSTEM_PROBE"
+  }
+}</textarea>
+                            <div class="d-flex gap-2 mt-2">
                                 <button id="wsSendBtn" class="btn btn-primary btn-sm" onclick="sendWsMessage()" disabled><i class="fas fa-paper-plane me-1"></i>Send</button>
                                 <button class="btn btn-outline-secondary btn-sm" onclick="clearWsLog()"><i class="fas fa-eraser me-1"></i>Clear Log</button>
+                                <button class="btn btn-outline-info btn-sm" onclick="formatWsJson()"><i class="fas fa-align-left me-1"></i>Format</button>
                             </div>
                         </div></div>
-                        <!-- WS Quick templates -->
                         <div class="card border-0 shadow-sm mt-3"><div class="card-header bg-light py-2"><h6 class="mb-0 small"><i class="fas fa-magic me-2"></i>WebSocket Templates</h6></div>
                         <div class="card-body p-2"><div class="d-flex flex-wrap gap-1">
-                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('WS_DEMO',{operation:'SYSTEM_PROBE'})">System Probe</button>
-                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('WS_DEMO',{operation:'MARKET_TICK',symbols:['AAPL','GOOG','TSLA'],ticks_per_symbol:3})">Market Ticks</button>
-                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('WS_DEMO',{operation:'PING_BURST'})">Ping Burst</button>
-                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('WS_DEMO',{operation:'DATA_GENERATE',count:5})">Generate Data</button>
-                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('ECHO',{hello:'from WebSocket!'})">Echo via WS</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsFull('WS_DEMO',{operation:'SYSTEM_PROBE'})">System Probe</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsFull('WS_DEMO',{operation:'MARKET_TICK',symbols:['AAPL','GOOG','TSLA'],ticks_per_symbol:3})">Market Ticks</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsFull('WS_DEMO',{operation:'PING_BURST'})">Ping Burst</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsFull('WS_DEMO',{operation:'DATA_GENERATE',count:5})">Generate Data</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsFull('ECHO',{hello:'from WebSocket!'})">Echo via WS</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsFull('CHAIN',{chain_id:'PARALLEL_ANALYSIS',message:'Parallel analysis via WebSocket'})">Chain via WS</button>
                         </div></div></div>
                     </div>
                     <div class="col-lg-7">
                         <div class="card border-0 shadow-sm h-100"><div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="fas fa-stream me-2"></i>WebSocket Log</h6>
                             <span id="wsMsgCount" class="badge bg-info">0 messages</span></div>
-                        <div class="card-body p-0"><div id="wsLog" class="p-3 bg-dark text-light" style="min-height:450px;max-height:600px;overflow-y:auto;font-size:0.78rem;">Connect to WebSocket to begin...</div></div></div>
+                        <div class="card-body p-0"><div id="wsLog" class="p-3 bg-dark text-light" style="min-height:500px;max-height:650px;overflow-y:auto;font-size:0.78rem;">Connect to WebSocket to begin...</div></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════ KAFKA TAB ════════════════ -->
+            <div class="tab-pane fade" id="kafkaPane" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <div class="card border-0 shadow-sm mb-3"><div class="card-header bg-dark text-white py-2"><h6 class="mb-0"><i class="fas fa-stream me-2"></i>Kafka Integration Overview</h6></div>
+                        <div class="card-body">
+                            <p class="small text-muted mb-2">DGFacade connects to Kafka as both a <strong>consumer</strong> (Input Channels) and a <strong>producer</strong> (Output Channels). Messages consumed from Kafka topics are fanned-out to all registered listeners. Handler results can be published back to Kafka via Output Channels.</p>
+                            <div class="d-flex gap-2 mb-3">
+                                <span class="badge bg-success"><i class="fas fa-arrow-down me-1"></i>Input: Subscribe</span>
+                                <span class="badge bg-primary"><i class="fas fa-arrow-up me-1"></i>Output: Publish</span>
+                                <span class="badge bg-warning text-dark"><i class="fas fa-shield-alt me-1"></i>SSL/TLS + PEM</span>
+                            </div>
+                            <h6 class="small fw-bold">Message Flow</h6>
+                            <pre class="bg-dark text-light p-2 rounded small mb-0" style="font-size:0.72rem;">Kafka Topic  ──►  Input Channel  ──►  Internal Queue  ──►  Fan-Out
+                                                           ├── Handler A
+                                                           ├── Handler B
+                                                           └── Handler C
+                                                                   │
+Handler Result  ──►  Output Channel  ──►  Kafka Producer  ──►  Kafka Topic</pre>
+                        </div></div>
+
+                        <!-- Kafka Config Viewer -->
+                        <div class="card border-0 shadow-sm mb-3"><div class="card-header py-2" style="background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff;"><h6 class="mb-0"><i class="fas fa-cog me-2"></i>Configuration Viewer</h6></div>
+                        <div class="card-body">
+                            <label class="form-label fw-semibold small">Select Configuration</label>
+                            <select id="kafkaConfigSelect" class="form-select form-select-sm mb-2" onchange="loadKafkaConfig()">
+                                <optgroup label="Brokers">
+                                    <option value="broker-dev-kafka">Broker: dev-kafka (no SSL)</option>
+                                    <option value="broker-prod-kafka">Broker: prod-kafka-pem (mTLS)</option>
+                                </optgroup>
+                                <optgroup label="Input Channels (Subscribe)">
+                                    <option value="input-order-events">Input: order-events (Kafka)</option>
+                                    <option value="input-trade-queue">Input: trade-queue (ActiveMQ)</option>
+                                </optgroup>
+                                <optgroup label="Output Channels (Publish)">
+                                    <option value="output-order-notifications">Output: order-notifications (Kafka)</option>
+                                    <option value="output-trade-results">Output: trade-results (ActiveMQ)</option>
+                                </optgroup>
+                            </select>
+                            <pre id="kafkaConfigDisplay" class="bg-dark text-light p-3 rounded" style="font-size:0.75rem; max-height:250px; overflow-y:auto; white-space:pre-wrap;">Select a configuration to view...</pre>
+                        </div></div>
+
+                        <!-- Kafka Producer Simulator -->
+                        <div class="card border-0 shadow-sm"><div class="card-header bg-success text-white py-2"><h6 class="mb-0"><i class="fas fa-paper-plane me-2"></i>Kafka Producer Simulator</h6></div>
+                        <div class="card-body">
+                            <p class="small text-muted mb-2">Simulate producing a Kafka message. Sends through DGFacade's REST API with metadata indicating Kafka origin.</p>
+                            <div class="mb-2"><label class="form-label fw-semibold small">Target Input Channel</label>
+                                <select id="kafkaTargetChannel" class="form-select form-select-sm">
+                                    <option value="order-events">order-events (Kafka: orders.created)</option>
+                                    <option value="trade-queue">trade-queue (ActiveMQ: TRADE.INPUT)</option>
+                                </select></div>
+                            <div class="mb-2"><label class="form-label fw-semibold small">Full Request JSON</label>
+                                <textarea id="kafkaPayload" class="form-control font-monospace" rows="8" style="font-size:0.78rem;">{
+  "api_key": "dgf-admin-key-0001",
+  "request_type": "ECHO",
+  "payload": {
+    "order_id": "ORD-90210",
+    "customer": "Acme Corp",
+    "product": "Widget Pro",
+    "quantity": 50,
+    "unit_price": 24.99
+  }
+}</textarea></div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success btn-sm" onclick="sendKafkaSimulated()"><i class="fas fa-play me-1"></i>Produce Message</button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearKafkaResult()"><i class="fas fa-eraser me-1"></i>Clear</button>
+                            </div>
+                        </div></div>
+                    </div>
+
+                    <!-- Right: Results + Code -->
+                    <div class="col-lg-7">
+                        <div class="card border-0 shadow-sm mb-3"><div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-terminal me-2"></i>Kafka Simulation Result</h6>
+                            <span id="kafkaStatus" class="badge bg-secondary">Ready</span></div>
+                        <div class="card-body p-0"><pre id="kafkaResult" class="p-3 mb-0 bg-dark text-light" style="min-height:200px;max-height:350px;overflow-y:auto;font-size:0.78rem;white-space:pre-wrap;">Produce a message to see the handler response here.
+
+This simulator sends the message through DGFacade's REST API
+with metadata indicating it originated from a Kafka Input Channel.
+In production, the message would arrive via a real Kafka consumer.</pre></div></div>
+
+                        <!-- Code Snippets -->
+                        <div class="card border-0 shadow-sm"><div class="card-header py-2" style="background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff;"><h6 class="mb-0"><i class="fas fa-code me-2"></i>Integration Code Snippets</h6></div>
+                        <div class="card-body">
+                            <ul class="nav nav-pills nav-fill mb-3" id="codeSnippetTabs">
+                                <li class="nav-item"><a class="nav-link active small py-1" data-bs-toggle="pill" href="#snippet-producer">Kafka Producer</a></li>
+                                <li class="nav-item"><a class="nav-link small py-1" data-bs-toggle="pill" href="#snippet-consumer">Kafka Consumer</a></li>
+                                <li class="nav-item"><a class="nav-link small py-1" data-bs-toggle="pill" href="#snippet-curl">curl Examples</a></li>
+                                <li class="nav-item"><a class="nav-link small py-1" data-bs-toggle="pill" href="#snippet-docker">Docker Compose</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active" id="snippet-producer">
+                                    <pre class="bg-dark text-light p-3 rounded" style="font-size:0.72rem;max-height:260px;overflow-y:auto;"><span style="color:#6c9;">// Java — Produce to DGFacade's Input Channel via Kafka</span>
+Properties props = new Properties();
+props.put("bootstrap.servers", "localhost:9092");
+props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+KafkaProducer&lt;String, String&gt; producer = new KafkaProducer&lt;&gt;(props);
+
+<span style="color:#6c9;">// DGFacade Input Channel "order-events" subscribes to "orders.created"</span>
+String message = """
+    {
+      "request_type": "CHAIN",
+      "api_key": "dgf-admin-key-0001",
+      "payload": {
+        "chain_id": "ORDER_PROCESS",
+        "order_id": "ORD-90210",
+        "customer": "Acme Corp"
+      }
+    }
+    """;
+
+producer.send(new ProducerRecord&lt;&gt;("orders.created", "ORD-90210", message));
+producer.flush();</pre>
+                                </div>
+                                <div class="tab-pane fade" id="snippet-consumer">
+                                    <pre class="bg-dark text-light p-3 rounded" style="font-size:0.72rem;max-height:260px;overflow-y:auto;"><span style="color:#6c9;">// Java — Consume handler results from DGFacade's Output Channel</span>
+Properties props = new Properties();
+props.put("bootstrap.servers", "localhost:9092");
+props.put("group.id", "my-result-consumer");
+props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+props.put("auto.offset.reset", "latest");
+
+KafkaConsumer&lt;String, String&gt; consumer = new KafkaConsumer&lt;&gt;(props);
+
+<span style="color:#6c9;">// DGFacade Output Channel "order-notifications" publishes to this topic</span>
+consumer.subscribe(Collections.singletonList("notifications.orders.confirmed"));
+
+while (true) {
+    ConsumerRecords&lt;String, String&gt; records = consumer.poll(Duration.ofMillis(500));
+    for (ConsumerRecord&lt;String, String&gt; record : records) {
+        DGResponse response = objectMapper.readValue(record.value(), DGResponse.class);
+        System.out.println("Handler result: " + response.getStatus());
+        System.out.println("Data: " + response.getData());
+    }
+}</pre>
+                                </div>
+                                <div class="tab-pane fade" id="snippet-curl">
+                                    <pre class="bg-dark text-light p-3 rounded" style="font-size:0.72rem;max-height:260px;overflow-y:auto;"><span style="color:#6c9;"># Produce message via Kafka CLI &rarr; DGFacade consumes it</span>
+kafka-console-producer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic orders.created \
+  --property "parse.key=true" --property "key.separator=:" &lt;&lt; 'EOF'
+ORD-001:{"request_type":"CHAIN","api_key":"dgf-admin-key-0001","payload":{"chain_id":"ORDER_PROCESS","order_id":"ORD-001","customer":"Test"}}
+EOF
+
+<span style="color:#6c9;"># Consume results from Output Channel</span>
+kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic notifications.orders.confirmed \
+  --from-beginning
+
+<span style="color:#6c9;"># Simulate Kafka flow via REST API</span>
+curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "ETL_PIPELINE",
+      "source_data": {"order":{"id":"X1","total":99}},
+      "customer_name": "alice smith",
+      "unit_price": 24.99,
+      "quantity": 10,
+      "source_format": "nested-json"
+    }
+  }'</pre>
+                                </div>
+                                <div class="tab-pane fade" id="snippet-docker">
+                                    <pre class="bg-dark text-light p-3 rounded" style="font-size:0.72rem;max-height:260px;overflow-y:auto;"><span style="color:#6c9;"># docker-compose.yml — DGFacade + Kafka + Zookeeper</span>
+version: '3.8'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on: [zookeeper]
+    ports: ["9092:9092"]
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  dgfacade:
+    image: dgfacade:1.4.0
+    ports: ["8090:8090"]
+    depends_on: [kafka]
+    volumes:
+      - ./config:/app/config
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092</pre>
+                                </div>
+                            </div>
+                        </div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════ HANDLER CHAINS TAB ════════════════ -->
+            <div class="tab-pane fade" id="chainPane" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <div class="card border-0 shadow-sm"><div class="card-header text-white py-2" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"><h6 class="mb-0"><i class="fas fa-link me-2"></i>Chain Executor</h6></div>
+                        <div class="card-body">
+                            <div class="mb-3"><label class="form-label fw-semibold small">Select Chain (loads template)</label>
+                                <select id="chainSelect" class="form-select form-select-sm" onchange="loadChainTemplate()">
+                                    <option value="">— Select a Chain —</option>
+                                    <optgroup label="Phase 1 — Linear Pipelines">
+                                        <option value="ORDER_PROCESS">ORDER_PROCESS — Normalize &rarr; hash &rarr; audit</option>
+                                        <option value="ETL_PIPELINE">ETL_PIPELINE — Extract &rarr; transform &rarr; load</option>
+                                    </optgroup>
+                                    <optgroup label="Phase 2 — Conditional Steps">
+                                        <option value="DATA_ENRICH">DATA_ENRICH — Conditional enrichment</option>
+                                        <option value="SECURITY_AUDIT">SECURITY_AUDIT — PII hashing &amp; audit</option>
+                                        <option value="NOTIFICATION_ROUTER">NOTIFICATION_ROUTER — Priority routing</option>
+                                    </optgroup>
+                                    <optgroup label="Phase 3 — Parallel Fan-Out">
+                                        <option value="PARALLEL_ANALYSIS">PARALLEL_ANALYSIS — Multi-hash analysis</option>
+                                        <option value="DATA_CONVERTER">DATA_CONVERTER — Parallel integrity hashing</option>
+                                    </optgroup>
+                                </select></div>
+                            <div id="chainDescription" class="alert alert-light small py-2 d-none"></div>
+                            <div class="mb-2 d-flex justify-content-between align-items-center">
+                                <label class="form-label fw-semibold small mb-0">Full Request JSON</label>
+                                <code class="small text-muted">POST /api/v1/request</code>
+                            </div>
+                            <textarea id="chainPayload" class="form-control font-monospace" rows="14" style="font-size:0.78rem;">{
+  "api_key": "dgf-admin-key-0001",
+  "request_type": "CHAIN",
+  "payload": {}
+}</textarea>
+                            <div class="d-flex gap-2 mt-2">
+                                <button id="chainSendBtn" class="btn btn-sm text-white" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);" onclick="sendChainRequest()"><i class="fas fa-play me-1"></i>Execute Chain</button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearChainResult()"><i class="fas fa-eraser me-1"></i>Clear</button>
+                                <button class="btn btn-outline-info btn-sm" onclick="formatChainJson()"><i class="fas fa-align-left me-1"></i>Format</button>
+                            </div>
+                        </div></div>
+
+                        <!-- Chain Steps Preview -->
+                        <div class="card border-0 shadow-sm mt-3"><div class="card-header bg-light py-2"><h6 class="mb-0 small"><i class="fas fa-project-diagram me-2"></i>Chain Steps Preview</h6></div>
+                        <div class="card-body p-2" id="chainStepsPreview">
+                            <p class="text-muted small mb-0">Select a chain to see its step diagram.</p>
+                        </div></div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="card border-0 shadow-sm"><div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-terminal me-2"></i>Chain Execution Result</h6>
+                            <span id="chainStatus" class="badge bg-secondary">Ready</span></div>
+                        <div class="card-body p-0"><pre id="chainResult" class="p-3 mb-0 bg-dark text-light" style="min-height:300px;max-height:500px;overflow-y:auto;font-size:0.78rem;white-space:pre-wrap;">Select a chain and click Execute to see the pipeline result here.
+
+Each chain response includes:
+  - Merged output data from all steps
+  - chain_trace[] with per-step status, duration, and skip reasons
+  - Execution statistics (total/executed/skipped/failed steps)</pre></div></div>
+
+                        <!-- Chain Trace Visualizer -->
+                        <div class="card border-0 shadow-sm mt-3"><div class="card-header py-2" style="background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff;">
+                            <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Execution Trace</h6></div>
+                        <div class="card-body p-2" id="chainTraceViz">
+                            <p class="text-muted small mb-0">Execute a chain to see the step-by-step trace visualization.</p>
+                        </div></div>
                     </div>
                 </div>
             </div>
@@ -121,36 +399,53 @@
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 
 <script>
-// ════════════ REST ════════════
+// ════════════════════════════════════════════════════
+//  COMMON: build full request JSON
+// ════════════════════════════════════════════════════
+function buildFullRequest(type, payload, apiKey) {
+    return JSON.stringify({ api_key: apiKey || 'dgf-admin-key-0001', request_type: type, payload: payload }, null, 2);
+}
+function formatJson(elId) {
+    const el = document.getElementById(elId);
+    try { el.value = JSON.stringify(JSON.parse(el.value), null, 2); } catch(e) {}
+}
+function formatRestJson()  { formatJson('restPayload'); }
+function formatWsJson()    { formatJson('wsPayload'); }
+function formatChainJson() { formatJson('chainPayload'); }
+
+// ════════════════════════════════════════════════════
+//  REST TAB
+// ════════════════════════════════════════════════════
+function setRestFull(type, payload) {
+    document.getElementById('restPayload').value = buildFullRequest(type, payload);
+}
 function sendRestRequest() {
     const btn = document.getElementById('restSendBtn');
     const status = document.getElementById('restStatus');
     const result = document.getElementById('restResult');
     btn.disabled = true; status.className = 'badge bg-warning'; status.textContent = 'Sending...';
-    let payload;
-    try { payload = JSON.parse(document.getElementById('restPayload').value); } catch(e) { result.textContent = 'ERROR: Invalid JSON payload\n' + e.message; status.className = 'badge bg-danger'; status.textContent = 'Error'; btn.disabled = false; return; }
-    const body = { api_key: document.getElementById('restApiKey').value, request_type: document.getElementById('restRequestType').value, payload: payload };
-    const startTime = performance.now();
+    let body;
+    try { body = JSON.parse(document.getElementById('restPayload').value); } catch(e) { result.textContent = 'ERROR: Invalid JSON\n' + e.message; status.className = 'badge bg-danger'; status.textContent = 'Error'; btn.disabled = false; return; }
+    const t0 = performance.now();
     fetch('/api/v1/request', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) })
         .then(r => r.json()).then(data => {
-            const elapsed = (performance.now() - startTime).toFixed(1);
+            const ms = (performance.now() - t0).toFixed(1);
             status.className = data.status === 'SUCCESS' ? 'badge bg-success' : 'badge bg-danger';
-            status.textContent = data.status + ' (' + elapsed + 'ms)';
+            status.textContent = data.status + ' (' + ms + 'ms)';
             result.textContent = JSON.stringify(data, null, 2);
         }).catch(e => { status.className = 'badge bg-danger'; status.textContent = 'Failed'; result.textContent = 'FETCH ERROR:\n' + e.message; })
         .finally(() => btn.disabled = false);
 }
-function setRestTemplate(type, payload) { document.getElementById('restRequestType').value = type; document.getElementById('restPayload').value = JSON.stringify(payload, null, 2); }
-function loadRestTemplate() {
-    const t = document.getElementById('restRequestType').value;
-    const templates = { 'ECHO': {message:'Hello!',ts:new Date().toISOString()}, 'ARITHMETIC': {operation:'ADD',operands:[10,20]}, 'STRING_TRANSFORM': {operation:'UPPER',input:'hello world'}, 'HASH': {operation:'SHA256',input:'test'}, 'JSON_TRANSFORM': {operation:'FLATTEN',input:{a:{b:{c:1}},d:2}}, 'SYSTEM_INFO': {}, 'HTTP_PROBE': {url:'https://httpbin.org/get',method:'GET'}, 'PDC_PROCESS': {order_id:'ORD-001',customer:'Acme Corp',items:[{sku:'WIDGET-A',qty:100}]} };
-    if (templates[t]) document.getElementById('restPayload').value = JSON.stringify(templates[t], null, 2);
-}
 function clearRestResult() { document.getElementById('restResult').textContent = 'Send a request to see the response here...'; document.getElementById('restStatus').className = 'badge bg-secondary'; document.getElementById('restStatus').textContent = 'Ready'; }
 
-// ════════════ WEBSOCKET ════════════
+// ════════════════════════════════════════════════════
+//  WEBSOCKET TAB
+// ════════════════════════════════════════════════════
 let ws = null; let wsMsgIdx = 0;
 window.addEventListener('load', () => { document.getElementById('wsUrl').value = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/gateway'; });
+function setWsFull(type, payload) {
+    document.getElementById('wsPayload').value = buildFullRequest(type, payload);
+}
 function toggleWs() {
     if (ws && ws.readyState === WebSocket.OPEN) { ws.close(); return; }
     const url = document.getElementById('wsUrl').value;
@@ -158,30 +453,191 @@ function toggleWs() {
     document.getElementById('wsStatus').className = 'badge bg-warning'; document.getElementById('wsStatus').textContent = 'Connecting...';
     ws.onopen = () => { document.getElementById('wsStatus').className = 'badge bg-success'; document.getElementById('wsStatus').textContent = 'Connected'; document.getElementById('wsConnectBtn').innerHTML = '<i class="fas fa-times me-1"></i>Disconnect'; document.getElementById('wsSendBtn').disabled = false; appendWsLog('system', 'Connected to ' + url); };
     ws.onclose = () => { document.getElementById('wsStatus').className = 'badge bg-secondary'; document.getElementById('wsStatus').textContent = 'Disconnected'; document.getElementById('wsConnectBtn').innerHTML = '<i class="fas fa-plug me-1"></i>Connect'; document.getElementById('wsSendBtn').disabled = true; appendWsLog('system', 'Disconnected'); };
-    ws.onerror = (e) => { appendWsLog('error', 'WebSocket error'); };
+    ws.onerror = () => { appendWsLog('error', 'WebSocket error'); };
     ws.onmessage = (e) => { let data; try { data = JSON.parse(e.data); } catch(ex) { data = e.data; } appendWsLog('recv', JSON.stringify(data, null, 2)); };
 }
 function sendWsMessage() {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    let payload; try { payload = JSON.parse(document.getElementById('wsPayload').value); } catch(e) { appendWsLog('error', 'Invalid JSON: ' + e.message); return; }
-    const msg = { api_key: document.getElementById('wsApiKey').value, request_type: document.getElementById('wsRequestType').value, payload: payload };
-    ws.send(JSON.stringify(msg));
-    appendWsLog('sent', JSON.stringify(msg, null, 2));
+    let msg;
+    try { msg = JSON.parse(document.getElementById('wsPayload').value); } catch(e) { appendWsLog('error', 'Invalid JSON: ' + e.message); return; }
+    ws.send(JSON.stringify(msg)); appendWsLog('sent', JSON.stringify(msg, null, 2));
 }
 function appendWsLog(type, text) {
     const log = document.getElementById('wsLog');
     if (wsMsgIdx === 0) log.innerHTML = '';
     wsMsgIdx++;
     const colors = { system: '#6c757d', sent: '#28a745', recv: '#0d6efd', error: '#dc3545' };
-    const labels = { system: '⚙ SYSTEM', sent: '→ SENT', recv: '← RECEIVED', error: '✗ ERROR' };
+    const labels = { system: '\u2699 SYSTEM', sent: '\u2192 SENT', recv: '\u2190 RECEIVED', error: '\u2717 ERROR' };
     const ts = new Date().toLocaleTimeString();
-    const el = document.createElement('div'); el.style.borderBottom = '1px solid #333'; el.style.padding = '6px 0';
+    const el = document.createElement('div'); el.style.cssText = 'border-bottom:1px solid #333;padding:6px 0';
     el.innerHTML = '<span style="color:' + (colors[type]||'#aaa') + ';font-weight:bold">[' + ts + '] ' + (labels[type]||type) + '</span><pre style="margin:4px 0 0;white-space:pre-wrap;color:#e0e0e0;font-size:0.75rem;">' + escapeHtml(text) + '</pre>';
     log.appendChild(el); log.scrollTop = log.scrollHeight;
     document.getElementById('wsMsgCount').textContent = wsMsgIdx + ' messages';
 }
-function setWsTemplate(type, payload) { document.getElementById('wsRequestType').value = type; document.getElementById('wsPayload').value = JSON.stringify(payload, null, 2); }
 function clearWsLog() { document.getElementById('wsLog').innerHTML = 'Connect to WebSocket to begin...'; wsMsgIdx = 0; document.getElementById('wsMsgCount').textContent = '0 messages'; }
+
+// ════════════════════════════════════════════════════
+//  KAFKA TAB
+// ════════════════════════════════════════════════════
+const kafkaConfigs = {
+    'broker-dev-kafka': {"type":"kafka","description":"Development Kafka broker","enabled":true,"connection":{"bootstrap_servers":"localhost:9092","client_id":"dgfacade-dev","group_id":"dgfacade-consumer-group","auto_offset_reset":"latest","max_poll_records":500}},
+    'broker-prod-kafka': {"type":"kafka","description":"Production Kafka cluster with PEM-based mTLS","enabled":true,"connection":{"bootstrap_servers":"kafka-1.prod.example.com:9093,kafka-2.prod.example.com:9093","client_id":"dgfacade-prod","acks":"all","retries":5},"ssl":{"enabled":true,"format":"PEM","protocol":"TLSv1.3","ca_cert_path":"config/certs/kafka/ca-chain.pem","client_cert_path":"config/certs/kafka/client-cert.pem","client_key_path":"config/certs/kafka/client-key.pem"}},
+    'input-order-events': {"type":"kafka","description":"Order lifecycle events from Kafka","enabled":true,"broker":"dev-kafka","destinations":[{"name":"orders.created","type":"topic"},{"name":"orders.updated","type":"topic"}],"queue":{"depth":10000,"warning_threshold_pct":70,"critical_threshold_pct":90},"retry":{"max_attempts":3,"backoff_ms":1000}},
+    'input-trade-queue': {"type":"jms","description":"Trade execution queue from ActiveMQ","enabled":true,"broker":"dev-activemq","destinations":[{"name":"TRADE.INPUT","type":"queue"}],"queue":{"depth":5000,"warning_threshold_pct":75,"critical_threshold_pct":95}},
+    'output-order-notifications': {"type":"kafka","description":"Publishes order notification messages to Kafka","enabled":true,"broker":"dev-kafka","destinations":[{"name":"notifications.orders.confirmed","type":"topic"},{"name":"notifications.orders.shipped","type":"topic"}],"queue":{"depth":5000},"retry":{"max_attempts":5,"backoff_ms":2000}},
+    'output-trade-results': {"type":"jms","description":"Publishes trade results to ActiveMQ queues","enabled":true,"broker":"dev-activemq","destinations":[{"name":"TRADE.RESULTS","type":"queue"},{"name":"TRADE.AUDIT","type":"queue"}],"queue":{"depth":10000}}
+};
+function loadKafkaConfig() {
+    const key = document.getElementById('kafkaConfigSelect').value;
+    const display = document.getElementById('kafkaConfigDisplay');
+    if (kafkaConfigs[key]) display.textContent = JSON.stringify(kafkaConfigs[key], null, 2);
+}
+function sendKafkaSimulated() {
+    const status = document.getElementById('kafkaStatus');
+    const result = document.getElementById('kafkaResult');
+    status.className = 'badge bg-warning'; status.textContent = 'Producing...';
+    let body;
+    try { body = JSON.parse(document.getElementById('kafkaPayload').value); } catch(e) { result.textContent = 'ERROR: Invalid JSON\n' + e.message; status.className = 'badge bg-danger'; status.textContent = 'Error'; return; }
+    const channel = document.getElementById('kafkaTargetChannel').value;
+    const t0 = performance.now();
+    const header = '# Simulated Kafka Produce \u2192 Input Channel: ' + channel + '\n# Handler: ' + (body.request_type || '?') + '\n# Timestamp: ' + new Date().toISOString() + '\n' + '\u2500'.repeat(60) + '\n\n';
+    fetch('/api/v1/request', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) })
+        .then(r => r.json()).then(data => {
+            const ms = (performance.now() - t0).toFixed(1);
+            status.className = data.status === 'SUCCESS' ? 'badge bg-success' : 'badge bg-danger';
+            status.textContent = data.status + ' (' + ms + 'ms)';
+            result.textContent = header + JSON.stringify(data, null, 2);
+        }).catch(e => { status.className = 'badge bg-danger'; status.textContent = 'Failed'; result.textContent = header + 'FETCH ERROR:\n' + e.message; });
+}
+function clearKafkaResult() { document.getElementById('kafkaResult').textContent = 'Produce a message to see the handler response here.'; document.getElementById('kafkaStatus').className = 'badge bg-secondary'; document.getElementById('kafkaStatus').textContent = 'Ready'; }
+
+// ════════════════════════════════════════════════════
+//  HANDLER CHAINS TAB
+// ════════════════════════════════════════════════════
+const chainMeta = {
+    'ORDER_PROCESS': {
+        desc: '<strong>Phase 1 \u2014 Linear</strong>: Flatten nested JSON \u2192 uppercase order ID \u2192 SHA256 signature \u2192 audit log. 4 steps, all sequential.',
+        steps: [{n:1,h:'JSON_TRANSFORM',a:'normalize',m:'REPLACE'},{n:2,h:'STRING_TRANSFORM',a:'format_id',m:'APPEND'},{n:3,h:'HASH',a:'sign',m:'APPEND'},{n:4,h:'ECHO',a:'audit_log',m:'PASSTHROUGH'}],
+        payload: {chain_id:'ORDER_PROCESS',order_id:'ord-7891',customer:'Acme Corp',items:[{sku:'WIDGET-A',qty:10,price:12.50},{sku:'GADGET-B',qty:3,price:45.00}]}
+    },
+    'ETL_PIPELINE': {
+        desc: '<strong>Phase 1+2 \u2014 Linear + Conditional</strong>: Flatten source data \u2192 title-case name (if exists) \u2192 compute total \u2192 apply 8.5% tax (if total > 0) \u2192 dedup hash \u2192 assemble record.',
+        steps: [{n:1,h:'JSON_TRANSFORM',a:'extract',m:'REPLACE'},{n:2,h:'STRING_TRANSFORM',a:'normalize_name',m:'APPEND',w:'name exists'},{n:3,h:'ARITHMETIC',a:'compute_total',m:'APPEND',w:'price exists'},{n:4,h:'ARITHMETIC',a:'apply_tax',m:'APPEND',w:'total > 0'},{n:5,h:'HASH',a:'dedup_key',m:'APPEND'},{n:6,h:'ECHO',a:'load_record',m:'REPLACE'}],
+        payload: {chain_id:'ETL_PIPELINE',source_data:{order:{id:'X1',total:99.50,region:'US'}},customer_name:'alice smith',unit_price:24.99,quantity:10,source_format:'nested-json'}
+    },
+    'DATA_ENRICH': {
+        desc: '<strong>Phase 2 \u2014 Conditional</strong>: Echo capture \u2192 title-case name (if non-empty) \u2192 SHA512 hash (only if security_level == HIGH) \u2192 discount calc (only if PREMIUM tier).',
+        steps: [{n:1,h:'ECHO',a:'capture',m:'REPLACE'},{n:2,h:'STRING_TRANSFORM',a:'title_case',m:'APPEND',w:"name != ''"},{n:3,h:'HASH',a:'secure_hash',m:'APPEND',w:'security == HIGH'},{n:4,h:'ARITHMETIC',a:'discount',m:'APPEND',w:'tier == PREMIUM'}],
+        payload: {chain_id:'DATA_ENRICH',name:'john doe',security_level:'HIGH',sensitive_data:'SSN:123-45-6789',customer_tier:'PREMIUM',price:200}
+    },
+    'SECURITY_AUDIT': {
+        desc: '<strong>Phase 2 \u2014 Conditional + Multi-Hash</strong>: Capture input \u2192 classify \u2192 SHA512 PII (if PII exists) \u2192 MD5 record checksum \u2192 assemble audit record.',
+        steps: [{n:1,h:'ECHO',a:'capture',m:'REPLACE'},{n:2,h:'STRING_TRANSFORM',a:'classify',m:'APPEND'},{n:3,h:'HASH',a:'pii_hash',m:'APPEND',w:'PII exists'},{n:4,h:'HASH',a:'record_checksum',m:'APPEND'},{n:5,h:'ECHO',a:'audit_record',m:'REPLACE'}],
+        payload: {chain_id:'SECURITY_AUDIT',entity_name:'Acme Corp',classification:'restricted',pii_data:'john.doe@acme.com',auditor:'compliance-bot',event_type:'data_access'}
+    },
+    'NOTIFICATION_ROUTER': {
+        desc: '<strong>Phase 2+3 \u2014 Conditional + Parallel</strong>: Classify priority \u2192 SHA256 fingerprint \u2192 escalation score (if severity > 3) \u2192 parallel format for email/SMS/webhook \u2192 dispatch.',
+        steps: [{n:1,h:'STRING_TRANSFORM',a:'classify_priority',m:'REPLACE'},{n:2,h:'HASH',a:'event_fingerprint',m:'APPEND'},{n:3,h:'ARITHMETIC',a:'escalation_score',m:'APPEND',w:'severity > 3'},{n:4,h:'PARALLEL',a:'format_outputs',p:['email_subject','sms_body','webhook_sig']},{n:5,h:'ECHO',a:'dispatch',m:'REPLACE'}],
+        payload: {chain_id:'NOTIFICATION_ROUTER',event_id:'EVT-20250209-001',priority:'critical',subject:'Server CPU > 95%',message:'Production server cpu-01 exceeded 95% CPU utilization for 5 minutes. Immediate attention required.',severity:8,impact_weight:3,webhook_secret:'whsec_abc123',recipient:'ops-team@acme.com',source:'monitoring-agent',timestamp:'2025-02-09T14:30:00Z'}
+    },
+    'PARALLEL_ANALYSIS': {
+        desc: '<strong>Phase 3 \u2014 Parallel Fan-Out</strong>: Uppercase input \u2192 parallel [MD5 + SHA256 + word count + system info] with KEYED join \u2192 echo summary.',
+        steps: [{n:1,h:'STRING_TRANSFORM',a:'prepare',m:'REPLACE'},{n:2,h:'PARALLEL',a:'multi_analysis',p:['md5_hash','sha256_hash','word_count','system_snapshot']},{n:3,h:'ECHO',a:'summary',m:'REPLACE'}],
+        payload: {chain_id:'PARALLEL_ANALYSIS',message:'DGFacade handler chaining supports linear conditional and parallel execution modes'}
+    },
+    'DATA_CONVERTER': {
+        desc: '<strong>Phase 3 \u2014 Parallel Integrity</strong>: Sort keys \u2192 uppercase ID \u2192 char count (if desc exists) \u2192 parallel [MD5 + SHA256] \u2192 output manifest.',
+        steps: [{n:1,h:'JSON_TRANSFORM',a:'sort_keys',m:'REPLACE'},{n:2,h:'STRING_TRANSFORM',a:'normalize_id',m:'APPEND'},{n:3,h:'STRING_TRANSFORM',a:'char_count',m:'APPEND',w:'desc exists'},{n:4,h:'PARALLEL',a:'dual_hash',p:['md5','sha256']},{n:5,h:'ECHO',a:'manifest',m:'REPLACE'}],
+        payload: {chain_id:'DATA_CONVERTER',record_id:'rec-abc-123',record:{name:'Widget Pro',category:'electronics',price:29.99,in_stock:true},description:'High-performance widget for enterprise deployments with advanced telemetry',output_format:'canonical-json'}
+    }
+};
+
+function loadChainTemplate() {
+    const id = document.getElementById('chainSelect').value;
+    const tpl = chainMeta[id];
+    if (!tpl) { document.getElementById('chainDescription').classList.add('d-none'); document.getElementById('chainStepsPreview').innerHTML = '<p class="text-muted small mb-0">Select a chain to see its step diagram.</p>'; return; }
+    document.getElementById('chainPayload').value = buildFullRequest('CHAIN', tpl.payload);
+    const descEl = document.getElementById('chainDescription');
+    descEl.innerHTML = '<i class="fas fa-info-circle me-1 text-primary"></i>' + tpl.desc;
+    descEl.classList.remove('d-none');
+    // Build steps preview
+    let html = '<div class="d-flex flex-wrap align-items-center gap-1">';
+    tpl.steps.forEach((s, i) => {
+        const isParallel = s.h === 'PARALLEL';
+        const bg = isParallel ? 'bg-success' : s.w ? 'bg-warning text-dark' : 'bg-primary';
+        const icon = isParallel ? 'fa-project-diagram' : s.w ? 'fa-code-branch' : 'fa-arrow-right';
+        html += '<div class="badge ' + bg + ' p-2" style="font-size:0.72rem;">';
+        html += '<i class="fas ' + icon + ' me-1"></i>' + s.a;
+        if (s.w) html += ' <small class="opacity-75">(when)</small>';
+        if (isParallel && s.p) html += ' <small class="opacity-75">[' + s.p.length + ']</small>';
+        if (s.m === 'PASSTHROUGH') html += ' <small class="opacity-75">(pass)</small>';
+        html += '</div>';
+        if (i < tpl.steps.length - 1) html += '<i class="fas fa-chevron-right text-muted small"></i>';
+    });
+    html += '</div>';
+    document.getElementById('chainStepsPreview').innerHTML = html;
+}
+
+function sendChainRequest() {
+    const btn = document.getElementById('chainSendBtn');
+    const status = document.getElementById('chainStatus');
+    const result = document.getElementById('chainResult');
+    btn.disabled = true; status.className = 'badge bg-warning'; status.textContent = 'Executing...';
+    let body;
+    try { body = JSON.parse(document.getElementById('chainPayload').value); } catch(e) { result.textContent = 'ERROR: Invalid JSON\n' + e.message; status.className = 'badge bg-danger'; status.textContent = 'Error'; btn.disabled = false; return; }
+    const t0 = performance.now();
+    fetch('/api/v1/request', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) })
+        .then(r => r.json()).then(data => {
+            const ms = (performance.now() - t0).toFixed(1);
+            status.className = data.status === 'SUCCESS' ? 'badge bg-success' : 'badge bg-danger';
+            status.textContent = data.status + ' (' + ms + 'ms)';
+            result.textContent = JSON.stringify(data, null, 2);
+            renderChainTrace(data);
+        }).catch(e => { status.className = 'badge bg-danger'; status.textContent = 'Failed'; result.textContent = 'FETCH ERROR:\n' + e.message; })
+        .finally(() => btn.disabled = false);
+}
+
+function renderChainTrace(data) {
+    const viz = document.getElementById('chainTraceViz');
+    let trace = null;
+    if (data && data.data && data.data.chain_trace) trace = data.data.chain_trace;
+    if (!trace || !trace.length) { viz.innerHTML = '<p class="text-muted small mb-0">No trace data available.</p>'; return; }
+    let html = '<div class="table-responsive"><table class="table table-sm table-bordered mb-0" style="font-size:0.78rem;">';
+    html += '<thead class="table-dark"><tr><th>Step</th><th>Alias</th><th>Handler</th><th>Status</th><th>Duration</th><th>Details</th></tr></thead><tbody>';
+    trace.forEach(t => {
+        const statusBadge = t.status === 'SUCCESS' ? '<span class="badge bg-success">SUCCESS</span>'
+            : t.status === 'SKIPPED' ? '<span class="badge bg-warning text-dark">SKIPPED</span>'
+            : t.status === 'FAILED' ? '<span class="badge bg-danger">FAILED</span>'
+            : '<span class="badge bg-info">' + escapeHtml(t.status || '?') + '</span>';
+        const details = t.reason ? '<small class="text-muted">' + escapeHtml(t.reason) + '</small>'
+            : t.error ? '<small class="text-danger">' + escapeHtml(t.error) + '</small>'
+            : t.parallel ? '<span class="badge bg-info bg-opacity-25 text-info">parallel</span>' : '';
+        html += '<tr><td>' + (t.step||'') + '</td><td><code>' + escapeHtml(t.alias||'') + '</code></td><td>' + escapeHtml(t.handler||'') + '</td><td>' + statusBadge + '</td><td>' + (t.duration_ms||0) + 'ms</td><td>' + details + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    const total = trace.length;
+    const success = trace.filter(t => t.status === 'SUCCESS').length;
+    const skipped = trace.filter(t => t.status === 'SKIPPED').length;
+    const failed = trace.filter(t => t.status === 'FAILED').length;
+    const totalMs = data.data.chain_duration_ms || trace.reduce((s,t) => s + (t.duration_ms||0), 0);
+    html += '<div class="d-flex gap-3 mt-2 small">';
+    html += '<span class="text-success"><i class="fas fa-check-circle me-1"></i>' + success + ' passed</span>';
+    if (skipped > 0) html += '<span class="text-warning"><i class="fas fa-forward me-1"></i>' + skipped + ' skipped</span>';
+    if (failed > 0) html += '<span class="text-danger"><i class="fas fa-times-circle me-1"></i>' + failed + ' failed</span>';
+    html += '<span class="text-muted"><i class="fas fa-clock me-1"></i>' + totalMs + 'ms total</span>';
+    html += '</div>';
+    viz.innerHTML = html;
+}
+
+function clearChainResult() {
+    document.getElementById('chainResult').textContent = 'Select a chain and click Execute to see the pipeline result here.';
+    document.getElementById('chainStatus').className = 'badge bg-secondary'; document.getElementById('chainStatus').textContent = 'Ready';
+    document.getElementById('chainTraceViz').innerHTML = '<p class="text-muted small mb-0">Execute a chain to see the step-by-step trace visualization.</p>';
+}
+
+// ════════════════════════════════════════════════════
+//  UTIL
+// ════════════════════════════════════════════════════
 function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 </script>
 </body>

@@ -1,0 +1,55 @@
+{
+  "chain_id": "ORDER_PROCESS",
+  "description": "Normalize → validate → hash → enrich order data",
+  "ttl_minutes": 15,
+  "error_strategy": "ABORT",
+  "enabled": true,
+  "steps": [
+    {
+      "step": 1,
+      "handler": "JSON_TRANSFORM",
+      "alias": "normalize",
+      "description": "Flatten nested order structure",
+      "payload_mapping": {
+        "operation": "FLATTEN",
+        "input": "${payload}"
+      },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2,
+      "handler": "STRING_TRANSFORM",
+      "alias": "format_id",
+      "description": "Uppercase the order ID for consistency",
+      "payload_mapping": {
+        "operation": "UPPER",
+        "input": "${prev.order_id}"
+      },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 3,
+      "handler": "HASH",
+      "alias": "sign",
+      "description": "SHA256 signature of the normalized order",
+      "payload_mapping": {
+        "operation": "SHA256",
+        "input": "${prev}"
+      },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 4,
+      "handler": "ECHO",
+      "alias": "audit_log",
+      "description": "Log the final enriched order (side effect)",
+      "payload_mapping": {
+        "chain_id": "ORDER_PROCESS",
+        "order_data": "${prev}",
+        "signature": "${steps.sign}",
+        "formatted_id": "${steps.format_id}"
+      },
+      "merge_strategy": "PASSTHROUGH"
+    }
+  ]
+}

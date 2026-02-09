@@ -6,6 +6,7 @@
 package com.dgfacade.server.actor;
 
 import com.dgfacade.common.model.*;
+import com.dgfacade.server.channel.ChannelAccessor;
 import com.dgfacade.server.handler.DGHandler;
 import com.dgfacade.server.handler.DGHandlerProxy;
 import com.dgfacade.server.handler.StreamingDGHandler;
@@ -87,6 +88,10 @@ public class HandlerActor extends AbstractBehavior<HandlerActor.Command> {
 
             // Construct
             state.setPhase(HandlerState.Phase.CONSTRUCTING);
+            // Inject ChannelAccessor for handlers that need pub/sub access
+            if (req.channelAccessor() != null) {
+                handler.setChannelAccessor(req.channelAccessor());
+            }
             handler.construct(req.handlerConfig().getConfig());
 
             // Execute

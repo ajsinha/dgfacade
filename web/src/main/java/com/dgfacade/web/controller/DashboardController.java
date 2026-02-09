@@ -19,7 +19,7 @@ public class DashboardController {
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.3.0}")
+    @Value("${dgfacade.version:1.4.0}")
     private String version;
 
     public DashboardController(ExecutionEngine engine) {
@@ -126,5 +126,19 @@ public class DashboardController {
         model.addAttribute("appName", appName);
         model.addAttribute("version", version);
         return "pages/help/handlers";
+    }
+
+    @GetMapping("/help/handler-chaining")
+    public String helpHandlerChaining(Model model) {
+        model.addAttribute("appName", appName);
+        model.addAttribute("version", version);
+        return "pages/help/handler-chaining";
+    }
+
+    @GetMapping("/help/clustering")
+    public String helpClustering(Model model) {
+        model.addAttribute("appName", appName);
+        model.addAttribute("version", version);
+        return "pages/help/clustering";
     }
 }

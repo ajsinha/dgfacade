@@ -48,9 +48,11 @@ public class JsonTransformHandler implements DGHandler {
             if (payload == null) return DGResponse.error(request.getRequestId(), "Payload is required");
 
             String operation = String.valueOf(payload.getOrDefault("operation", "FLATTEN")).toUpperCase();
+            // Accept both 'data' and 'input' field names
             Map<String, Object> data = (Map<String, Object>) payload.get("data");
-            if (data == null && !"SIZE".equals(operation)) {
-                return DGResponse.error(request.getRequestId(), "'data' field is required in payload");
+            if (data == null) data = (Map<String, Object>) payload.get("input");
+            if (data == null && !Set.of("SIZE", "KEYS", "VALUES").contains(operation)) {
+                return DGResponse.error(request.getRequestId(), "'data' (or 'input') field is required in payload");
             }
 
             Map<String, Object> result = new LinkedHashMap<>();

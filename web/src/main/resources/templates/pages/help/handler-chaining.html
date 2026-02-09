@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Handler Chaining')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/help"><i class="fas fa-book me-1"></i>Help</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Handler Chaining</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <h1 class="display-5 mb-4"><i class="fas fa-link me-3 text-primary"></i>Handler Chaining</h1>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Version 1.4.0</strong> &mdash; Declarative pipeline composition. Chain multiple handlers into
+                    sequential, conditional, or parallel workflows using pure JSON configuration &mdash; no code required.
+                </div>
+
+                <!-- TOC -->
+                <div class="card mb-5">
+                    <div class="card-header bg-dark text-white"><h5 class="mb-0"><i class="fas fa-list me-2"></i>Contents</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ol>
+                                    <li><a href="#overview">Overview &amp; Concepts</a></li>
+                                    <li><a href="#config">Chain Configuration Schema</a></li>
+                                    <li><a href="#variables">Variable Resolution</a></li>
+                                    <li><a href="#merge">Merge Strategies</a></li>
+                                    <li><a href="#linear">Phase 1 &mdash; Linear Chains</a></li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6">
+                                <ol start="6">
+                                    <li><a href="#conditional">Phase 2 &mdash; Conditional Steps</a></li>
+                                    <li><a href="#parallel">Phase 3 &mdash; Parallel Fan-Out</a></li>
+                                    <li><a href="#errors">Error Strategies</a></li>
+                                    <li><a href="#trace">Execution Trace</a></li>
+                                    <li><a href="#examples">Complete Examples</a></li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. Overview -->
+                <section id="overview" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-eye me-2 text-primary"></i>1. Overview &amp; Concepts</h2>
+                    <p>Handler chaining lets you compose complex workflows by piping multiple handlers together declaratively.
+                    Each step's output becomes the next step's input, creating a data transformation pipeline.</p>
+
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.78rem; overflow-x: auto;">
+   DGRequest arrives (request_type: "CHAIN")
+        │
+        ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │                    ChainHandler                              │
+   │                                                              │
+   │  Step 1: ECHO (alias: "capture")                            │
+   │     payload_mapping: ${payload}                              │
+   │     merge_strategy: REPLACE                                  │
+   │     ──────────────── output ────────────────►                │
+   │                                                              │
+   │  Step 2: STRING_TRANSFORM (alias: "format")                 │
+   │     payload_mapping: { input: "${prev.name}" }              │
+   │     merge_strategy: APPEND                                   │
+   │     ──────────────── output ────────────────►                │
+   │                                                              │
+   │  Step 3: HASH (alias: "sign")        [when: ${prev.sign}]  │
+   │     payload_mapping: { input: "${steps.format.result}" }    │
+   │     merge_strategy: APPEND                                   │
+   │     ──────────────── output ────────────────►                │
+   │                                                              │
+   │  Step 4: parallel                                            │
+   │     ├── branch A: HTTP_PROBE (alias: "api_check")           │
+   │     └── branch B: SYSTEM_INFO (alias: "sys_snap")           │
+   │     join_strategy: KEYED                                     │
+   │                                                              │
+   └──────────────────────┬──────────────────────────────────────┘
+                          │
+                          ▼
+                  DGResponse with:
+                    • Final merged data
+                    • Full chain_trace[]
+                    • Execution timing</pre>
+
+                    <div class="row g-3 mt-3">
+                        <div class="col-md-4">
+                            <div class="card border-primary h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-arrows-alt-h fa-2x text-primary mb-2"></i>
+                                    <h6>Phase 1: Linear</h6>
+                                    <p class="small text-muted mb-0">Sequential steps with payload mapping and merge strategies</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-warning h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-code-branch fa-2x text-warning mb-2"></i>
+                                    <h6>Phase 2: Conditional</h6>
+                                    <p class="small text-muted mb-0"><code>when</code> expressions skip steps dynamically based on data</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-project-diagram fa-2x text-success mb-2"></i>
+                                    <h6>Phase 3: Parallel</h6>
+                                    <p class="small text-muted mb-0">Concurrent branches with configurable join strategies</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Configuration Schema -->
+                <section id="config" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-file-code me-2 text-success"></i>2. Chain Configuration Schema</h2>
+                    <p>Chain definitions live in <code>config/chains/*.json</code>. Each file defines one chain.</p>
+
+                    <h4 class="mt-4">Top-Level Fields</h4>
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>chain_id</code></td><td>string</td><td>Yes</td><td>Unique identifier for the chain. Used in request payloads to select which chain to execute.</td></tr>
+                            <tr><td><code>description</code></td><td>string</td><td>No</td><td>Human-readable description</td></tr>
+                            <tr><td><code>ttl_minutes</code></td><td>int</td><td>No</td><td>Overall chain timeout (default: 30). Individual step TTLs are inherited from handler configs.</td></tr>
+                            <tr><td><code>error_strategy</code></td><td>string</td><td>No</td><td>How to handle step failures: <code>ABORT</code> (default), <code>SKIP</code>, or <code>FALLBACK</code></td></tr>
+                            <tr><td><code>enabled</code></td><td>boolean</td><td>No</td><td>Whether the chain is active (default: true)</td></tr>
+                            <tr><td><code>steps</code></td><td>array</td><td>Yes</td><td>Ordered list of step definitions</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4 class="mt-4">Step Fields</h4>
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>step</code></td><td>int</td><td>Yes</td><td>Step number (for ordering and tracing)</td></tr>
+                            <tr><td><code>handler</code></td><td>string</td><td>Yes*</td><td>Request type of the handler to invoke (e.g., <code>ECHO</code>, <code>HASH</code>, <code>HTTP_PROBE</code>)</td></tr>
+                            <tr><td><code>alias</code></td><td>string</td><td>Yes</td><td>Unique name for this step. Used in <code>${steps.alias.field}</code> references.</td></tr>
+                            <tr><td><code>description</code></td><td>string</td><td>No</td><td>What this step does</td></tr>
+                            <tr><td><code>payload_mapping</code></td><td>object</td><td>No</td><td>Map of key→value with <code>${var}</code> placeholders. If omitted, previous output is passed through.</td></tr>
+                            <tr><td><code>merge_strategy</code></td><td>string</td><td>No</td><td><code>REPLACE</code> (default), <code>MERGE_PREV</code>, <code>APPEND</code>, or <code>PASSTHROUGH</code></td></tr>
+                            <tr><td><code>when</code></td><td>string</td><td>No</td><td>Condition expression. Step is skipped when condition evaluates to false.</td></tr>
+                            <tr><td><code>handler_config</code></td><td>object</td><td>No</td><td>Extra config passed to the handler's <code>construct()</code> method</td></tr>
+                            <tr><td><code>fallback</code></td><td>object</td><td>No</td><td>Value to use when step fails and error_strategy is <code>FALLBACK</code></td></tr>
+                            <tr><td><code>parallel</code></td><td>array</td><td>*</td><td>List of branch definitions for parallel execution (replaces <code>handler</code>)</td></tr>
+                            <tr><td><code>join_strategy</code></td><td>string</td><td>No</td><td>For parallel steps: <code>KEYED</code> (default), <code>MERGE_ALL</code>, or <code>FIRST_SUCCESS</code></td></tr>
+                        </tbody>
+                    </table>
+                    <div class="alert alert-warning mt-2">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        A step must have either <code>handler</code> (linear/conditional) or <code>parallel</code> (fan-out), never both.
+                    </div>
+                </section>
+
+                <!-- 3. Variable Resolution -->
+                <section id="variables" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-dollar-sign me-2 text-warning"></i>3. Variable Resolution</h2>
+                    <p>Variables in <code>payload_mapping</code> and <code>when</code> expressions use <code>${reference}</code> syntax.
+                    The chain engine resolves them against three scopes.</p>
+
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Variable</th><th>Resolves To</th><th>Example</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>${payload}</code></td><td>Original request payload (entire map)</td><td><code>"input": "${payload}"</code> &rarr; passes full original payload</td></tr>
+                            <tr><td><code>${payload.field}</code></td><td>Specific field from original payload</td><td><code>"name": "${payload.customer.name}"</code> &rarr; nested dot-path</td></tr>
+                            <tr><td><code>${prev}</code></td><td>Previous step's full output map</td><td><code>"data": "${prev}"</code> &rarr; entire previous result</td></tr>
+                            <tr><td><code>${prev.field}</code></td><td>Specific field from previous step</td><td><code>"hash_input": "${prev.result}"</code></td></tr>
+                            <tr><td><code>${steps.alias}</code></td><td>Named step's full output by alias</td><td><code>"sig": "${steps.sign}"</code> &rarr; entire output of step "sign"</td></tr>
+                            <tr><td><code>${steps.alias.field}</code></td><td>Specific field from named step</td><td><code>"hash": "${steps.sign.hash}"</code> &rarr; hash field from step "sign"</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="card mt-3">
+                        <div class="card-header bg-dark text-white">Variable Resolution Rules</div>
+                        <div class="card-body">
+                            <ul class="mb-0">
+                                <li><strong>Full match</strong>: If the entire value is a single <code>${ref}</code>, the resolved object is passed as-is (map, list, number &mdash; not stringified)</li>
+                                <li><strong>Partial match</strong>: If the value contains <code>${ref}</code> mixed with text (e.g., <code>"prefix_${prev.id}_suffix"</code>), all references are stringified and interpolated</li>
+                                <li><strong>Nested resolution</strong>: Variable maps and lists are resolved recursively</li>
+                                <li><strong>Unresolved</strong>: If a reference cannot be resolved, the literal <code>${ref}</code> string is preserved</li>
+                                <li><strong>Dot paths</strong>: Support arbitrary nesting depth: <code>${payload.order.items.0.name}</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Merge Strategies -->
+                <section id="merge" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-object-group me-2 text-info"></i>4. Merge Strategies</h2>
+                    <p>After each step executes, its output is merged into the accumulated pipeline state using the step's <code>merge_strategy</code>.</p>
+
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Strategy</th><th>Behavior</th><th>Use Case</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><code>REPLACE</code></td>
+                                <td>Step output <strong>becomes</strong> the entire pipeline state. Previous data is discarded.</td>
+                                <td>Transformation steps where you want a clean slate (normalize, reshape)</td>
+                            </tr>
+                            <tr>
+                                <td><code>MERGE_PREV</code></td>
+                                <td>Shallow merge: step output keys are added to (or overwrite) previous state keys.</td>
+                                <td>Enrichment steps that add fields: <code>{prev...} + {step output...}</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>APPEND</code></td>
+                                <td>Step output is nested under its alias key in the pipeline state.</td>
+                                <td>Collecting outputs without collision: <code>{prev..., "alias": {step output}}</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>PASSTHROUGH</code></td>
+                                <td>Step output is <strong>ignored</strong>. Previous pipeline state passes through unchanged.</td>
+                                <td>Side-effect steps: audit logging, notifications, metrics emission</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h5 class="mt-4">Visual Example</h5>
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">
+Step 1 output: { "order_id": "ABC", "total": 99.50 }       merge: REPLACE
+Pipeline state: { "order_id": "ABC", "total": 99.50 }
+
+Step 2 output: { "result": "abc" }                          merge: APPEND (alias: "lower_id")
+Pipeline state: { "order_id": "ABC", "total": 99.50, "lower_id": { "result": "abc" } }
+
+Step 3 output: { "hash": "a1b2c3", "algo": "SHA256" }      merge: MERGE_PREV
+Pipeline state: { "order_id": "ABC", "total": 99.50, "lower_id": {...}, "hash": "a1b2c3", "algo": "SHA256" }
+
+Step 4 output: { "logged": true }                           merge: PASSTHROUGH
+Pipeline state: { "order_id": "ABC", "total": 99.50, "lower_id": {...}, "hash": "a1b2c3", "algo": "SHA256" }
+   └── Step 4 output is discarded; state unchanged</pre>
+                </section>
+
+                <!-- 5. Phase 1: Linear Chains -->
+                <section id="linear" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-arrows-alt-h me-2 text-primary"></i>5. Phase 1 &mdash; Linear Chains</h2>
+                    <p>The simplest chain mode: steps execute sequentially, each receiving the accumulated pipeline state.</p>
+
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">Example: Order Processing Chain</div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-2"><code>config/chains/order-processing.json</code></p>
+                            <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.80rem;">{
+  "chain_id": "ORDER_PROCESS",
+  "error_strategy": "ABORT",
+  "steps": [
+    {
+      "step": 1, "handler": "JSON_TRANSFORM", "alias": "normalize",
+      "payload_mapping": { "operation": "FLATTEN", "input": "${payload}" },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2, "handler": "STRING_TRANSFORM", "alias": "format_id",
+      "payload_mapping": { "operation": "UPPER", "input": "${prev.order_id}" },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 3, "handler": "HASH", "alias": "sign",
+      "payload_mapping": { "operation": "SHA256", "input": "${prev}" },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 4, "handler": "ECHO", "alias": "audit_log",
+      "payload_mapping": {
+        "chain_id": "ORDER_PROCESS",
+        "order_data": "${prev}",
+        "signature": "${steps.sign}",
+        "formatted_id": "${steps.format_id}"
+      },
+      "merge_strategy": "PASSTHROUGH"
+    }
+  ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <h5 class="mt-4">Invoke via REST</h5>
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "ORDER_PROCESS",
+      "order_id": "ord-7891",
+      "customer": "Acme Corp",
+      "items": [
+        { "sku": "WIDGET-A", "qty": 10, "price": 12.50 },
+        { "sku": "GADGET-B", "qty": 3, "price": 45.00 }
+      ]
+    }
+  }'</pre>
+                    <div class="alert alert-info mt-2">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        The <code>chain_id</code> inside the payload tells ChainHandler which chain config to load from <code>config/chains/</code>.
+                        The outer <code>request_type</code> is always <code>"CHAIN"</code>.
+                    </div>
+                </section>
+
+                <!-- 6. Phase 2: Conditional Steps -->
+                <section id="conditional" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-code-branch me-2 text-warning"></i>6. Phase 2 &mdash; Conditional Steps</h2>
+                    <p>Add a <code>when</code> expression to any step. The step executes only when the condition is true; otherwise it is skipped with <code>SKIPPED</code> status in the trace.</p>
+
+                    <h4 class="mt-3">Supported Operators</h4>
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Operator</th><th>Syntax</th><th>Example</th></tr></thead>
+                        <tbody>
+                            <tr><td>Equals</td><td><code>==</code></td><td><code>${payload.tier} == "PREMIUM"</code></td></tr>
+                            <tr><td>Not equals</td><td><code>!=</code></td><td><code>${prev.status} != "error"</code></td></tr>
+                            <tr><td>Greater than</td><td><code>&gt;</code></td><td><code>${prev.risk_score} &gt; 75</code></td></tr>
+                            <tr><td>Less than</td><td><code>&lt;</code></td><td><code>${payload.amount} &lt; 1000</code></td></tr>
+                            <tr><td>Greater/equal</td><td><code>&gt;=</code></td><td><code>${steps.score.value} &gt;= 50</code></td></tr>
+                            <tr><td>Less/equal</td><td><code>&lt;=</code></td><td><code>${prev.retries} &lt;= 3</code></td></tr>
+                            <tr><td>Contains</td><td><code>contains</code></td><td><code>${payload.tags} contains "urgent"</code></td></tr>
+                            <tr><td>Exists</td><td><code>exists</code></td><td><code>${payload.email} exists</code></td></tr>
+                            <tr><td>Null check</td><td><code>== null</code> / <code>!= null</code></td><td><code>${prev.error} == null</code></td></tr>
+                            <tr><td>Truthy</td><td><code>${ref}</code> (bare)</td><td><code>${payload.enable_hash}</code> &mdash; true if non-null, non-false, non-zero</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="card mt-4">
+                        <div class="card-header bg-warning text-dark">Example: Data Enrichment with Conditions</div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-2"><code>config/chains/data-enrichment.json</code></p>
+                            <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.80rem;">{
+  "chain_id": "DATA_ENRICH",
+  "error_strategy": "SKIP",
+  "steps": [
+    {
+      "step": 1, "handler": "ECHO", "alias": "capture",
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2, "handler": "STRING_TRANSFORM", "alias": "title_case",
+      "payload_mapping": { "operation": "TITLE_CASE", "input": "${payload.name}" },
+      "merge_strategy": "APPEND",
+      <span class="text-warning">"when": "${payload.name} != ''"</span>
+    },
+    {
+      "step": 3, "handler": "HASH", "alias": "secure_hash",
+      "payload_mapping": { "operation": "SHA512", "input": "${payload.sensitive_data}" },
+      "merge_strategy": "APPEND",
+      <span class="text-warning">"when": "${payload.security_level} == \"HIGH\""</span>
+    },
+    {
+      "step": 4, "handler": "ARITHMETIC", "alias": "discount",
+      "payload_mapping": { "operation": "MUL", "operands": ["${payload.price}", 0.85] },
+      "merge_strategy": "APPEND",
+      <span class="text-warning">"when": "${payload.customer_tier} == \"PREMIUM\""</span>,
+      "fallback": { "result": 0, "note": "Discount unavailable" }
+    }
+  ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <h5 class="mt-4">Test: Non-Premium Customer</h5>
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "DATA_ENRICH",
+      "name": "john doe",
+      "security_level": "LOW",
+      "customer_tier": "STANDARD",
+      "price": 100
+    }
+  }'</pre>
+                    <p class="text-muted small mt-2">
+                        Expected: Step 2 (title_case) executes. Step 3 (secure_hash) <strong>SKIPPED</strong> because security_level is LOW.
+                        Step 4 (discount) <strong>SKIPPED</strong> because customer_tier is STANDARD.
+                    </p>
+                </section>
+
+                <!-- 7. Phase 3: Parallel Fan-Out -->
+                <section id="parallel" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-project-diagram me-2 text-success"></i>7. Phase 3 &mdash; Parallel Fan-Out</h2>
+                    <p>For steps where branches are independent, you can run them concurrently using the <code>parallel</code> array.
+                    A thread pool executes all branches simultaneously and a <code>join_strategy</code> merges the results.</p>
+
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.78rem; overflow-x: auto;">
+                          Step 1 (linear: prepare)
+                                   │
+                                   ▼
+                  ┌────────────────┼────────────────┐
+                  │                │                 │
+            ┌─────┴─────┐  ┌──────┴──────┐  ┌──────┴──────┐
+            │ branch A   │  │ branch B    │  │ branch C    │     ← concurrent
+            │ MD5 hash   │  │ SHA256 hash │  │ word count  │
+            └─────┬─────┘  └──────┬──────┘  └──────┬──────┘
+                  │                │                 │
+                  └────────────────┼────────────────┘
+                                   │
+                              join_strategy
+                                   │
+                                   ▼
+                          Step 3 (linear: summary)</pre>
+
+                    <h4 class="mt-4">Join Strategies</h4>
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Strategy</th><th>Result Structure</th><th>Use Case</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>KEYED</code></td><td>Each branch output nested under its alias: <code>{"parallel_results": {"md5": {...}, "sha256": {...}}}</code></td><td>When you need individual results identifiable by name</td></tr>
+                            <tr><td><code>MERGE_ALL</code></td><td>All branch outputs merged flat: <code>{"hash": "...", "count": 5, ...}</code></td><td>When branches produce non-overlapping keys</td></tr>
+                            <tr><td><code>FIRST_SUCCESS</code></td><td>First completed branch's output is used; others discarded</td><td>Redundancy / fastest-response patterns</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="card mt-4">
+                        <div class="card-header bg-success text-white">Example: Parallel Analysis Chain</div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-2"><code>config/chains/parallel-analysis.json</code></p>
+                            <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.80rem;">{
+  "chain_id": "PARALLEL_ANALYSIS",
+  "error_strategy": "SKIP",
+  "steps": [
+    {
+      "step": 1, "handler": "STRING_TRANSFORM", "alias": "prepare",
+      "payload_mapping": { "operation": "UPPER", "input": "${payload.message}" },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2, "alias": "multi_analysis",
+      <span class="text-success">"parallel"</span>: [
+        {
+          "handler": "HASH", "alias": "md5_hash",
+          "payload_mapping": { "operation": "MD5", "input": "${prev.result}" }
+        },
+        {
+          "handler": "HASH", "alias": "sha256_hash",
+          "payload_mapping": { "operation": "SHA256", "input": "${prev.result}" }
+        },
+        {
+          "handler": "STRING_TRANSFORM", "alias": "word_count",
+          "payload_mapping": { "operation": "WORD_COUNT", "input": "${prev.result}" }
+        },
+        {
+          "handler": "SYSTEM_INFO", "alias": "system_snapshot",
+          "payload_mapping": {}
+        }
+      ],
+      <span class="text-success">"join_strategy": "KEYED"</span>
+    },
+    {
+      "step": 3, "handler": "ECHO", "alias": "summary",
+      "payload_mapping": {
+        "original_message": "${payload.message}",
+        "analysis": "${prev}"
+      },
+      "merge_strategy": "REPLACE"
+    }
+  ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <h5 class="mt-4">Invoke</h5>
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "PARALLEL_ANALYSIS",
+      "message": "Hello World from DGFacade handler chaining"
+    }
+  }'</pre>
+                </section>
+
+                <!-- 8. Error Strategies -->
+                <section id="errors" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-exclamation-triangle me-2 text-danger"></i>8. Error Strategies</h2>
+                    <p>The <code>error_strategy</code> at the chain level controls what happens when a step fails.</p>
+
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Strategy</th><th>Behavior on Failure</th><th>Chain Continues?</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><code>ABORT</code></td>
+                                <td>Chain stops immediately. Error response returned with partial trace.</td>
+                                <td><span class="badge bg-danger">No</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>SKIP</code></td>
+                                <td>Failed step is recorded as <code>FAILED</code> in trace. Pipeline state unchanged. Next step runs.</td>
+                                <td><span class="badge bg-success">Yes</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>FALLBACK</code></td>
+                                <td>Failed step's output is replaced by its <code>fallback</code> value. Pipeline continues with fallback data.</td>
+                                <td><span class="badge bg-success">Yes</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="card mt-3">
+                        <div class="card-header bg-dark text-white">Fallback Example</div>
+                        <div class="card-body">
+                            <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">{
+  "step": 4,
+  "handler": "HTTP_PROBE",
+  "alias": "external_api",
+  "payload_mapping": { "url": "https://api.example.com/data" },
+  "merge_strategy": "APPEND",
+  "fallback": {
+    "source": "cache",
+    "data": { "status": "unavailable" },
+    "note": "External API unreachable, using cached fallback"
+  }
+}</pre>
+                            <p class="small text-muted mt-2 mb-0">If HTTP_PROBE fails (timeout, connection error), the <code>fallback</code> object is used
+                            as this step's output instead. The chain continues normally.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 9. Execution Trace -->
+                <section id="trace" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-clipboard-list me-2 text-primary"></i>9. Execution Trace</h2>
+                    <p>Every chain response includes a <code>chain_trace</code> array with per-step execution details.</p>
+
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">{
+  "status": "SUCCESS",
+  "data": {
+    "chain_id": "DATA_ENRICH",
+    "data": { ... },
+    "chain_trace": [
+      { "step": 1, "alias": "capture",     "handler": "ECHO",             "status": "SUCCESS", "duration_ms": 2 },
+      { "step": 2, "alias": "title_case",  "handler": "STRING_TRANSFORM", "status": "SUCCESS", "duration_ms": 1 },
+      { "step": 3, "alias": "secure_hash", "handler": "HASH",             "status": "SKIPPED", "reason": "Condition not met: ${payload.security_level} == \"HIGH\"" },
+      { "step": 4, "alias": "discount",    "handler": "ARITHMETIC",       "status": "SKIPPED", "reason": "Condition not met: ${payload.customer_tier} == \"PREMIUM\"" }
+    ],
+    "total_steps": 4,
+    "executed_steps": 2,
+    "skipped_steps": 2,
+    "failed_steps": 0,
+    "chain_duration_ms": 8
+  }
+}</pre>
+
+                    <h5 class="mt-3">Parallel Trace Entries</h5>
+                    <p class="small text-muted">Parallel branches include <code>"parallel": true</code> in their trace entries:</p>
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">{ "step": 2, "alias": "md5_hash",  "parallel": true, "handler": "HASH",  "status": "SUCCESS", "duration_ms": 3 }
+{ "step": 2, "alias": "sha256_hash","parallel": true, "handler": "HASH",  "status": "SUCCESS", "duration_ms": 4 }
+{ "step": 2, "alias": "word_count", "parallel": true, "handler": "STRING_TRANSFORM", "status": "SUCCESS", "duration_ms": 1 }</pre>
+                </section>
+
+                <!-- 10. Complete Examples -->
+                <section id="examples" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-terminal me-2 text-dark"></i>10. Complete Examples</h2>
+
+                    <h4>Example 1: Simple Two-Step Pipeline</h4>
+                    <p class="text-muted">Uppercase a message, then hash it.</p>
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "SIMPLE_PIPELINE",
+      "steps": [
+        { "step": 1, "handler": "STRING_TRANSFORM", "alias": "upper",
+          "payload_mapping": { "operation": "UPPER", "input": "hello world" },
+          "merge_strategy": "REPLACE" },
+        { "step": 2, "handler": "HASH", "alias": "hash",
+          "payload_mapping": { "operation": "SHA256", "input": "${prev.result}" },
+          "merge_strategy": "MERGE_PREV" }
+      ]
+    }
+  }'</pre>
+
+                    <h4 class="mt-4">Example 2: Conditional with Fallback</h4>
+                    <p class="text-muted">Only hash if security flag is set; use fallback if hash fails.</p>
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "DATA_ENRICH",
+      "name": "alice smith",
+      "security_level": "HIGH",
+      "sensitive_data": "SSN:123-45-6789",
+      "customer_tier": "PREMIUM",
+      "price": 200
+    }
+  }'</pre>
+                    <p class="text-muted small">Expected: All 4 steps execute &mdash; name is title-cased, data is SHA512-hashed, discount is calculated at 85%.</p>
+
+                    <h4 class="mt-4">Example 3: Parallel Multi-Hash</h4>
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "PARALLEL_ANALYSIS",
+      "message": "DGFacade handler chaining is powerful"
+    }
+  }'</pre>
+                    <p class="text-muted small">Expected: Step 1 uppercases the message. Step 2 runs MD5, SHA256, word count, and system info in parallel. Step 3 echoes the aggregated analysis.</p>
+
+                    <h4 class="mt-4">Example 4: Inline Chain (No Config File)</h4>
+                    <p class="text-muted">You can also pass the entire chain definition inline in the payload, which is useful for ad-hoc workflows.</p>
+                    <pre class="bg-dark text-light p-3 rounded" style="font-size: 0.82rem;">curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "INLINE_DEMO",
+      "error_strategy": "ABORT",
+      "steps": [
+        { "step": 1, "handler": "ECHO", "alias": "start",
+          "payload_mapping": { "message": "chain started", "ts": "2025-01-01" },
+          "merge_strategy": "REPLACE" },
+        { "step": 2, "handler": "HASH", "alias": "hash_it",
+          "payload_mapping": { "operation": "MD5", "input": "${prev.message}" },
+          "merge_strategy": "MERGE_PREV" }
+      ]
+    }
+  }'</pre>
+                </section>
+
+                <div class="mt-5 text-center">
+                    <a href="/help" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Back to Help Index</a>
+                    <a href="/help/handlers" class="btn btn-primary ms-2">Handler Tutorial<i class="fas fa-arrow-right ms-2"></i></a>
+                    <a href="/playground" class="btn btn-success ms-2"><i class="fas fa-flask me-2"></i>Test in Playground</a>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <div class="card mb-4" style="position: sticky; top: 1rem;">
+                    <div class="card-header bg-dark text-white"><h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Quick Reference</h6></div>
+                    <div class="card-body small">
+                        <h6 class="text-primary">Request Type</h6>
+                        <code class="d-block mb-3">"request_type": "CHAIN"</code>
+
+                        <h6 class="text-primary">Merge Strategies</h6>
+                        <ul class="list-unstyled mb-3">
+                            <li><code>REPLACE</code> &mdash; overwrite all</li>
+                            <li><code>MERGE_PREV</code> &mdash; shallow merge</li>
+                            <li><code>APPEND</code> &mdash; nest under alias</li>
+                            <li><code>PASSTHROUGH</code> &mdash; ignore output</li>
+                        </ul>
+
+                        <h6 class="text-primary">Error Strategies</h6>
+                        <ul class="list-unstyled mb-3">
+                            <li><code>ABORT</code> &mdash; stop on failure</li>
+                            <li><code>SKIP</code> &mdash; continue past failure</li>
+                            <li><code>FALLBACK</code> &mdash; use fallback value</li>
+                        </ul>
+
+                        <h6 class="text-primary">Join Strategies</h6>
+                        <ul class="list-unstyled mb-3">
+                            <li><code>KEYED</code> &mdash; alias→result map</li>
+                            <li><code>MERGE_ALL</code> &mdash; flat merge</li>
+                            <li><code>FIRST_SUCCESS</code> &mdash; fastest wins</li>
+                        </ul>
+
+                        <h6 class="text-primary">Variable Scopes</h6>
+                        <ul class="list-unstyled mb-3">
+                            <li><code>${payload}</code> &mdash; original input</li>
+                            <li><code>${prev}</code> &mdash; last step output</li>
+                            <li><code>${steps.alias}</code> &mdash; named step</li>
+                        </ul>
+
+                        <h6 class="text-primary">Built-in Chains</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="#linear">ORDER_PROCESS</a></li>
+                            <li><a href="#conditional">DATA_ENRICH</a></li>
+                            <li><a href="#parallel">PARALLEL_ANALYSIS</a></li>
+                        </ul>
+                    </div>
+                    <div class="card-footer text-center">
+                        <a href="/playground" class="btn btn-sm btn-outline-success w-100"><i class="fas fa-flask me-1"></i>Playground</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="py-4 mt-5 border-top">
+            <div class="row">
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.4.0'">1.4.0</span></p></div>
+                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br><span class="badge bg-warning text-dark">Patent Pending</span></p></div>
+            </div>
+        </footer>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -9,6 +9,7 @@ import com.dgfacade.common.model.DGRequest;
 import com.dgfacade.common.model.DGResponse;
 import com.dgfacade.common.model.HandlerConfig;
 import com.dgfacade.common.model.HandlerState;
+import com.dgfacade.server.channel.ChannelAccessor;
 import java.io.Serializable;
 
 /**
@@ -25,7 +26,8 @@ public final class HandlerMessages {
         HandlerConfig handlerConfig,
         String handlerId,
         java.util.concurrent.CompletableFuture<DGResponse> responseFuture,
-        HandlerState state
+        HandlerState state,
+        ChannelAccessor channelAccessor
     ) implements Serializable {}
 
     /** Signal that a handler has completed. */

@@ -28,10 +28,10 @@ public class EchoHandler implements DGHandler {
     public DGResponse execute(DGRequest request) {
         if (stopped) return DGResponse.error(request.getRequestId(), "Handler was stopped");
         Map<String, Object> data = new HashMap<>();
-        data.put("echo_payload", request.getPayload());
-        data.put("echo_request_type", request.getRequestType());
-        data.put("echo_request_id", request.getRequestId());
-        data.put("echo_timestamp", java.time.Instant.now().toString());
+        data.put("payload", request.getPayload());
+        data.put("request_type", request.getRequestType());
+        data.put("request_id", request.getRequestId());
+        data.put("timestamp", java.time.Instant.now().toString());
         data.put("handler_config", config);
         return DGResponse.success(request.getRequestId(), data);
     }

@@ -47,7 +47,9 @@ public class StringTransformHandler {
         }
 
         String operation = String.valueOf(payload.getOrDefault("operation", "UPPER")).toUpperCase();
-        String text = String.valueOf(payload.getOrDefault("text", ""));
+        // Accept both 'text' and 'input' field names
+        String text = payload.containsKey("text") ? String.valueOf(payload.get("text"))
+                : payload.containsKey("input") ? String.valueOf(payload.get("input")) : "";
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("operation", operation);
         result.put("original_text", text);

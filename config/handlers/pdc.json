@@ -1,16 +1,17 @@
 {
   "PDC_PROCESS": {
     "handler_class": "com.dgfacade.server.handler.PDCHandler",
-    "description": "Publish-Deliver-Consume: POSTs to REST endpoint, subscribes to returned Kafka topic, publishes to output channel",
+    "description": "Publish-Deliver-Consume: Subscribes to an input topic via Input Channel, forwards every message to an Output Channel topic. Optionally resolves the input topic dynamically via a REST POST.",
     "ttl_minutes": 60,
     "enabled": true,
     "config": {
       "rest_endpoint": "${pdc.rest.endpoint:http://localhost:9090/api/v1/stream-request}",
       "rest_timeout_seconds": 30,
       "input_channel": "order-events",
+      "input_topic": "orders.raw",
       "output_channel": "order-notifications",
-      "output_destination": "notifications.orders.confirmed",
-      "kafka_poll_ms": 100,
+      "output_topic": "notifications.orders.confirmed",
+      "use_dynamic_topic": false,
       "kafka_group_id": "dgfacade-pdc-consumer"
     }
   }

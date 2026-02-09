@@ -28,7 +28,7 @@ mvn clean package -DskipTests
 mvn spring-boot:run -pl web
 
 # Or using the JAR directly
-java -jar web/target/dgfacade-web-1.3.0.jar
+java -jar web/target/dgfacade-web-1.4.0.jar
 ```
 
 ## Verify

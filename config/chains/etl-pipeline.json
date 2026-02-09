@@ -1,0 +1,83 @@
+{
+  "chain_id": "ETL_PIPELINE",
+  "description": "ETL pipeline: flatten nested JSON → normalize strings → compute aggregates → hash for dedup",
+  "ttl_minutes": 15,
+  "error_strategy": "SKIP",
+  "enabled": true,
+  "steps": [
+    {
+      "step": 1,
+      "handler": "JSON_TRANSFORM",
+      "alias": "extract",
+      "description": "Flatten deeply nested source data into a flat key-value structure",
+      "payload_mapping": {
+        "operation": "FLATTEN",
+        "input": "${payload.source_data}"
+      },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2,
+      "handler": "STRING_TRANSFORM",
+      "alias": "normalize_name",
+      "description": "Title-case the customer name for consistent formatting",
+      "payload_mapping": {
+        "operation": "TITLE_CASE",
+        "input": "${payload.customer_name}"
+      },
+      "merge_strategy": "APPEND",
+      "when": "${payload.customer_name} exists"
+    },
+    {
+      "step": 3,
+      "handler": "ARITHMETIC",
+      "alias": "compute_total",
+      "description": "Calculate order total: unit_price × quantity",
+      "payload_mapping": {
+        "operation": "MUL",
+        "operands": ["${payload.unit_price}", "${payload.quantity}"]
+      },
+      "merge_strategy": "APPEND",
+      "when": "${payload.unit_price} exists"
+    },
+    {
+      "step": 4,
+      "handler": "ARITHMETIC",
+      "alias": "apply_tax",
+      "description": "Apply 8.5% tax to the computed total (if computed)",
+      "payload_mapping": {
+        "operation": "MUL",
+        "operands": ["${steps.compute_total.result}", 1.085]
+      },
+      "merge_strategy": "APPEND",
+      "when": "${steps.compute_total.result} > 0"
+    },
+    {
+      "step": 5,
+      "handler": "HASH",
+      "alias": "dedup_key",
+      "description": "Generate a deduplication hash from flattened data",
+      "payload_mapping": {
+        "operation": "SHA256",
+        "input": "${steps.extract}"
+      },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 6,
+      "handler": "ECHO",
+      "alias": "load_record",
+      "description": "Assemble the final ETL record ready for loading",
+      "payload_mapping": {
+        "pipeline": "ETL_PIPELINE",
+        "extracted": "${steps.extract}",
+        "customer_name": "${steps.normalize_name.result}",
+        "subtotal": "${steps.compute_total.result}",
+        "total_with_tax": "${steps.apply_tax.result}",
+        "dedup_hash": "${steps.dedup_key.hash}",
+        "source_format": "${payload.source_format}"
+      },
+      "merge_strategy": "REPLACE"
+    }
+  ]
+}

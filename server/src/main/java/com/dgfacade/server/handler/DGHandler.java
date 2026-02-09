@@ -7,6 +7,7 @@ package com.dgfacade.server.handler;
 
 import com.dgfacade.common.model.DGRequest;
 import com.dgfacade.common.model.DGResponse;
+import com.dgfacade.server.channel.ChannelAccessor;
 import java.util.Map;
 
 /**
@@ -61,5 +62,17 @@ public interface DGHandler {
      */
     default boolean isStreaming() {
         return false;
+    }
+
+    /**
+     * Provides access to Input and Output Channels for pub/sub messaging.
+     * Called by the execution engine before {@link #execute(DGRequest)}.
+     * Override this in handlers that need to subscribe to topics or publish messages
+     * (e.g. PDCHandler). Default implementation is a no-op.
+     *
+     * @param accessor the channel accessor providing DataPublisher/DataSubscriber instances
+     */
+    default void setChannelAccessor(ChannelAccessor accessor) {
+        // No-op — handlers that don't need channel access ignore this.
     }
 }

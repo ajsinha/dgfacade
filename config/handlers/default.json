@@ -53,5 +53,52 @@
     "ttl_minutes": 5,
     "enabled": true,
     "config": {}
+  },
+  "CHAIN": {
+    "handler_class": "com.dgfacade.server.handler.ChainHandler",
+    "description": "Declarative pipeline handler: executes a chain of handlers sequentially, conditionally, or in parallel",
+    "ttl_minutes": 30,
+    "enabled": true,
+    "config": {}
+  },
+  "SYSTEM_INFO": {
+    "handler_class": "com.dgfacade.server.handler.SystemInfoHandler",
+    "description": "Returns JVM runtime, OS, memory, and system environment information",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {}
+  },
+  "HTTP_PROBE": {
+    "handler_class": "com.dgfacade.server.handler.HttpProbeHandler",
+    "description": "Probes a remote HTTP/HTTPS endpoint and returns status, headers, timing, and body preview",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {
+      "default_timeout_seconds": 10,
+      "max_body_preview_chars": 2000
+    }
+  },
+  "BATCH_ARITHMETIC": {
+    "handler_class": "com.dgfacade.server.handler.BatchArithmeticHandler",
+    "description": "Batch arithmetic operations on arrays of numbers with statistics (sum, avg, min, max, stddev)",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {}
+  },
+  "PDC_PROCESS": {
+    "handler_class": "com.dgfacade.server.handler.PDCHandler",
+    "description": "Publish-Deliver-Consume: POSTs to REST, subscribes to broker topic via Input Channel, forwards messages to Output Channel",
+    "ttl_minutes": 60,
+    "enabled": true,
+    "config": {
+      "rest_endpoint": "http://localhost:8090/api/v1/request",
+      "rest_timeout_seconds": 30,
+      "input_channel": "order-events",
+      "input_topic": "orders.created",
+      "output_channel": "order-notifications",
+      "output_topic": "notifications.orders.confirmed",
+      "use_dynamic_topic": false,
+      "kafka_group_id": "dgfacade-pdc-consumer"
+    }
   }
 }

@@ -1,0 +1,69 @@
+{
+  "chain_id": "PARALLEL_ANALYSIS",
+  "description": "Parallel multi-analysis: hash + transform + system probe simultaneously",
+  "ttl_minutes": 10,
+  "error_strategy": "SKIP",
+  "enabled": true,
+  "steps": [
+    {
+      "step": 1,
+      "handler": "STRING_TRANSFORM",
+      "alias": "prepare",
+      "description": "Prepare input by uppercasing the message",
+      "payload_mapping": {
+        "operation": "UPPER",
+        "input": "${payload.message}"
+      },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2,
+      "alias": "multi_analysis",
+      "description": "Run hash, word count, and system probe in parallel",
+      "parallel": [
+        {
+          "handler": "HASH",
+          "alias": "md5_hash",
+          "payload_mapping": {
+            "operation": "MD5",
+            "input": "${prev.result}"
+          }
+        },
+        {
+          "handler": "HASH",
+          "alias": "sha256_hash",
+          "payload_mapping": {
+            "operation": "SHA256",
+            "input": "${prev.result}"
+          }
+        },
+        {
+          "handler": "STRING_TRANSFORM",
+          "alias": "word_count",
+          "payload_mapping": {
+            "operation": "WORD_COUNT",
+            "input": "${prev.result}"
+          }
+        },
+        {
+          "handler": "SYSTEM_INFO",
+          "alias": "system_snapshot",
+          "payload_mapping": {}
+        }
+      ],
+      "join_strategy": "KEYED",
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 3,
+      "handler": "ECHO",
+      "alias": "summary",
+      "description": "Echo the final aggregated analysis",
+      "payload_mapping": {
+        "original_message": "${payload.message}",
+        "analysis": "${prev}"
+      },
+      "merge_strategy": "REPLACE"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # DGFacade — Data Gateway Facade
 
-**Version:** 1.3.0
+**Version:** 1.4.0
 **Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.**
 **Patent Pending:** Certain architectural patterns and implementations may be subject to patent applications.
 

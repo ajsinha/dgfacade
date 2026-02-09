@@ -25,7 +25,7 @@
                     SSL/TLS with PEM certificates, and enterprise-grade messaging across 6 broker types.
                 </p>
                 <div class="mt-4">
-                    <span class="badge bg-primary fs-6 me-2">Version <span th:text="${version} ?: '1.3.0'">1.3.0</span></span>
+                    <span class="badge bg-primary fs-6 me-2">Version <span th:text="${version} ?: '1.4.0'">1.4.0</span></span>
                     <span class="badge bg-success fs-6 me-2">Production Ready</span>
                     <span class="badge bg-info fs-6">Patent Pending</span>
                 </div>
@@ -145,7 +145,7 @@
                             Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, and SQL — all with
                             unified publish/subscribe abstraction and SSL support.
                         </p>
-                        <span class="badge bg-light text-dark">v1.3.0</span>
+                        <span class="badge bg-light text-dark">v1.4.0</span>
                     </div>
                 </div>
             </div>
@@ -156,12 +156,12 @@
                         <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
                             <i class="fas fa-exchange-alt fa-2x"></i>
                         </div>
-                        <h5 class="card-title">Input Fan-Out Channelsamp; Output Channels</h5>
+                        <h5 class="card-title">Input &amp; Output Channels</h5>
                         <p class="card-text opacity-75">
                             Input Channels (fan-out, subscribe) and Output Channels (fan-in, publish) with destinations and backpressure.
                             Decouple producers from consumers with bounded queues.
                         </p>
-                        <span class="badge bg-light text-dark">v1.3.0</span>
+                        <span class="badge bg-light text-dark">v1.4.0</span>
                     </div>
                 </div>
             </div>
@@ -177,7 +177,23 @@
                             Handlers can emit multiple streaming updates via WebSocket.
                             Sequence-numbered partial results with final completion signals.
                         </p>
-                        <span class="badge bg-light text-dark">v1.3.0</span>
+                        <span class="badge bg-light text-dark">v1.4.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-link fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Handler Chaining</h5>
+                        <p class="card-text opacity-75">
+                            Declarative pipeline composition: linear, conditional, and parallel handler
+                            chains defined in JSON. Variable mapping, merge strategies, and execution tracing.
+                        </p>
+                        <span class="badge bg-light text-dark">v1.4.0</span>
                     </div>
                 </div>
             </div>
@@ -238,7 +254,7 @@
                             Built-in Micrometer instrumentation with 13+ custom metrics, percentile
                             histograms, and a pre-built Grafana dashboard. Scrape via /actuator/prometheus.
                         </p>
-                        <span class="badge bg-light text-dark">v1.3.0</span>
+                        <span class="badge bg-light text-dark">v1.4.0</span>
                     </div>
                 </div>
             </div>
@@ -248,12 +264,12 @@
                         <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
                             <i class="fas fa-tools fa-2x"></i>
                         </div>
-                        <h5 class="card-title">Broker Broker &amp; Channel Adminamp; Channel Admin (Input/Output)</h5>
+                        <h5 class="card-title">Broker &amp; Channel Admin</h5>
                         <p class="card-text opacity-75">
                             Full-page admin UI for creating, editing, and managing broker connections
                             input and output channels with SSL/TLS config, start/stop controls, and live status.
                         </p>
-                        <span class="badge bg-light text-dark">v1.3.0</span>
+                        <span class="badge bg-light text-dark">v1.4.0</span>
                     </div>
                 </div>
             </div>
@@ -298,6 +314,10 @@
                                             <li class="mb-0">
                                                 <i class="fas fa-check text-success me-2"></i>
                                                 <strong>Built-in UI</strong> — monitoring dashboard included
+                                            </li>
+                                            <li class="mt-3 mb-0">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                <strong>JSON Pipelines</strong> — handler chaining vs Java DSL composition
                                             </li>
                                         </ul>
                                     </div>
@@ -477,6 +497,18 @@
                                                     <small>Error Pages</small>
                                                 </div>
                                             </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-link text-info mb-1 d-block"></i>
+                                                    <small>Handler Chaining</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2">
+                                                <div class="p-2">
+                                                    <i class="fas fa-flask text-info mb-1 d-block"></i>
+                                                    <small>Playground</small>
+                                                </div>
+                                            </div>
                                         </div>
                                         <hr>
                                         <div class="text-center">
@@ -529,8 +561,91 @@
                                             <small class="text-white-50">Prometheus Metrics</small>
                                         </div>
                                     </div>
+                                    <div class="col-6 col-lg-3">
+                                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.15);">
+                                            <h2 class="text-white mb-0">3</h2>
+                                            <small class="text-white-50">Chain Modes</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Competitive Analysis Matrix -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h4 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Competitive Analysis</h4>
+                        <p class="mb-0 mt-1 small opacity-75">Feature-by-feature comparison with leading middleware and integration platforms</p>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0 small align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="min-width:180px">Capability</th>
+                                        <th class="text-center" style="min-width:110px"><span class="badge bg-primary">DGFacade</span></th>
+                                        <th class="text-center" style="min-width:110px">Spring<br>Integration</th>
+                                        <th class="text-center" style="min-width:110px">Apache<br>Camel</th>
+                                        <th class="text-center" style="min-width:110px">MuleSoft<br>Anypoint</th>
+                                        <th class="text-center" style="min-width:110px">Kong<br>Gateway</th>
+                                        <th class="text-center" style="min-width:110px">Apache<br>NiFi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="table-light"><td colspan="7" class="fw-bold text-primary"><i class="fas fa-satellite-dish me-1"></i> Ingestion &amp; Messaging</td></tr>
+                                    <tr><td>REST API Ingestion</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>WebSocket Ingestion</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td></tr>
+                                    <tr><td>Kafka Native</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>ActiveMQ / JMS</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>RabbitMQ AMQP</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>IBM MQ</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td></tr>
+                                    <tr><td>FileSystem &amp; SQL Brokers</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+
+                                    <tr class="table-light"><td colspan="7" class="fw-bold text-primary"><i class="fas fa-cogs me-1"></i> Handler &amp; Processing</td></tr>
+                                    <tr><td>Pluggable Handler Model</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>Dynamic Proxy (POJO → Handler)</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td></tr>
+                                    <tr><td>Per-Request TTL Enforcement</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td></tr>
+                                    <tr><td>Actor-Based Concurrency</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td></tr>
+                                    <tr><td>Streaming / Partial Responses</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>Declarative Handler Chaining (JSON)</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>Conditional &amp; Parallel Steps</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>External Handler JARs (Drop-in)</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>Input/Output Channel Routing</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+
+                                    <tr class="table-light"><td colspan="7" class="fw-bold text-primary"><i class="fas fa-lock me-1"></i> Security &amp; Configuration</td></tr>
+                                    <tr><td>JSON-Only Configuration</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td></tr>
+                                    <tr><td>Hot Reload (No Restart)</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>Native PEM Certificate Support</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td></tr>
+                                    <tr><td>Per-User Handler Configs</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td></tr>
+                                    <tr><td>API Key Authentication</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td></tr>
+                                    <tr><td>Property Resolution Waterfall</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+
+                                    <tr class="table-light"><td colspan="7" class="fw-bold text-primary"><i class="fas fa-desktop me-1"></i> Observability &amp; Operations</td></tr>
+                                    <tr><td>Built-in Web Dashboard</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>Handler Playground (Test UI)</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td></tr>
+                                    <tr><td>Prometheus Metrics</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>Grafana Dashboard (Pre-built)</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td></tr>
+                                    <tr><td>Phased Startup / Graceful Shutdown</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+
+                                    <tr class="table-light"><td colspan="7" class="fw-bold text-primary"><i class="fas fa-dollar-sign me-1"></i> Deployment &amp; Cost</td></tr>
+                                    <tr><td>Single Fat JAR Deployment</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td></tr>
+                                    <tr><td>No Per-Node Licensing</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-minus-circle text-warning"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td></tr>
+                                    <tr><td>No External Runtime Required</td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-check-circle text-success"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td><td class="text-center"><i class="fas fa-times-circle text-danger"></i></td></tr>
+                                    <tr><td>Dependency Footprint</td><td class="text-center"><span class="badge bg-success">Low</span></td><td class="text-center"><span class="badge bg-success">Low</span></td><td class="text-center"><span class="badge bg-danger">High</span></td><td class="text-center"><span class="badge bg-danger">High</span></td><td class="text-center"><span class="badge bg-warning text-dark">Med</span></td><td class="text-center"><span class="badge bg-danger">High</span></td></tr>
+                                    <tr><td>Learning Curve</td><td class="text-center"><span class="badge bg-success">Easy</span></td><td class="text-center"><span class="badge bg-warning text-dark">Med</span></td><td class="text-center"><span class="badge bg-warning text-dark">Med</span></td><td class="text-center"><span class="badge bg-danger">Hard</span></td><td class="text-center"><span class="badge bg-warning text-dark">Med</span></td><td class="text-center"><span class="badge bg-danger">Hard</span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer bg-light text-center small text-muted py-3">
+                            <i class="fas fa-check-circle text-success me-1"></i> Full support &nbsp;
+                            <i class="fas fa-minus-circle text-warning me-1"></i> Partial / plugin required &nbsp;
+                            <i class="fas fa-times-circle text-danger me-1"></i> Not available or requires significant custom work
                         </div>
                     </div>
                 </div>
@@ -727,7 +842,7 @@
                     <div class="card-body">
                         <div class="mb-4">
                             <h6 class="mb-1">
-                                <span class="badge bg-primary me-2">v1.3.0</span>
+                                <span class="badge bg-primary me-2">v1.4.0</span>
                                 <span class="text-muted small">Current Release</span>
                             </h6>
                             <ul class="small text-muted mb-0">
@@ -738,6 +853,10 @@
                                 <li><strong>Percentile Histograms</strong>: p50/p90/p95/p99 for handler execution duration</li>
                                 <li><strong>Alert Rules</strong>: Recommended Prometheus alerting rules for production</li>
                                 <li><strong>Docker Compose</strong>: Full observability stack (DGFacade + Prometheus + Grafana)</li>
+                                <li><strong>Handler Chaining</strong>: Declarative pipeline composition with linear, conditional, and parallel execution phases</li>
+                                <li><strong>Chain Variable Resolution</strong>: ${payload}, ${prev}, ${steps.alias} scoping with dot-path navigation</li>
+                                <li><strong>3 Chain Configs</strong>: ORDER_PROCESS (linear), DATA_ENRICH (conditional), PARALLEL_ANALYSIS (fan-out)</li>
+                                <li><strong>Handler Playground</strong>: Interactive REST &amp; WebSocket testing UI at /playground</li>
                                 <li><strong>Broker Admin UI</strong>: Full-page CRUD for all 6 broker types with SSL/TLS config, start/stop controls</li>
                                 <li><strong>Input/Output Channel Admin</strong>: Separate admin pages for input channels (fan-out) and output channels (fan-in) with destinations, queue, backpressure, retry</li>
                                 <li><strong>Global Error Handler</strong>: Detailed error pages with stack traces, explanations, and suggestions</li>
@@ -756,7 +875,7 @@
                                 <li><strong>New Handlers</strong>: SystemInfo, JsonTransform, Hash, HttpProbe, BatchArithmetic</li>
                                 <li><strong>Admin Protection</strong>: Built-in admin user/key locked from UI modification</li>
                                 <li><strong>Request Processing Guide</strong>: End-to-end documentation with 5 runnable examples</li>
-                                <li><strong>Input Fan-Out Channelsamp; Output Channels</strong>: Data channels with backpressure and multi-listener support</li>
+                                <li><strong>Input &amp; Output Channels</strong>: Data channels with backpressure and multi-listener support</li>
                                 <li><strong>Streaming Handlers</strong>: Multi-update WebSocket responses with sequence numbers</li>
                             </ul>
                         </div>
@@ -787,11 +906,11 @@
                         <ul class="list-unstyled small">
                             <li class="mb-3">
                                 <i class="fas fa-check-circle text-success me-2" style="font-size: 0.8em; vertical-align: middle;"></i>
-                                <strong>v1.3.0</strong> — <del>Prometheus metrics and Grafana dashboard</del> <span class="badge bg-success">Done</span>
+                                <strong>v1.4.0</strong> — <del>Prometheus metrics and Grafana dashboard</del> <span class="badge bg-success">Done</span>
                             </li>
                             <li class="mb-3">
-                                <i class="fas fa-circle text-warning me-2" style="font-size: 0.6em; vertical-align: middle;"></i>
-                                <strong>v1.3.0</strong> — Handler chaining and pipeline composition
+                                <i class="fas fa-check-circle text-success me-2" style="font-size: 0.8em; vertical-align: middle;"></i>
+                                <strong>v1.4.0</strong> — <del>Handler chaining and pipeline composition</del> <span class="badge bg-success">Done</span>
                             </li>
                             <li class="mb-3">
                                 <i class="fas fa-circle text-secondary me-2" style="font-size: 0.6em; vertical-align: middle;"></i>
@@ -854,7 +973,7 @@
                             </li>
                             <li class="mb-0">
                                 <i class="fas fa-code-branch fa-fw text-primary me-2"></i>
-                                <strong>Version:</strong> <span th:text="${version} ?: '1.3.0'">1.3.0</span>
+                                <strong>Version:</strong> <span th:text="${version} ?: '1.4.0'">1.4.0</span>
                             </li>
                         </ul>
                     </div>

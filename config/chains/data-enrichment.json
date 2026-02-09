@@ -1,0 +1,54 @@
+{
+  "chain_id": "DATA_ENRICH",
+  "description": "Transform data with conditional hash and formatting based on payload flags",
+  "ttl_minutes": 10,
+  "error_strategy": "SKIP",
+  "enabled": true,
+  "steps": [
+    {
+      "step": 1,
+      "handler": "ECHO",
+      "alias": "capture",
+      "description": "Capture and echo back original input for tracing",
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2,
+      "handler": "STRING_TRANSFORM",
+      "alias": "title_case",
+      "description": "Title-case the name field (if provided)",
+      "payload_mapping": {
+        "operation": "TITLE_CASE",
+        "input": "${payload.name}"
+      },
+      "merge_strategy": "APPEND",
+      "when": "${payload.name} != ''"
+    },
+    {
+      "step": 3,
+      "handler": "HASH",
+      "alias": "secure_hash",
+      "description": "Generate hash only when security_level is HIGH",
+      "payload_mapping": {
+        "operation": "SHA512",
+        "input": "${payload.sensitive_data}"
+      },
+      "merge_strategy": "APPEND",
+      "when": "${payload.security_level} == 'HIGH'"
+    },
+    {
+      "step": 4,
+      "handler": "ARITHMETIC",
+      "alias": "discount",
+      "description": "Calculate discount only for premium customers",
+      "payload_mapping": {
+        "operation": "MUL",
+        "operands": ["${payload.price}", 0.85]
+      },
+      "merge_strategy": "APPEND",
+      "when": "${payload.customer_tier} == 'PREMIUM'",
+      "error_strategy": "FALLBACK",
+      "fallback_value": { "result": 0, "note": "Discount calculation unavailable" }
+    }
+  ]
+}

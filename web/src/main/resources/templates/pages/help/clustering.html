@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Clustering &amp; Distributed Execution')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/help">Documentation</a></li>
+                    <li class="breadcrumb-item active">Clustering &amp; Distributed Execution</li>
+                </ol>
+            </nav>
+            <h1 class="display-5">
+                <i class="fas fa-network-wired me-3 text-primary"></i>Clustering &amp; Distributed Execution
+            </h1>
+            <p class="lead text-muted">
+                <strong>Version 1.4.0</strong> &mdash; Scale <span th:text="${appName} ?: 'DGFacade'">DGFacade</span>
+                horizontally across multiple nodes with automatic peer discovery,
+                heartbeat-based health monitoring, and round-robin work distribution.
+            </p>
+            <span class="badge bg-primary me-1">v1.4.0</span>
+            <span class="badge bg-success me-1">HTTP-based</span>
+            <span class="badge bg-info me-1">Zero-config Standalone</span>
+            <span class="badge bg-warning text-dark me-1">Patent Pending</span>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="card mb-5 border-0 shadow-sm">
+            <div class="card-body">
+                <h5><i class="fas fa-list-ol me-2"></i>Contents</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <ol class="mb-0">
+                            <li><a href="#overview">Overview</a></li>
+                            <li><a href="#modes">Operating Modes</a></li>
+                            <li><a href="#architecture">Cluster Architecture</a></li>
+                            <li><a href="#protocol">Cluster Protocol</a></li>
+                        </ol>
+                    </div>
+                    <div class="col-md-4">
+                        <ol start="5" class="mb-0">
+                            <li><a href="#configuration">Configuration</a></li>
+                            <li><a href="#joining">Joining a Cluster</a></li>
+                            <li><a href="#roles">Node Roles</a></li>
+                            <li><a href="#execution">Distributed Execution</a></li>
+                            <li><a href="#health">Health &amp; Failover</a></li>
+                        </ol>
+                    </div>
+                    <div class="col-md-4">
+                        <ol start="10" class="mb-0">
+                            <li><a href="#channel-access">Channel Access from Handlers</a></li>
+                            <li><a href="#pdc-example">PDCHandler: Complete Example</a></li>
+                            <li><a href="#monitoring">Cluster Monitoring</a></li>
+                            <li><a href="#deployment">Deployment Patterns</a></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Overview -->
+        <div id="overview" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">1</span>Overview</h3>
+                <p>
+                    DGFacade is designed to operate in two modes: <strong>standalone</strong> (single node, zero configuration)
+                    and <strong>cluster</strong> (multi-node, distributed execution). The transition between modes requires
+                    only a single configuration property change &mdash; no code changes, no different builds, no special deployment artifacts.
+                </p>
+                <p>
+                    The cluster implementation uses a lightweight <strong>HTTP-based protocol</strong> rather than
+                    embedded distributed frameworks. Every DGFacade node runs the same JAR. Nodes discover each other
+                    via configurable seed node URLs and maintain awareness through periodic heartbeats. When a node
+                    receives a request it can&rsquo;t (or shouldn&rsquo;t) execute locally, it forwards the request
+                    to a peer node via HTTP.
+                </p>
+
+                <div class="alert alert-success mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Key Design Principle:</strong> A single node with no seed nodes configured behaves
+                    identically to pre-cluster DGFacade. The cluster layer adds zero overhead in standalone mode &mdash;
+                    no background threads, no network I/O, no additional memory.
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Operating Modes -->
+        <div id="modes" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">2</span>Operating Modes</h3>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-success">
+                            <div class="card-header bg-success text-white">
+                                <i class="fas fa-cube me-2"></i>Standalone Mode (Default)
+                            </div>
+                            <div class="card-body">
+                                <ul class="mb-0">
+                                    <li>No seed nodes configured (<code>dgfacade.cluster.seed-nodes=</code> empty)</li>
+                                    <li>Node role automatically set to <code>BOTH</code></li>
+                                    <li>All ingestion (REST, WebSocket, Kafka, ActiveMQ) and all execution happen on the same node</li>
+                                    <li>No heartbeat thread started, no HTTP client created</li>
+                                    <li>ClusterService reports <code>STANDALONE</code> mode</li>
+                                    <li>The cluster monitoring page shows a single &ldquo;self&rdquo; node</li>
+                                    <li>Zero additional overhead vs. a non-cluster build</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <i class="fas fa-project-diagram me-2"></i>Cluster Mode
+                            </div>
+                            <div class="card-body">
+                                <ul class="mb-0">
+                                    <li>One or more seed node URLs configured</li>
+                                    <li>Heartbeat thread starts, HTTP client created</li>
+                                    <li>Initial peer discovery from seed nodes on startup</li>
+                                    <li>Periodic heartbeat every <code>N</code> seconds (default: 15)</li>
+                                    <li>Health tracking: UP → SUSPECT → DOWN → evicted</li>
+                                    <li>GATEWAY nodes can forward requests to EXECUTOR peers</li>
+                                    <li>Round-robin selection among healthy executor nodes</li>
+                                    <li>Automatic local fallback if forwarding fails</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Architecture -->
+        <div id="architecture" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">3</span>Cluster Architecture</h3>
+                <p>The cluster is formed by DGFacade nodes that communicate via REST endpoints. There is no central
+                    coordinator &mdash; every node maintains its own peer list and can independently decide where to
+                    route requests.</p>
+
+                <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.8rem; overflow-x: auto;"><code>
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                    DGFacade Cluster (HTTP-based)                    │
+    │                                                                     │
+    │  ┌──────────────────┐   heartbeat    ┌──────────────────┐          │
+    │  │  Node A (GATEWAY) │◄────────────►│  Node B (EXECUTOR)│          │
+    │  │  :8090            │   /cluster/   │  :8090            │          │
+    │  │                   │   heartbeat   │                   │          │
+    │  │  ┌─────────────┐ │               │  ┌─────────────┐  │          │
+    │  │  │ REST API     │ │   forward     │  │ Pekko Actors│  │          │
+    │  │  │ WebSocket    │ │──────────────►│  │ Handlers    │  │          │
+    │  │  │ Kafka Cons.  │ │  /api/v1/     │  │ Execution   │  │          │
+    │  │  │ ActiveMQ     │ │  request      │  │ Engine      │  │          │
+    │  │  └─────────────┘ │               │  └─────────────┘  │          │
+    │  └──────────────────┘               └──────────────────┘           │
+    │           │                                    ▲                    │
+    │           │           heartbeat                │                    │
+    │           └──────────────────┐   ┌─────────────┘                   │
+    │                              ▼   ▼                                  │
+    │                    ┌──────────────────┐                             │
+    │                    │  Node C (BOTH)    │                             │
+    │                    │  :8090            │                             │
+    │                    │  Gateway+Executor │                             │
+    │                    └──────────────────┘                             │
+    └─────────────────────────────────────────────────────────────────────┘
+
+    Request Flow (cluster mode, GATEWAY → EXECUTOR):
+
+    Client ──► Load Balancer ──► Gateway Node ──┬──► Local Execution
+                                                 │    (if BOTH role or
+                                                 │     no peers available)
+                                                 │
+                                                 └──► HTTP Forward to
+                                                      Executor Node
+                                                      POST /api/v1/request
+                                                      ──► Pekko Actor
+                                                      ──► Handler
+                                                      ──► Response
+                                                      ◄── JSON Response
+                                                 ◄────── to Client
+</code></pre>
+            </div>
+        </div>
+
+        <!-- Section 4: Protocol -->
+        <div id="protocol" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">4</span>Cluster Protocol</h3>
+                <p>Nodes communicate via three REST endpoints. These are standard DGFacade HTTP endpoints &mdash;
+                    no special ports, no special protocols, no binary serialization.</p>
+
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Endpoint</th>
+                            <th>Method</th>
+                            <th>Purpose</th>
+                            <th>Request Body</th>
+                            <th>Response</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>/api/v1/cluster/heartbeat</code></td>
+                            <td><span class="badge bg-warning text-dark">POST</span></td>
+                            <td>Send node state to a peer and receive their state back</td>
+                            <td>ClusterNode JSON (self)</td>
+                            <td>ClusterNode JSON (peer)</td>
+                        </tr>
+                        <tr>
+                            <td><code>/api/v1/cluster/nodes</code></td>
+                            <td><span class="badge bg-success">GET</span></td>
+                            <td>Get all known nodes from a peer (for initial discovery)</td>
+                            <td>&mdash;</td>
+                            <td>List&lt;ClusterNode&gt; JSON</td>
+                        </tr>
+                        <tr>
+                            <td><code>/api/v1/cluster/status</code></td>
+                            <td><span class="badge bg-success">GET</span></td>
+                            <td>Get cluster summary: mode, size, status counts, node list</td>
+                            <td>&mdash;</td>
+                            <td>Status JSON</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h5 class="mt-4">Heartbeat Cycle</h5>
+                <p>Each node runs a periodic heartbeat cycle (default: every 15 seconds):</p>
+                <ol>
+                    <li>Update self metrics (active handlers, total requests, CPU, heap)</li>
+                    <li>POST heartbeat to all known peers + seed nodes</li>
+                    <li>Receive peer state in the response &mdash; update peer registry</li>
+                    <li>Check peer health: mark SUSPECT after 2 missed heartbeats, DOWN after 5</li>
+                    <li>Evict DOWN nodes after 10 minutes, LEAVING nodes after 60 seconds</li>
+                </ol>
+
+                <h5 class="mt-4">ClusterNode Payload</h5>
+                <pre class="bg-light p-3 rounded" style="font-size: 0.82rem;"><code>{
+  "node_id": "node-a1b2c3d4",
+  "host": "dgfacade-node-1",
+  "port": 8090,
+  "role": "BOTH",
+  "status": "UP",
+  "version": "1.4.0",
+  "started_at": "2026-02-09T14:30:00Z",
+  "last_heartbeat": "2026-02-09T15:45:12Z",
+  "active_handlers": 42,
+  "total_requests_processed": 128459,
+  "cpu_load": 2.4,
+  "heap_used_mb": 512,
+  "heap_max_mb": 2048
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Section 5: Configuration -->
+        <div id="configuration" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">5</span>Configuration</h3>
+                <p>All cluster settings are in <code>application.properties</code>. The only required property
+                    to enable clustering is <code>dgfacade.cluster.seed-nodes</code>.</p>
+
+                <table class="table table-bordered table-sm">
+                    <thead class="table-dark">
+                        <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>dgfacade.cluster.seed-nodes</code></td>
+                            <td><em>(empty)</em></td>
+                            <td>Comma-separated list of peer node URLs. Empty = standalone mode.
+                                Example: <code>http://node2:8090,http://node3:8090</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>dgfacade.cluster.node-role</code></td>
+                            <td><code>BOTH</code></td>
+                            <td>This node&rsquo;s role: <code>BOTH</code>, <code>GATEWAY</code>, or <code>EXECUTOR</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>dgfacade.cluster.heartbeat-seconds</code></td>
+                            <td><code>15</code></td>
+                            <td>Interval between heartbeat cycles (minimum: 5)</td>
+                        </tr>
+                        <tr>
+                            <td><code>server.port</code></td>
+                            <td><code>8090</code></td>
+                            <td>HTTP port &mdash; used for both API traffic and cluster communication</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h5 class="mt-4">Example: 3-Node Cluster</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">Node 1 (Gateway)</div>
+                            <div class="card-body">
+                                <pre class="bg-light p-2 rounded mb-0" style="font-size: 0.78rem;"><code>server.port=8090
+dgfacade.cluster.node-role=GATEWAY
+dgfacade.cluster.seed-nodes=\
+  http://node2:8090,\
+  http://node3:8090
+dgfacade.cluster.heartbeat-seconds=10</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">Node 2 (Executor)</div>
+                            <div class="card-body">
+                                <pre class="bg-light p-2 rounded mb-0" style="font-size: 0.78rem;"><code>server.port=8090
+dgfacade.cluster.node-role=EXECUTOR
+dgfacade.cluster.seed-nodes=\
+  http://node1:8090,\
+  http://node3:8090
+dgfacade.cluster.heartbeat-seconds=10</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white">Node 3 (Both)</div>
+                            <div class="card-body">
+                                <pre class="bg-light p-2 rounded mb-0" style="font-size: 0.78rem;"><code>server.port=8090
+dgfacade.cluster.node-role=BOTH
+dgfacade.cluster.seed-nodes=\
+  http://node1:8090,\
+  http://node2:8090
+dgfacade.cluster.heartbeat-seconds=10</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: Joining a Cluster -->
+        <div id="joining" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">6</span>Joining a Cluster</h3>
+                <p>
+                    Understanding exactly how a new node discovers and joins an existing cluster is important
+                    for operations, troubleshooting, and capacity planning. The process is fully automatic &mdash;
+                    a new node only needs the URL of at least one existing node in its seed list.
+                </p>
+
+                <h5>Step-by-Step Join Sequence</h5>
+                <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.78rem; overflow-x: auto;"><code>
+  New Node (node-4)                                  Existing Cluster
+  ──────────────────                                 ──────────────────
+
+  1. STARTUP
+  ┌─────────────────────────┐
+  │ Spring Boot starts      │
+  │ AppConfig creates       │
+  │ ClusterService bean     │
+  │ seed-nodes parsed:      │
+  │   [http://node-1:8090]  │
+  │ clusterEnabled = true   │
+  │ role = BOTH             │
+  │ nodeId = node-4-a7b3... │
+  └─────────────────────────┘
+            │
+  2. PHASE 8: clusterService.start()
+            │
+            ├── Creates HTTP client
+            ├── Starts heartbeat daemon thread
+            │
+  3. INITIAL DISCOVERY (2 seconds after start)
+            │
+            │   discoverPeers()
+            │         │
+            │         ├── For each seed URL:
+            │         │
+            │         │   POST /api/v1/cluster/heartbeat ──────────────►  node-1
+            │         │   Body: { node_id: "node-4-a7b3",                  │
+            │         │           host: "node-4", port: 8090,              │
+            │         │           role: "BOTH", status: "UP",              │
+            │         │           version: "1.4.0", ... }                  │
+            │         │                                                     │
+            │         │                                    receiveHeartbeat(node-4)
+            │         │                                    → peers.put("node-4-a7b3", ...)
+            │         │                                    → log: "New cluster peer discovered:
+            │         │                                            node-4-a7b3 (node-4:8090)"
+            │         │                                                     │
+            │         │   ◄──── 200 OK ────────────────────────────────────┘
+            │         │   Body: { node_id: "node-1-x9f2",
+            │         │           host: "node-1", port: 8090, ... }
+            │         │         │
+            │         │         └── receiveHeartbeat(node-1)
+            │         │             → peers.put("node-1-x9f2", ...)
+            │         │             → log: "New cluster peer discovered:
+            │         │                     node-1-x9f2 (node-1:8090)"
+            │         │
+            │         │   GET /api/v1/cluster/nodes ───────────────────►  node-1
+            │         │                                                     │
+            │         │                                    getAllNodes()
+            │         │                                    → [node-1, node-2, node-3]
+            │         │                                                     │
+            │         │   ◄──── 200 OK ────────────────────────────────────┘
+            │         │   Body: [ node-1-x9f2, node-2-k4m1, node-3-p8w6 ]
+            │         │         │
+            │         │         └── For each returned node:
+            │         │             receiveHeartbeat(node-2) → peers.put(...)
+            │         │             receiveHeartbeat(node-3) → peers.put(...)
+            │         │             receiveHeartbeat(node-1) → already known, update
+            │         │
+            │         └── node-4 now knows: node-1, node-2, node-3
+            │
+  4. FIRST HEARTBEAT CYCLE (after heartbeat-seconds interval)
+            │
+            │   heartbeatCycle()
+            │         │
+            │         ├── Build target list:
+            │         │   seedNodes + all known peer URLs
+            │         │   = [node-1:8090, node-2:8090, node-3:8090]
+            │         │
+            │         ├── POST heartbeat to node-1 ────────────────────►  node-1
+            │         │   ◄── 200 OK (node-1 state) ──────────────────┘  already knows node-4
+            │         │
+            │         ├── POST heartbeat to node-2 ────────────────────►  node-2
+            │         │   ◄── 200 OK (node-2 state) ──────────────────┘  discovers node-4!
+            │         │                                                   "New cluster peer
+            │         │                                                    discovered: node-4"
+            │         │
+            │         └── POST heartbeat to node-3 ────────────────────►  node-3
+            │             ◄── 200 OK (node-3 state) ──────────────────┘  discovers node-4!
+            │
+  5. STEADY STATE
+            │
+            └── Every 15s: heartbeatCycle() exchanges state with all peers
+                All 4 nodes now have full cluster view
+                node-4 is eligible for work distribution</code></pre>
+
+                <h5 class="mt-4">Key Observations</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white"><i class="fas fa-handshake me-2"></i>Bidirectional Handshake</div>
+                            <div class="card-body">
+                                <p class="mb-0 small">
+                                    The heartbeat endpoint is a <strong>two-way exchange</strong>. When node-4 POSTs
+                                    its state to node-1, node-1 responds with its own state. Both sides learn about
+                                    each other in a single HTTP round-trip. This means node-4 doesn&rsquo;t just
+                                    announce itself &mdash; it immediately learns about the seed node too.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white"><i class="fas fa-sitemap me-2"></i>Transitive Discovery</div>
+                            <div class="card-body">
+                                <p class="mb-0 small">
+                                    The new node only needs <strong>one seed node URL</strong> to discover the
+                                    entire cluster. After the initial heartbeat, it calls
+                                    <code>GET /api/v1/cluster/nodes</code> on the seed, which returns all nodes
+                                    that seed knows about. This gossip-style propagation means the new node
+                                    learns about peers it has never directly contacted.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-warning">
+                            <div class="card-header bg-warning text-dark"><i class="fas fa-clock me-2"></i>Convergence Time</div>
+                            <div class="card-body">
+                                <p class="mb-0 small">
+                                    The new node is reachable by the seed within <strong>~2 seconds</strong>
+                                    (the initial discovery delay). Other non-seed nodes learn about it at
+                                    the next heartbeat cycle &mdash; worst case <strong>one heartbeat interval</strong>
+                                    (default 15s). The node is eligible for forwarded work as soon as any
+                                    peer has registered it as <code>UP</code>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-secondary">
+                            <div class="card-header bg-secondary text-white"><i class="fas fa-shield-alt me-2"></i>Seed Node Unavailable</div>
+                            <div class="card-body">
+                                <p class="mb-0 small">
+                                    If the seed node is unreachable at startup, the new node logs a warning
+                                    and continues running in a degraded cluster state. It retries every heartbeat
+                                    cycle. Once the seed (or any other peer) becomes reachable, discovery
+                                    completes automatically. The node functions locally in the meantime &mdash;
+                                    no requests are dropped.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="mt-4">How Existing Nodes Learn About the New Node</h5>
+                <p>Existing nodes learn about a new peer through two paths:</p>
+                <ol>
+                    <li><strong>Direct heartbeat:</strong> When the new node sends its first heartbeat to a seed,
+                        that seed immediately adds it to its peer registry. The seed&rsquo;s
+                        <code>receiveHeartbeat()</code> method creates the entry and logs
+                        <code>&quot;New cluster peer discovered&quot;</code>.</li>
+                    <li><strong>Propagation via heartbeat targets:</strong> On the new node&rsquo;s next heartbeat
+                        cycle, it sends heartbeats to all peers it discovered (not just seeds). This is how
+                        non-seed nodes (e.g. node-2, node-3) learn about node-4 &mdash; they receive a
+                        heartbeat directly from it and add it to their registries.</li>
+                </ol>
+                <p>There is no central registry. Every node maintains its own peer map and converges
+                    through direct heartbeat exchanges.</p>
+
+                <h5 class="mt-4">Minimal Join Configuration</h5>
+                <p>The only requirement for a new node to join is setting <code>dgfacade.cluster.seed-nodes</code>
+                    to at least one URL of an existing node:</p>
+                <pre class="bg-light p-3 rounded" style="font-size: 0.82rem;"><code># New node joining an existing cluster — minimal config
+dgfacade.cluster.seed-nodes=http://any-existing-node:8090
+
+# Optional: specify role (defaults to BOTH)
+dgfacade.cluster.node-role=EXECUTOR</code></pre>
+
+                <div class="alert alert-success mt-3 mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Best practice:</strong> List 2&ndash;3 seed nodes for resilience. If the single seed
+                    is down when the new node starts, discovery will be delayed until the next heartbeat
+                    retry. Multiple seeds ensure at least one is reachable.
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 7: Roles -->
+        <div id="roles" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">7</span>Node Roles</h3>
+
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr><th>Role</th><th>Accepts Traffic</th><th>Executes Handlers</th><th>Forwards Requests</th><th>Use When</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge bg-info">BOTH</span></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><i class="fas fa-times text-muted"></i></td>
+                            <td>Standalone mode, small clusters, or nodes that do everything</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge bg-success">GATEWAY</span></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td>Fallback only</td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td>Front-line nodes behind a load balancer; lightweight, high-throughput ingestion</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge bg-primary">EXECUTOR</span></td>
+                            <td>Cluster API only</td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><i class="fas fa-times text-muted"></i></td>
+                            <td>Dedicated compute nodes; heavy handler workloads, GPU-attached, etc.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Fallback:</strong> A GATEWAY node will execute locally if no healthy EXECUTOR peers are available.
+                    This ensures the system never drops requests due to temporary peer unavailability.
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 7: Distributed Execution -->
+        <div id="execution" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">8</span>Distributed Execution</h3>
+                <p>When a request arrives at a GATEWAY node, the <code>ExecutionEngine.submit()</code> method
+                    decides whether to execute locally or forward to a peer:</p>
+
+                <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.8rem; overflow-x: auto;"><code>
+    ExecutionEngine.submit(request)
+        │
+        ├── Cluster disabled?           → Execute locally (standalone)
+        │
+        ├── Node role = BOTH?           → Execute locally
+        │
+        ├── Request type = CHAIN?       → Execute locally (chain affinity)
+        │
+        ├── Node role = GATEWAY?
+        │   ├── selectExecutorNode()
+        │   │   ├── Found healthy peer? → forwardToNode(peer, request)
+        │   │   │                          POST /api/v1/request → peer
+        │   │   │                          ← DGResponse JSON
+        │   │   │                          Tag response: _forwarded_to, _forwarded_host
+        │   │   │
+        │   │   └── No healthy peers?   → submitLocal(request) [fallback]
+        │   │
+        │   └── Forward failed?         → submitLocal(request) [fallback]
+        │
+        └── Node role = EXECUTOR?       → Execute locally
+</code></pre>
+
+                <h5 class="mt-4">Chain Affinity</h5>
+                <p>
+                    Handler chains (<code>CHAIN</code> request type) always execute locally regardless of node role.
+                    This is because chain steps share state via variable resolution (<code>${prev}</code>,
+                    <code>${steps.alias.field}</code>), and serializing intermediate results across the network for
+                    every step would add latency without benefit. The parallelism <em>within</em> a chain&rsquo;s
+                    fan-out phase still benefits from local Pekko actor concurrency.
+                </p>
+
+                <h5 class="mt-4">Round-Robin Selection</h5>
+                <p>
+                    The <code>ClusterService.selectExecutorNode()</code> method implements round-robin selection
+                    among all peers that are (a) status <code>UP</code> and (b) role <code>EXECUTOR</code> or
+                    <code>BOTH</code>. The round-robin index is maintained per-node and wraps around the candidate
+                    list. This provides simple, deterministic load distribution without requiring shared state.
+                </p>
+
+                <h5 class="mt-4">Forwarded Response Metadata</h5>
+                <p>When a request is forwarded to a peer, the response includes two extra fields in the
+                    <code>data</code> object indicating where execution actually happened:</p>
+                <pre class="bg-light p-3 rounded" style="font-size: 0.82rem;"><code>{
+  "request_id": "req-abc123",
+  "status": "SUCCESS",
+  "data": {
+    "result": 150,
+    "_forwarded_to": "node-b7f3e2a1",
+    "_forwarded_host": "dgfacade-node-2:8090"
+  }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Section 8: Health & Failover -->
+        <div id="health" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">9</span>Health &amp; Failover</h3>
+
+                <h5>Node Status Transitions</h5>
+                <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.8rem;"><code>
+    ┌────────────┐   2× missed heartbeat   ┌────────────┐   5× missed heartbeat   ┌────────────┐
+    │     UP     │ ────────────────────────► │  SUSPECT   │ ────────────────────────►│    DOWN    │
+    └────────────┘                           └────────────┘                          └────────────┘
+         ▲                                        │                                       │
+         │   heartbeat received                   │   heartbeat received                  │ 10 min
+         └────────────────────────────────────────┘                                       │
+                                                                                          ▼
+    ┌────────────┐   60 seconds                                                     ┌──────────┐
+    │  LEAVING   │ ──────────────────────────────────────────────────────────────────►│ EVICTED  │
+    └────────────┘                                                                   └──────────┘
+         ▲
+         │  node calls stop() during shutdown
+         │
+</code></pre>
+
+                <table class="table table-bordered table-sm mt-3">
+                    <thead class="table-dark">
+                        <tr><th>Status</th><th>Threshold</th><th>Behavior</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="badge bg-success">UP</span></td><td>Heartbeat received within last 2 intervals</td><td>Eligible for work distribution</td></tr>
+                        <tr><td><span class="badge bg-warning text-dark">SUSPECT</span></td><td>2&times; heartbeat interval missed</td><td>Excluded from work distribution; logged as warning</td></tr>
+                        <tr><td><span class="badge bg-danger">DOWN</span></td><td>5&times; heartbeat interval missed</td><td>Excluded from work distribution; logged as error</td></tr>
+                        <tr><td><span class="badge bg-secondary">LEAVING</span></td><td>Node called <code>stop()</code></td><td>Best-effort notification to peers; evicted after 60s</td></tr>
+                    </tbody>
+                </table>
+
+                <h5 class="mt-4">Graceful Shutdown</h5>
+                <p>
+                    When DGFacade shuts down (via Spring&rsquo;s graceful shutdown), the <code>ShutdownOrchestrator</code>
+                    calls <code>ClusterService.stop()</code> which sets the node status to <code>LEAVING</code> and
+                    sends a final heartbeat to all known peers. Peers see the LEAVING status and stop forwarding new
+                    requests to this node immediately. The node is evicted from peer registries after 60 seconds.
+                </p>
+
+                <h5 class="mt-4">Forward Failure Handling</h5>
+                <p>
+                    If a request forward to a peer fails (connection timeout, HTTP error, parse error), the
+                    ExecutionEngine automatically falls back to local execution. This means the worst case of a
+                    peer failure is slightly increased latency (the forward attempt timeout + local execution),
+                    never a dropped request.
+                </p>
+            </div>
+        </div>
+
+        <!-- Section 9: Channel Access from Handlers -->
+        <div id="channel-access" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">10</span>Channel Access from Handlers</h3>
+                <p>
+                    Handlers that need to interact with message brokers (subscribe to topics, publish messages)
+                    do so through the <code>ChannelAccessor</code> service. The execution engine injects a
+                    <code>ChannelAccessor</code> reference into every handler before <code>execute()</code> is called.
+                </p>
+
+                <h5>How It Works</h5>
+                <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.8rem; overflow-x: auto;"><code>
+    DGHandler Interface
+    ├── setChannelAccessor(ChannelAccessor accessor)  ← called by ExecutionEngine
+    ├── construct(config)
+    └── execute(request)
+            │
+            ├── channelAccessor.getSubscriber("order-events")
+            │       │
+            │       └── InputChannelService.getChannel("order-events")
+            │               → { broker: "dev-kafka", destinations: [...] }
+            │                   │
+            │                   └── BrokerService.getBroker("dev-kafka")
+            │                           → { bootstrap_servers: "localhost:9092", ... }
+            │                               │
+            │                               └── MessagingFactory.createSubscriber(brokerConfig)
+            │                                       → KafkaDataSubscriber (cached)
+            │
+            ├── channelAccessor.getPublisher("order-notifications")
+            │       │
+            │       └── OutputChannelService.getChannel("order-notifications")
+            │               → { broker: "dev-kafka", destinations: [...] }
+            │                   │
+            │                   └── MessagingFactory.createPublisher(brokerConfig)
+            │                           → KafkaDataPublisher (cached)
+            │
+            └── subscriber.subscribe("orders.created", message -> {
+                    publisher.publish("notifications.orders.confirmed", envelope);
+                });
+</code></pre>
+
+                <h5 class="mt-4">ChannelAccessor API</h5>
+                <table class="table table-bordered table-sm">
+                    <thead class="table-dark">
+                        <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>getPublisher(outputChannelId)</code></td>
+                            <td><code>DataPublisher</code></td>
+                            <td>Get a publisher for the output channel. Initialized with broker connection. Cached.</td>
+                        </tr>
+                        <tr>
+                            <td><code>getSubscriber(inputChannelId)</code></td>
+                            <td><code>DataSubscriber</code></td>
+                            <td>Get a subscriber for the input channel. Initialized with broker connection. Cached.</td>
+                        </tr>
+                        <tr>
+                            <td><code>getDestinations(channelId, isOutput)</code></td>
+                            <td><code>List&lt;String&gt;</code></td>
+                            <td>List all configured destination names (topics/queues) for a channel.</td>
+                        </tr>
+                        <tr>
+                            <td><code>getChannelConfig(channelId, isOutput)</code></td>
+                            <td><code>Map&lt;String, Object&gt;</code></td>
+                            <td>Get the raw channel JSON configuration map.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h5 class="mt-4">Writing a Handler That Uses Channels</h5>
+                <pre class="bg-light p-3 rounded" style="font-size: 0.82rem;"><code>public class MyBrokerHandler implements DGHandler {
+
+    private ChannelAccessor channelAccessor;
+
+    @Override
+    public void setChannelAccessor(ChannelAccessor accessor) {
+        this.channelAccessor = accessor;  // called before construct()
+    }
+
+    @Override
+    public void construct(Map&lt;String, Object&gt; config) {
+        // read channel IDs from handler config
+    }
+
+    @Override
+    public DGResponse execute(DGRequest request) {
+        // Subscribe to an input channel topic
+        DataSubscriber sub = channelAccessor.getSubscriber("order-events");
+        sub.subscribe("orders.created", envelope -> {
+            String payload = envelope.getPayload();
+            // process...
+        });
+        sub.start();
+
+        // Publish to an output channel topic
+        DataPublisher pub = channelAccessor.getPublisher("order-notifications");
+        MessageEnvelope env = new MessageEnvelope("notifications.orders.confirmed", jsonPayload);
+        pub.publish("notifications.orders.confirmed", env);
+
+        return DGResponse.success(request.getRequestId(), resultData);
+    }
+
+    // ... stop(), cleanup()
+}</code></pre>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Important:</strong> DataPublisher and DataSubscriber instances are <strong>cached</strong> in
+                    the ChannelAccessor. Do NOT call <code>close()</code> on them from your handler &mdash; other handlers
+                    may be using the same instance. Instead, call <code>unsubscribe(topic)</code> in your
+                    <code>cleanup()</code> method and let the ChannelAccessor manage the connection lifecycle.
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 10: PDCHandler Example -->
+        <div id="pdc-example" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">11</span>PDCHandler: Complete Example</h3>
+                <p>
+                    The <code>PDCHandler</code> (Publish&ndash;Deliver&ndash;Consume) is the reference implementation
+                    for a handler that uses both Input and Output Channels with real broker connectivity.
+                    It demonstrates the full pattern: REST call → topic subscription → message forwarding → output publishing.
+                </p>
+
+                <h5>Handler Configuration</h5>
+                <pre class="bg-light p-3 rounded" style="font-size: 0.82rem;"><code>{
+  "PDC_PROCESS": {
+    "handler_class": "com.dgfacade.server.handler.PDCHandler",
+    "description": "Publish-Deliver-Consume: subscribes to broker topic, forwards to output",
+    "ttl_minutes": 60,
+    "enabled": true,
+    "config": {
+      "rest_endpoint": "http://localhost:8090/api/v1/request",
+      "rest_timeout_seconds": 30,
+      "input_channel": "order-events",
+      "input_topic": "orders.created",
+      "output_channel": "order-notifications",
+      "output_topic": "notifications.orders.confirmed",
+      "use_dynamic_topic": false,
+      "kafka_group_id": "dgfacade-pdc-consumer"
+    }
+  }
+}</code></pre>
+
+                <h5 class="mt-4">Execution Flow</h5>
+                <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.8rem; overflow-x: auto;"><code>
+    PDCHandler.execute(request)
+        │
+        ├── Step 1: Determine input topic
+        │   ├── use_dynamic_topic=true?  → POST to rest_endpoint → get topic from response
+        │   └── use_dynamic_topic=false? → use static input_topic from config
+        │
+        ├── Step 2: Get DataSubscriber from Input Channel
+        │   └── channelAccessor.getSubscriber("order-events")
+        │       → resolves broker "dev-kafka" → KafkaDataSubscriber (localhost:9092)
+        │
+        ├── Step 3: Get DataPublisher from Output Channel
+        │   └── channelAccessor.getPublisher("order-notifications")
+        │       → resolves broker "dev-kafka" → KafkaDataPublisher (localhost:9092)
+        │
+        ├── Step 4: Subscribe and forward
+        │   └── subscriber.subscribe("orders.created", message -> {
+        │           envelope = new MessageEnvelope(output_topic, message.payload)
+        │           envelope.headers = { pdc_source_topic, pdc_request_id, ... }
+        │           publisher.publish("notifications.orders.confirmed", envelope)
+        │       })
+        │   └── subscriber.start()
+        │
+        ├── Step 5: Wait until TTL expires or stop() called
+        │   └── loop: check running && !stopped && before(deadline)
+        │
+        └── Return DGResponse with:
+            ├── subscribed_topic, input_channel, output_channel
+            ├── messages_consumed, messages_published, messages_errored
+            ├── duration_seconds, stopped_reason
+            └── sample_messages (first 10, truncated to 200 chars)
+</code></pre>
+
+                <h5 class="mt-4">Channel Configuration Files Required</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card border-secondary">
+                            <div class="card-header"><i class="fas fa-server me-2"></i>config/brokers/dev-kafka.json</div>
+                            <div class="card-body">
+                                <pre class="mb-0" style="font-size: 0.78rem;"><code>{
+  "type": "kafka",
+  "enabled": true,
+  "connection": {
+    "bootstrap_servers": "localhost:9092",
+    "client_id": "dgfacade-dev",
+    "group_id": "dgfacade-consumer-group"
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-success">
+                            <div class="card-header"><i class="fas fa-sign-in-alt me-2"></i>config/input-channels/order-events.json</div>
+                            <div class="card-body">
+                                <pre class="mb-0" style="font-size: 0.78rem;"><code>{
+  "type": "kafka",
+  "enabled": true,
+  "broker": "dev-kafka",
+  "destinations": [
+    { "name": "orders.created",
+      "type": "topic" },
+    { "name": "orders.updated",
+      "type": "topic" }
+  ]
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-primary">
+                            <div class="card-header"><i class="fas fa-sign-out-alt me-2"></i>config/output-channels/order-notifications.json</div>
+                            <div class="card-body">
+                                <pre class="mb-0" style="font-size: 0.78rem;"><code>{
+  "type": "kafka",
+  "enabled": true,
+  "broker": "dev-kafka",
+  "destinations": [
+    { "name":
+      "notifications.orders.confirmed",
+      "type": "topic" }
+  ]
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="mt-4">Sending a PDC Request</h5>
+                <pre class="bg-light p-3 rounded" style="font-size: 0.82rem;"><code>curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "test-key-001",
+    "request_type": "PDC_PROCESS",
+    "ttl_minutes": 5,
+    "payload": {
+      "description": "Forward order events to notification pipeline"
+    }
+  }'</code></pre>
+            </div>
+        </div>
+
+        <!-- Section 11: Monitoring -->
+        <div id="monitoring" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">12</span>Cluster Monitoring</h3>
+                <p>
+                    The cluster monitoring page at <a href="/monitoring/cluster"><code>/monitoring/cluster</code></a>
+                    provides a real-time view of all nodes in the cluster. It shows:
+                </p>
+                <ul>
+                    <li><strong>Summary metrics:</strong> total nodes, nodes UP/SUSPECT/DOWN, requests forwarded/received</li>
+                    <li><strong>Node cards:</strong> each node displayed with its role, status, version, uptime, active handlers, CPU, heap</li>
+                    <li><strong>Self-node highlight:</strong> the current node&rsquo;s card has a blue background for easy identification</li>
+                    <li><strong>Status indicators:</strong> green (UP), yellow (SUSPECT), red (DOWN), gray (LEAVING) border colors</li>
+                </ul>
+
+                <h5 class="mt-3">REST API for Programmatic Access</h5>
+                <pre class="bg-light p-3 rounded" style="font-size: 0.82rem;"><code># Get cluster status summary
+curl http://localhost:8090/api/v1/cluster/status | jq .
+
+# Get all cluster nodes
+curl http://localhost:8090/api/v1/cluster/nodes | jq .
+
+# Prometheus metrics (cluster-related)
+curl http://localhost:8090/actuator/prometheus | grep dgfacade_cluster</code></pre>
+            </div>
+        </div>
+
+        <!-- Section 12: Deployment Patterns -->
+        <div id="deployment" class="card mb-4 border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title"><span class="badge bg-primary me-2">13</span>Deployment Patterns</h3>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-success">
+                            <div class="card-header bg-success text-white">Pattern 1: Single Node (Default)</div>
+                            <div class="card-body">
+                                <pre class="bg-light p-2 rounded" style="font-size: 0.78rem;"><code># No cluster config needed
+java -jar dgfacade-1.4.0.jar</code></pre>
+                                <p class="small text-muted mt-2 mb-0">
+                                    Simplest deployment. One process handles everything. Good for development, testing,
+                                    and low-traffic production environments.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-primary">
+                            <div class="card-header bg-primary text-white">Pattern 2: Symmetric Cluster</div>
+                            <div class="card-body">
+                                <pre class="bg-light p-2 rounded" style="font-size: 0.78rem;"><code># All nodes are BOTH (default role)
+# Each node lists the others as seeds
+dgfacade.cluster.seed-nodes=\
+  http://node1:8090,\
+  http://node2:8090,\
+  http://node3:8090</code></pre>
+                                <p class="small text-muted mt-2 mb-0">
+                                    All nodes are equivalent. Load balancer distributes traffic evenly.
+                                    Each node can execute any request locally. Good for horizontal scaling.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-warning">
+                            <div class="card-header bg-warning text-dark">Pattern 3: Gateway + Executors</div>
+                            <div class="card-body">
+                                <pre class="bg-light p-2 rounded" style="font-size: 0.78rem;"><code># Gateway nodes (behind LB)
+dgfacade.cluster.node-role=GATEWAY
+
+# Executor nodes (no external traffic)
+dgfacade.cluster.node-role=EXECUTOR</code></pre>
+                                <p class="small text-muted mt-2 mb-0">
+                                    Separates ingestion from execution. Scale executor pool independently.
+                                    Good for CPU-intensive handlers or when gateways need to be lightweight.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-info">
+                            <div class="card-header bg-info text-white">Pattern 4: Docker Compose</div>
+                            <div class="card-body">
+                                <pre class="bg-light p-2 rounded" style="font-size: 0.78rem;"><code>services:
+  gateway:
+    image: dgfacade:1.4.0
+    ports: ["8090:8090"]
+    environment:
+      DGFACADE_CLUSTER_NODE_ROLE: GATEWAY
+      DGFACADE_CLUSTER_SEED_NODES: >
+        http://executor1:8090,
+        http://executor2:8090
+  executor1:
+    image: dgfacade:1.4.0
+    environment:
+      DGFACADE_CLUSTER_NODE_ROLE: EXECUTOR
+      DGFACADE_CLUSTER_SEED_NODES: >
+        http://gateway:8090
+  executor2:
+    image: dgfacade:1.4.0
+    environment:
+      DGFACADE_CLUSTER_NODE_ROLE: EXECUTOR
+      DGFACADE_CLUSTER_SEED_NODES: >
+        http://gateway:8090</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Tip:</strong> In Kubernetes, use a headless Service with DNS-based seed node discovery.
+                    Set <code>dgfacade.cluster.seed-nodes=http://dgfacade-0.dgfacade-headless:8090,http://dgfacade-1.dgfacade-headless:8090</code>
+                    as environment variables in the StatefulSet spec.
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="py-4 mt-4 border-top">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6>
+                    <p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.4.0'">1.4.0</span></p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="text-muted small mb-0">
+                        Copyright &copy; 2025-2030 Ashutosh Sinha<br>
+                        <span class="badge bg-warning text-dark">Patent Pending</span>
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

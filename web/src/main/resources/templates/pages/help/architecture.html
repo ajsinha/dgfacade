@@ -27,8 +27,9 @@
 
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Version 1.3.0</strong> &mdash; This document describes the architecture of <span th:text="${appName} ?: 'DGFacade'">DGFacade</span>,
-                    a high-performance data gateway facade with JSON-configured brokers, channels, fan-out distribution, and backpressure management.
+                    <strong>Version 1.4.0</strong> &mdash; This document describes the architecture of <span th:text="${appName} ?: 'DGFacade'">DGFacade</span>,
+                    a high-performance data gateway facade with JSON-configured brokers, bidirectional channels (input fan-out &amp; output fan-in),
+                    handler chaining pipelines, and backpressure management.
                 </div>
 
                 <!-- Table of Contents -->
@@ -44,16 +45,19 @@
                                     <li><a href="#high-level">High-Level Architecture</a></li>
                                     <li><a href="#startup">Startup Sequence</a></li>
                                     <li><a href="#brokers">Broker Layer</a></li>
-                                    <li><a href="#channels">Channel Layer</a></li>
+                                    <li><a href="#input-channels">Input Channels (Fan-Out)</a></li>
+                                    <li><a href="#output-channels">Output Channels (Fan-In)</a></li>
                                 </ol>
                             </div>
                             <div class="col-md-6">
-                                <ol start="6">
+                                <ol start="7">
                                     <li><a href="#backpressure">Backpressure Management</a></li>
                                     <li><a href="#fanout">Fan-Out Distribution</a></li>
                                     <li><a href="#handlers">Handler Execution Engine</a></li>
+                                    <li><a href="#chaining">Handler Chaining</a></li>
                                     <li><a href="#security">Security Architecture</a></li>
                                     <li><a href="#data-flow">End-to-End Data Flow</a></li>
+                                    <li><a href="#clustering">Clustering &amp; Distributed Execution</a></li>
                                 </ol>
                             </div>
                         </div>
@@ -65,8 +69,10 @@
                     <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-eye me-2 text-primary"></i>1. Overview</h2>
                     <p><span th:text="${appName} ?: 'DGFacade'">DGFacade</span> is a high-performance data gateway facade designed to
                     decouple data producers from consumers through a unified channel abstraction. It connects to message brokers
-                    (Kafka, ActiveMQ, RabbitMQ, IBM MQ), listens to queues and topics, buffers messages through internal queues
-                    with backpressure control, and distributes them to multiple registered listeners using a fan-out pattern.</p>
+                    (Kafka, ActiveMQ, RabbitMQ, IBM MQ), listens to queues and topics via input channels, buffers messages through
+                    internal queues with backpressure control, distributes them to multiple registered listeners using a fan-out pattern,
+                    and publishes handler results to external systems via output channels. Handlers can be composed into declarative
+                    pipelines using handler chaining.</p>
 
                     <h4 class="mt-4">Key Architectural Principles</h4>
                     <table class="table table-bordered">
@@ -74,12 +80,13 @@
                             <tr><th>Principle</th><th>Description</th></tr>
                         </thead>
                         <tbody>
-                            <tr><td><strong>JSON-Driven Configuration</strong></td><td>Brokers and channels are defined as JSON files in configurable directories &mdash; no code changes required to add or modify connections</td></tr>
-                            <tr><td><strong>Broker Abstraction</strong></td><td>Unified broker interface supports Kafka, ActiveMQ, RabbitMQ, and IBM MQ with identical channel semantics</td></tr>
-                            <tr><td><strong>Channel Isolation</strong></td><td>Each channel operates independently with its own internal queue, listeners, and backpressure configuration</td></tr>
-                            <tr><td><strong>Fan-Out Distribution</strong></td><td>Every message received on a channel topic/queue is delivered to ALL registered listeners &mdash; guaranteed multi-consumer delivery</td></tr>
+                            <tr><td><strong>JSON-Driven Configuration</strong></td><td>Brokers, channels, handlers, and chains are defined as JSON files in configurable directories &mdash; no code changes required to add or modify connections</td></tr>
+                            <tr><td><strong>Broker Abstraction</strong></td><td>Unified broker interface supports Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, and SQL with identical channel semantics</td></tr>
+                            <tr><td><strong>Bidirectional Channels</strong></td><td>Input channels subscribe and fan-out inbound messages; output channels fan-in and publish handler results to broker destinations</td></tr>
+                            <tr><td><strong>Fan-Out Distribution</strong></td><td>Every message received on an input channel topic/queue is delivered to ALL registered listeners &mdash; guaranteed multi-consumer delivery</td></tr>
                             <tr><td><strong>Backpressure Management</strong></td><td>Internal bounded queues with configurable depth prevent memory exhaustion and propagate slowdown signals to brokers</td></tr>
                             <tr><td><strong>Handler-Based Processing</strong></td><td>Pluggable request handlers process messages through an execution engine with state tracking and error management</td></tr>
+                            <tr><td><strong>Handler Chaining</strong></td><td>Declarative pipeline composition: chain handlers sequentially, conditionally, or in parallel using pure JSON configuration</td></tr>
                             <tr><td><strong>Security</strong></td><td>Role-based access control with API key authentication for programmatic access and SSL/TLS for broker connections</td></tr>
                         </tbody>
                     </table>
@@ -88,82 +95,81 @@
                 <!-- 2. High-Level Architecture -->
                 <section id="high-level" class="mb-5">
                     <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-layer-group me-2 text-success"></i>2. High-Level Architecture</h2>
-                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.72rem; overflow-x: auto;">
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            EXTERNAL SYSTEMS                                  │
-├──────────────────┬──────────────────┬──────────────────┬────────────────────┤
-│  Kafka Cluster   │  ActiveMQ        │  RabbitMQ        │  IBM MQ            │
-│  (Topics)        │  (Queues/Topics) │  (Exchanges)     │  (Queues)          │
-└────────┬─────────┴────────┬─────────┴────────┬─────────┴──────────┬─────────┘
-         │                  │                   │                    │
-         │ Broker JSON      │ Broker JSON       │ Broker JSON        │ Broker JSON
-         │ Config           │ Config            │ Config             │ Config
-         ▼                  ▼                   ▼                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           BROKER LAYER                                       │
-│         config/brokers/*.json → One JSON file per broker connection          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│  │ prod-kafka   │  │ prod-activemq│  │ dev-rabbit   │  │ prod-ibmmq   │    │
-│  │ .json        │  │ .json        │  │ .json        │  │ .json        │    │
-│  │ type: kafka  │  │ type: activemq│ │ type:rabbitmq│  │ type: ibmmq  │    │
-│  │ +SSL config  │  │ +SSL config  │  │ +SSL config  │  │ +SSL config  │    │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘    │
-│         │                  │                  │                  │           │
-└─────────┼──────────────────┼──────────────────┼──────────────────┼───────────┘
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.68rem; overflow-x: auto;">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            EXTERNAL SYSTEMS (INBOUND)                            │
+├──────────────────┬──────────────────┬──────────────────┬────────────────────────┤
+│  Kafka Cluster   │  ActiveMQ        │  RabbitMQ        │  IBM MQ                │
+│  (Topics)        │  (Queues/Topics) │  (Exchanges)     │  (Queues)              │
+└────────┬─────────┴────────┬─────────┴────────┬─────────┴──────────┬─────────────┘
+         │ subscribe         │ subscribe         │ subscribe          │ subscribe
+         ▼                   ▼                   ▼                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           BROKER LAYER                                           │
+│         config/brokers/*.json → One JSON file per broker connection              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│  │ prod-kafka   │  │ prod-activemq│  │ dev-rabbit   │  │ prod-ibmmq   │        │
+│  │ type: kafka  │  │ type:activemq│  │ type:rabbitmq│  │ type: ibmmq  │        │
+│  │ +SSL config  │  │ +SSL config  │  │ +SSL config  │  │ +SSL config  │        │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘        │
+└─────────┼──────────────────┼──────────────────┼──────────────────┼───────────────┘
           │                  │                  │                  │
           ▼                  ▼                  ▼                  ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           CHANNEL LAYER                                      │
-│         config/channels/*.json → One JSON file per channel                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  Channel: "order-events"  (type: kafka, broker: prod-kafka)         │    │
-│  │  ┌─────────────┐    ┌───────────────────┐    ┌─────────────────┐   │    │
-│  │  │ Kafka Topic │───►│ Internal Queue    │───►│ Fan-Out Engine  │   │    │
-│  │  │ orders.*    │    │ depth: 10000      │    │ → Listener A    │   │    │
-│  │  └─────────────┘    │ backpressure: on  │    │ → Listener B    │   │    │
-│  │                      └───────────────────┘    │ → Listener C    │   │    │
-│  │                                                └─────────────────┘   │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  Channel: "trade-queue"  (type: jms, broker: prod-activemq)        │    │
-│  │  ┌─────────────┐    ┌───────────────────┐    ┌─────────────────┐   │    │
-│  │  │ JMS Queue   │───►│ Internal Queue    │───►│ Fan-Out Engine  │   │    │
-│  │  │ TRADE.INPUT │    │ depth: 5000       │    │ → Listener X    │   │    │
-│  │  └─────────────┘    │ backpressure: on  │    │ → Listener Y    │   │    │
-│  │                      └───────────────────┘    └─────────────────┘   │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    INPUT CHANNELS (Fan-Out, Subscribe)                            │
+│         config/channels/input/*.json → Subscribe from broker topics/queues       │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────────────────────────┐       │
+│  │ Input Channel: "order-events"  (broker: prod-kafka)                  │       │
+│  │  Kafka Topic ──► Internal Queue (depth: 10000) ──► Fan-Out Engine   │       │
+│  │                                                     → Listener A    │       │
+│  │                                                     → Listener B    │       │
+│  └──────────────────────────────────────────────────────────────────────┘       │
+│  ┌──────────────────────────────────────────────────────────────────────┐       │
+│  │ Input Channel: "trade-queue"   (broker: prod-activemq)               │       │
+│  │  JMS Queue ────► Internal Queue (depth: 5000)  ──► Fan-Out Engine   │       │
+│  │                                                     → Listener X    │       │
+│  └──────────────────────────────────────────────────────────────────────┘       │
+└─────────────────────────────────────────────────────────────────────────────────┘
           │
           ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       HANDLER EXECUTION ENGINE                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │
-│  │ Handler A   │  │ Handler B   │  │ Handler C   │  │ Handler N...    │   │
-│  │ (Listener)  │  │ (Listener)  │  │ (Listener)  │  │ (Listener)      │   │
-│  │ requestType │  │ requestType │  │ requestType │  │ requestType     │   │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────────┘   │
-│         └────────────────┴───────────────┬─┴────────────────┘              │
-│                                          ▼                                  │
-│                               ┌─────────────────────┐                      │
-│                               │  State Tracker       │                      │
-│                               │  (Execution history, │                      │
-│                               │   timing, errors)    │                      │
-│                               └─────────────────────┘                      │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                       HANDLER EXECUTION ENGINE                                   │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌──────────────────────┐  │
+│  │ EchoHandler │  │ HashHandler │  │ PDCHandler  │  │ ChainHandler         │  │
+│  │ ECHO        │  │ HASH        │  │ PDC_PROCESS │  │ (Pipeline Composer)  │  │
+│  └─────────────┘  └─────────────┘  └──────┬──────┘  └──────────┬───────────┘  │
+│                                            │ publishes           │ orchestrates  │
+│  ┌─────────────────────────────────────────┼────────────────────┘              │
+│  │  State Tracker  (execution history,     │                                   │
+│  │   timing, errors, chain trace)          │                                   │
+│  └─────────────────────────────────────────┼───────────────────────────────────┘
+└────────────────────────────────────────────┼────────────────────────────────────┘
+          │                                  │
+          ▼                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    OUTPUT CHANNELS (Fan-In, Publish)                              │
+│         config/channels/output/*.json → Publish to broker destinations           │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────────────────────────┐       │
+│  │ Output Channel: "results-topic"  (broker: prod-kafka)                │       │
+│  │  Handler result ──► Queue ──► Kafka Producer ──► results.topic      │       │
+│  └──────────────────────────────────────────────────────────────────────┘       │
+│  ┌──────────────────────────────────────────────────────────────────────┐       │
+│  │ Output Channel: "audit-queue"    (broker: prod-activemq)             │       │
+│  │  Handler result ──► Queue ──► JMS Producer  ──► AUDIT.OUT.QUEUE     │       │
+│  └──────────────────────────────────────────────────────────────────────┘       │
+└─────────────────────────────────────────────────────────────────────────────────┘
           │
           ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         PROTOCOL LAYER                                       │
-├──────────────────────────┬──────────────────────┬───────────────────────────┤
-│   REST API (Spring Boot) │  WebSocket Server    │  CLI Interface            │
-│   Port 8090              │  (Real-time feeds)   │  (Command line)           │
-└──────────────────────────┴──────────────────────┴───────────────────────────┘</pre>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         PROTOCOL LAYER (INBOUND + OUTBOUND)                      │
+├───────────────┬──────────────┬──────────────────────────────────────────────────┤
+│  REST API     │  WebSocket   │  Broker Publishing (via Output Channels)          │
+│  Port 8090    │  /ws/gateway │  Kafka · ActiveMQ · RabbitMQ · IBM MQ · FS · SQL │
+└───────────────┴──────────────┴──────────────────────────────────────────────────┘</pre>
                 </section>
 
                 <!-- 3. Startup Sequence -->
@@ -174,7 +180,7 @@
 
                     <pre class="bg-dark text-white p-3 rounded" style="font-size: 0.85rem;">
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         STARTUP SEQUENCE (v1.3.0)                            │
+│                         STARTUP SEQUENCE (v1.4.0)                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
@@ -231,7 +237,7 @@
                     <h4 class="mt-4">Startup Logging</h4>
                     <pre class="bg-dark text-white p-3 rounded" style="font-size: 0.85rem;">
 ╔════════════════════════════════════════════════════════════════════╗
-║  DGFacade v1.3.0 - Starting initialization sequence...             ║
+║  DGFacade v1.4.0 - Starting initialization sequence...             ║
 ╚════════════════════════════════════════════════════════════════════╝
 
 ╔════════════════════════════════════════════════════════════════════╗
@@ -257,7 +263,7 @@
   → Bound 5 listeners to channel topics/queues
 
 ╔════════════════════════════════════════════════════════════════════╗
-║   SYSTEM READY - DGFacade v1.3.0                                   ║
+║   SYSTEM READY - DGFacade v1.4.0                                   ║
 ║   ✓ Brokers: 2 connected        ✓ Channels: 2 active              ║
 ║   ✓ Handlers: 12 registered     ✓ Listeners: 5 bound              ║
 ╚════════════════════════════════════════════════════════════════════╝</pre>
@@ -317,15 +323,16 @@
                     </div>
                 </section>
 
-                <!-- 5. Channel Layer -->
-                <section id="channels" class="mb-5">
-                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-exchange-alt me-2 text-info"></i>5. Channel Layer</h2>
-                    <p>Channels define the logical data pipes that connect broker topics/queues to application listeners.
-                    Each channel references a broker by name and specifies which topics or queues to subscribe to.</p>
+                <!-- 5. Input Channels -->
+                <section id="input-channels" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-sign-in-alt me-2 text-info"></i>5. Input Channels (Fan-Out, Subscribe)</h2>
+                    <p>Input Channels <strong>subscribe</strong> to broker topics and queues and <strong>fan-out</strong> every received message
+                    to all registered listeners. They are the inbound data pipes that feed the handler execution engine.
+                    Each input channel operates independently with its own internal bounded queue and backpressure configuration.</p>
 
                     <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.75rem; overflow-x: auto;">
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                            CHANNEL INTERNALS                                 │
+│                        INPUT CHANNEL INTERNALS                               │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │   Broker Topic/Queue                                                         │
@@ -338,7 +345,6 @@
 │                          │  ┌──┬──┬──┬──┬──┬──┬──┬──┬──┐  │                │
 │                          │  │m1│m2│m3│m4│m5│m6│m7│  │  │  │ depth=10000   │
 │                          │  └──┴──┴──┴──┴──┴──┴──┴──┴──┘  │                │
-│                          │                                  │                │
 │                          │  current: 7 / max: 10000         │                │
 │                          │  backpressure: OFF               │                │
 │                          └──────────────┬───────────────────┘                │
@@ -348,7 +354,6 @@
 │                          │      FAN-OUT DISTRIBUTION         │                │
 │                          │      (each message → ALL)         │                │
 │                          └───┬──────────┬──────────┬────────┘                │
-│                              │          │          │                          │
 │                              ▼          ▼          ▼                          │
 │                          ┌───────┐  ┌───────┐  ┌───────┐                    │
 │                          │Listen.│  │Listen.│  │Listen.│                    │
@@ -358,17 +363,107 @@
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘</pre>
 
+                    <h4 class="mt-4">Input Channel Properties</h4>
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Property</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Direction</strong></td><td>Inbound — subscribes to broker topics/queues and consumes messages</td></tr>
+                            <tr><td><strong>Pattern</strong></td><td>Fan-Out — every message is delivered to ALL registered listeners (guaranteed multi-consumer)</td></tr>
+                            <tr><td><strong>Internal Queue</strong></td><td>Bounded <code>java.util.concurrent</code> queue with configurable depth (default 10,000)</td></tr>
+                            <tr><td><strong>Backpressure</strong></td><td>When queue fills, broker consumer is paused. Auto-resumes when depth drops below 70%.</td></tr>
+                            <tr><td><strong>Listeners</strong></td><td>Handlers, loggers, alerting engines — each receives an independent copy of every message</td></tr>
+                            <tr><td><strong>Config Location</strong></td><td><code>config/channels/input/*.json</code> (or <code>config/channels/*.json</code> with <code>"direction": "input"</code>)</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-folder-open me-2"></i>
+                        <strong>Example:</strong> <code>config/channels/input/order-events.json</code> creates an input channel named <code>order-events</code>
+                        that subscribes to the <code>orders.*</code> topic pattern on the <code>prod-kafka</code> broker.
+                        See <a href="/help/channels">Channel Configuration</a> for full JSON schema.
+                    </div>
+                </section>
+
+                <!-- 6. Output Channels -->
+                <section id="output-channels" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-sign-out-alt me-2 text-success"></i>6. Output Channels (Fan-In, Publish)</h2>
+                    <p>Output Channels are the <strong>outbound</strong> data pipes. Handlers and chain steps can <strong>publish</strong> results
+                    to output channels, which then forward messages to broker destinations (Kafka topics, ActiveMQ queues, RabbitMQ exchanges,
+                    IBM MQ queues, FileSystem paths, or SQL tables). This enables handlers to push data to external systems.</p>
+
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.75rem; overflow-x: auto;">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        OUTPUT CHANNEL INTERNALS                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   Producers (multiple sources can publish):                                  │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                     │
+│   │ PDCHandler   │  │ ChainHandler │  │ Custom       │                     │
+│   │ (publish     │  │ (step output │  │ Handler      │                     │
+│   │  results)    │  │  forwarding) │  │ (explicit)   │                     │
+│   └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                     │
+│          │                  │                  │         FAN-IN              │
+│          └──────────────────┼──────────────────┘                            │
+│                              │                                               │
+│                              ▼                                               │
+│          ┌──────────────────────────────────────────┐                       │
+│          │       INTERNAL OUTBOUND QUEUE             │                       │
+│          │       (buffered, bounded, retry)          │                       │
+│          │                                           │                       │
+│          │  ┌──┬──┬──┬──┬──┬──┬──┐  depth=5000     │                       │
+│          │  │r1│r2│r3│r4│  │  │  │                  │                       │
+│          │  └──┴──┴──┴──┴──┴──┴──┘                  │                       │
+│          └──────────────┬───────────────────────────┘                       │
+│                          │                                                   │
+│                          ▼                                                   │
+│          ┌──────────────────────────────────────────┐                       │
+│          │       BROKER PUBLISHER                    │                       │
+│          │       (destination-aware)                 │                       │
+│          └───┬──────────┬──────────┬────────────────┘                       │
+│              ▼          ▼          ▼                                          │
+│         ┌────────┐ ┌────────┐ ┌────────┐                                   │
+│         │ Kafka  │ │ActiveMQ│ │RabbitMQ│  ... IBM MQ, FileSystem, SQL      │
+│         │ Topic  │ │ Queue  │ │Exchange│                                    │
+│         └────────┘ └────────┘ └────────┘                                   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘</pre>
+
+                    <h4 class="mt-4">Output Channel Properties</h4>
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Property</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Direction</strong></td><td>Outbound — publishes messages to broker destinations</td></tr>
+                            <tr><td><strong>Pattern</strong></td><td>Fan-In — multiple producers (handlers, chains, PDCHandler) write to a single channel</td></tr>
+                            <tr><td><strong>Destinations</strong></td><td>One or more broker destinations (topics, queues, exchanges, file paths, SQL tables)</td></tr>
+                            <tr><td><strong>Buffering</strong></td><td>Internal outbound queue with configurable depth, retry policy, and dead-letter handling</td></tr>
+                            <tr><td><strong>Broker Types</strong></td><td>Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, SQL — same 6 types as inbound</td></tr>
+                            <tr><td><strong>Config Location</strong></td><td><code>config/channels/output/*.json</code> (or <code>config/channels/*.json</code> with <code>"direction": "output"</code>)</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4 class="mt-4">Input vs Output Channel Comparison</h4>
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr><th>Aspect</th><th>Input Channel</th><th>Output Channel</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Direction</strong></td><td>Inbound (subscribe/consume)</td><td>Outbound (publish/produce)</td></tr>
+                            <tr><td><strong>Pattern</strong></td><td>Fan-Out: 1 source → N listeners</td><td>Fan-In: N producers → 1 destination</td></tr>
+                            <tr><td><strong>Trigger</strong></td><td>Broker pushes messages to DGFacade</td><td>Handlers explicitly publish to channel</td></tr>
+                            <tr><td><strong>Queue Role</strong></td><td>Buffer between broker and listeners</td><td>Buffer between handlers and broker publisher</td></tr>
+                            <tr><td><strong>Backpressure</strong></td><td>Pauses broker consumer when full</td><td>Blocks handler publish when full</td></tr>
+                            <tr><td><strong>Used By</strong></td><td>Channel listeners, execution engine</td><td>PDCHandler, ChainHandler, custom handlers</td></tr>
+                        </tbody>
+                    </table>
+
                     <div class="alert alert-success mt-3">
                         <i class="fas fa-folder-open me-2"></i>
-                        <strong>File-Based Configuration:</strong> Add a new channel by dropping a <code>.json</code> file into <code>config/channels/</code>.
-                        The channel name is derived from the filename. For example, <code>config/channels/order-events.json</code> creates a channel named <code>order-events</code>.
-                        See <a href="/help/channels">Channel Configuration</a> for JSON schema and examples.
+                        <strong>Example:</strong> <code>config/channels/output/results-topic.json</code> creates an output channel that publishes
+                        handler results to a Kafka topic. The PDCHandler uses output channels to bridge REST requests to messaging systems.
                     </div>
                 </section>
 
                 <!-- 6. Backpressure Management -->
                 <section id="backpressure" class="mb-5">
-                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-tachometer-alt me-2 text-danger"></i>6. Backpressure Management</h2>
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-tachometer-alt me-2 text-danger"></i>7. Backpressure Management</h2>
                     <p>Each channel maintains an internal bounded queue between the broker subscription and the fan-out engine.
                     The depth of this queue is the primary mechanism for backpressure management. When the queue fills up,
                     the broker consumer pauses until capacity is available.</p>
@@ -433,7 +528,7 @@ session.start();</pre>
 
                 <!-- 7. Fan-Out Distribution -->
                 <section id="fanout" class="mb-5">
-                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-broadcast-tower me-2 text-info"></i>7. Fan-Out Distribution</h2>
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-broadcast-tower me-2 text-info"></i>8. Fan-Out Distribution</h2>
                     <p>The fan-out engine ensures that every message dequeued from the internal queue is delivered to
                     <strong>all registered listeners</strong> for that channel's topic or queue. This is a guaranteed multi-consumer
                     delivery pattern &mdash; each listener receives its own copy of every message.</p>
@@ -473,7 +568,7 @@ session.start();</pre>
 
                 <!-- 8. Handler Execution Engine -->
                 <section id="handlers" class="mb-5">
-                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-cogs me-2 text-warning"></i>8. Handler Execution Engine</h2>
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-cogs me-2 text-warning"></i>9. Handler Execution Engine</h2>
                     <p>The Execution Engine is the core processing component. Handlers are registered with specific request types
                     and are invoked when matching messages arrive from channels or REST API calls.</p>
 
@@ -520,9 +615,92 @@ session.start();</pre>
                     </div>
                 </section>
 
-                <!-- 9. Security Architecture -->
+                <!-- 10. Handler Chaining -->
+                <section id="chaining" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-link me-2 text-primary"></i>10. Handler Chaining</h2>
+                    <p>Handler chaining composes multiple handlers into declarative pipelines defined in JSON.
+                    Each step's output feeds the next step's input, enabling complex data workflows without code.</p>
+
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.72rem; overflow-x: auto;">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         CHAIN EXECUTION MODEL                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  DGRequest (request_type: "CHAIN", payload: { chain_id: "ORDER_PROCESS" })  │
+│                              │                                               │
+│                              ▼                                               │
+│               ┌──────────────────────────┐                                  │
+│               │      ChainHandler         │                                  │
+│               │  (loads chain config JSON) │                                  │
+│               └────────────┬─────────────┘                                  │
+│                            │                                                 │
+│    ┌───────────────────────┼───────────────────────┐                        │
+│    │  LINEAR STEPS         │  CONDITIONAL           │  PARALLEL             │
+│    │                       │                         │                       │
+│    │  Step 1 ─►            │  Step 2 ─►              │  Step 3 ─►           │
+│    │  [JSON_TRANSFORM]     │  [HASH]                 │  ┌─[HASH:md5]       │
+│    │  merge: REPLACE       │  when: ${prev.sign}     │  ├─[HASH:sha256]    │
+│    │       │               │  merge: APPEND           │  └─[SYS_INFO]      │
+│    │       ▼               │       │  (or SKIPPED)   │  join: KEYED        │
+│    │  prevOutput updated   │       ▼                  │       │             │
+│    └───────────────────────┼───────────────────────┘       │             │
+│                            │                                  │             │
+│                            └──────────────┬───────────────────┘             │
+│                                           │                                  │
+│                                           ▼                                  │
+│                              ┌──────────────────────┐                       │
+│                              │  Final DGResponse     │                       │
+│                              │  • merged data        │                       │
+│                              │  • chain_trace[]      │                       │
+│                              │  • execution stats    │                       │
+│                              └──────────────────────┘                       │
+└─────────────────────────────────────────────────────────────────────────────┘</pre>
+
+                    <div class="row g-3 mt-3">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">Three Execution Phases</div>
+                                <div class="card-body">
+                                    <table class="table table-sm mb-0">
+                                        <tbody>
+                                            <tr><td><strong>Phase 1: Linear</strong></td><td>Sequential steps with payload mapping and 4 merge strategies (REPLACE, MERGE_PREV, APPEND, PASSTHROUGH)</td></tr>
+                                            <tr><td><strong>Phase 2: Conditional</strong></td><td><code>when</code> expressions: <code>==</code>, <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>contains</code>, <code>exists</code>. Steps SKIPPED when false.</td></tr>
+                                            <tr><td><strong>Phase 3: Parallel</strong></td><td>Concurrent branches via thread pool. Join strategies: KEYED, MERGE_ALL, FIRST_SUCCESS</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">Variable Scopes</div>
+                                <div class="card-body">
+                                    <table class="table table-sm mb-0">
+                                        <tbody>
+                                            <tr><td><code>${payload}</code></td><td>Original request payload</td></tr>
+                                            <tr><td><code>${payload.field}</code></td><td>Specific field from original (dot-path)</td></tr>
+                                            <tr><td><code>${prev}</code></td><td>Previous step's full output</td></tr>
+                                            <tr><td><code>${prev.field}</code></td><td>Specific field from previous step</td></tr>
+                                            <tr><td><code>${steps.alias}</code></td><td>Named step's output by alias</td></tr>
+                                            <tr><td><code>${steps.alias.field}</code></td><td>Specific field from named step</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-book me-2"></i>
+                        <strong>Full Documentation:</strong> See <a href="/help/handler-chaining">Handler Chaining Tutorial</a> for
+                        complete configuration schema, all operators, error strategies (ABORT/SKIP/FALLBACK), execution trace format,
+                        and runnable examples including ORDER_PROCESS, DATA_ENRICH, and PARALLEL_ANALYSIS chains.
+                    </div>
+                </section>
+
+                <!-- 11. Security Architecture -->
                 <section id="security" class="mb-5">
-                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-shield-alt me-2 text-danger"></i>9. Security Architecture</h2>
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-shield-alt me-2 text-danger"></i>11. Security Architecture</h2>
                     <table class="table table-bordered">
                         <thead class="table-light">
                             <tr><th>Layer</th><th>Mechanism</th><th>Description</th></tr>
@@ -538,14 +716,14 @@ session.start();</pre>
 
                 <!-- 10. End-to-End Data Flow -->
                 <section id="data-flow" class="mb-5">
-                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-project-diagram me-2 text-primary"></i>10. End-to-End Data Flow</h2>
-                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.75rem; overflow-x: auto;">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-project-diagram me-2 text-primary"></i>12. End-to-End Data Flow</h2>
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.72rem; overflow-x: auto;">
   External Producer                                             DGFacade
   ─────────────────                                            ──────────────
                                                                               
   ┌───────────┐        ┌──────────┐        ┌─────────────┐    ┌─────────────┐
-  │ App writes │──────►│  Kafka   │──────►│  Broker     │───►│  Channel    │
-  │ to Kafka   │       │  Cluster │       │  Connection │    │  Subscriber │
+  │ App writes │──────►│  Kafka   │──────►│  Broker     │───►│  Input      │
+  │ to Kafka   │       │  Cluster │       │  Connection │    │  Channel    │
   │ topic      │       │          │       │  (prod-     │    │  (order-    │
   └───────────┘        └──────────┘       │   kafka)    │    │   events)   │
                                            └─────────────┘    └──────┬──────┘
@@ -569,15 +747,85 @@ session.start();</pre>
                                                                ┌─────────────┐
                                                                │  Execution  │
                                                                │  Engine     │
-                                                               │  (state     │
-                                                               │   tracked)  │
+                                                               │  (Chain-    │
+                                                               │   aware)    │
                                                                └──────┬──────┘
                                                                       │
                                                                ┌──────┴──────┐
-                                                               │  REST API   │
-                                                               │  Dashboard  │
-                                                               │  WebSocket  │
+                                                               │  Results    │
+                                                               ├─────────────┤
+                                                               │  REST API   │─────► HTTP Response
+                                                               │  WebSocket  │─────► WS Frame
+                                                               │  Output Ch. │─────► Kafka / ActiveMQ /
+                                                               │             │       RabbitMQ / IBM MQ /
+                                                               │             │       FileSystem / SQL
                                                                └─────────────┘</pre>
+                </section>
+
+                <section id="clustering" class="mb-5">
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-network-wired me-2 text-primary"></i>13. Clustering &amp; Distributed Execution</h2>
+                    <p>DGFacade v1.4.0 supports multi-node deployment via a lightweight HTTP-based cluster protocol. In <strong>standalone mode</strong> (default, no seed nodes), the cluster layer adds zero overhead. In <strong>cluster mode</strong>, nodes discover peers, exchange heartbeats, and can forward handler execution to remote nodes.</p>
+
+                    <h4 class="mt-4">Cluster Topology</h4>
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.72rem; overflow-x: auto;">
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │                         DGFacade Cluster                                │
+  │                                                                          │
+  │   ┌──────────────┐     heartbeat      ┌──────────────┐                  │
+  │   │  GATEWAY     │◄──────────────────►│  EXECUTOR    │                  │
+  │   │  node-1:8090 │    POST /cluster/  │  node-2:8090 │                  │
+  │   │              │    heartbeat       │              │                  │
+  │   │  REST ━━━━━━━━━━━━━━━━━━━━━━━━━━━►│  Pekko Actors│                  │
+  │   │  WebSocket   │  forward via HTTP  │  Handler Exec│                  │
+  │   │  Kafka In    │  POST /api/v1/req  │              │                  │
+  │   └──────────────┘                    └──────────────┘                  │
+  │          ▲                                   ▲                          │
+  │          │           heartbeat               │                          │
+  │          └────────────────┬──────────────────┘                          │
+  │                           ▼                                              │
+  │                  ┌──────────────┐                                        │
+  │                  │  BOTH        │                                        │
+  │                  │  node-3:8090 │                                        │
+  │                  │  (gateway +  │                                        │
+  │                  │   executor)  │                                        │
+  │                  └──────────────┘                                        │
+  └──────────────────────────────────────────────────────────────────────────┘</pre>
+
+                    <h4 class="mt-4">Node Roles</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-dark">
+                                <tr><th>Role</th><th>Ingestion</th><th>Execution</th><th>Forwarding</th><th>Notes</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>BOTH</code> (default)</td><td>Yes</td><td>Yes</td><td>No</td><td>Standalone or symmetric cluster</td></tr>
+                                <tr><td><code>GATEWAY</code></td><td>Yes</td><td>Fallback</td><td>Yes</td><td>Lightweight ingestion; forwards to executors</td></tr>
+                                <tr><td><code>EXECUTOR</code></td><td>Cluster API only</td><td>Yes</td><td>No</td><td>Dedicated compute; receives forwarded work</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4 class="mt-4">Health State Machine</h4>
+                    <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.72rem; overflow-x: auto;">
+  UP ──(2× missed)──► SUSPECT ──(5× missed)──► DOWN ──(10 min)──► EVICTED
+   ▲                     │
+   └── heartbeat OK ─────┘
+  
+  LEAVING ──(60 sec)──► EVICTED       (graceful shutdown sends LEAVING)</pre>
+
+                    <h4 class="mt-4">Execution Routing</h4>
+                    <p>The <code>ExecutionEngine.submit()</code> method decides where to execute each request:</p>
+                    <ul>
+                        <li><strong>Standalone / BOTH role:</strong> always execute locally</li>
+                        <li><strong>CHAIN requests:</strong> always execute locally (chain step state affinity)</li>
+                        <li><strong>GATEWAY role:</strong> round-robin among healthy EXECUTOR/BOTH peers; local fallback on failure</li>
+                        <li><strong>Forwarded responses</strong> include <code>_forwarded_to</code> and <code>_forwarded_host</code> metadata fields</li>
+                    </ul>
+
+                    <h4 class="mt-4">Channel Access from Handlers</h4>
+                    <p>Handlers that need to interact with brokers (subscribe, publish) receive a <code>ChannelAccessor</code> injected by the execution engine. The accessor resolves channel IDs → broker configs → creates cached <code>DataPublisher</code>/<code>DataSubscriber</code> instances. See the <a href="/help/clustering#channel-access">Clustering Guide</a> for the full API.</p>
+
+                    <p class="text-center mt-3"><a href="/help/clustering" class="btn btn-outline-primary"><i class="fas fa-book me-2"></i>Full Clustering &amp; Distributed Execution Guide</a></p>
                 </section>
 
                 <div class="mt-5 text-center">
@@ -589,7 +837,7 @@ session.start();</pre>
 
         <footer class="py-4 mt-5 border-top">
             <div class="row">
-                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.3.0'">1.3.0</span></p></div>
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.4.0'">1.4.0</span></p></div>
                 <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br><span class="badge bg-warning text-dark">Patent Pending</span></p></div>
             </div>
         </footer>

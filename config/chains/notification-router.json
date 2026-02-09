@@ -1,0 +1,96 @@
+{
+  "chain_id": "NOTIFICATION_ROUTER",
+  "description": "Smart notification router: classify priority → conditional escalation → parallel formatting for email/SMS/webhook",
+  "ttl_minutes": 10,
+  "error_strategy": "SKIP",
+  "enabled": true,
+  "steps": [
+    {
+      "step": 1,
+      "handler": "STRING_TRANSFORM",
+      "alias": "classify_priority",
+      "description": "Uppercase the priority tag for matching",
+      "payload_mapping": {
+        "operation": "UPPER",
+        "input": "${payload.priority}"
+      },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2,
+      "handler": "HASH",
+      "alias": "event_fingerprint",
+      "description": "Generate unique event fingerprint for deduplication",
+      "payload_mapping": {
+        "operation": "SHA256",
+        "input": "${payload.event_id}_${payload.timestamp}_${payload.source}"
+      },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 3,
+      "handler": "ARITHMETIC",
+      "alias": "escalation_score",
+      "description": "Calculate escalation score: severity × impact_weight (only if severity > 3)",
+      "payload_mapping": {
+        "operation": "MUL",
+        "operands": ["${payload.severity}", "${payload.impact_weight}"]
+      },
+      "merge_strategy": "APPEND",
+      "when": "${payload.severity} > 3"
+    },
+    {
+      "step": 4,
+      "alias": "format_outputs",
+      "description": "Parallel formatting for multiple notification channels",
+      "parallel": [
+        {
+          "handler": "STRING_TRANSFORM",
+          "alias": "email_subject",
+          "payload_mapping": {
+            "operation": "UPPER",
+            "input": "[${payload.priority}] ${payload.subject}"
+          }
+        },
+        {
+          "handler": "STRING_TRANSFORM",
+          "alias": "sms_body",
+          "payload_mapping": {
+            "operation": "WORD_COUNT",
+            "input": "${payload.message}"
+          }
+        },
+        {
+          "handler": "HASH",
+          "alias": "webhook_sig",
+          "payload_mapping": {
+            "operation": "SHA256",
+            "input": "${payload.webhook_secret}_${payload.event_id}"
+          }
+        }
+      ],
+      "join_strategy": "KEYED"
+    },
+    {
+      "step": 5,
+      "handler": "ECHO",
+      "alias": "dispatch",
+      "description": "Assemble the final notification dispatch record",
+      "payload_mapping": {
+        "router": "NOTIFICATION_ROUTER",
+        "event_id": "${payload.event_id}",
+        "priority": "${steps.classify_priority.result}",
+        "fingerprint": "${steps.event_fingerprint.hash}",
+        "escalation_score": "${steps.escalation_score.result}",
+        "channels": {
+          "email_subject": "${steps.email_subject.result}",
+          "sms_word_count": "${steps.sms_body.count}",
+          "webhook_signature": "${steps.webhook_sig.hash}"
+        },
+        "recipient": "${payload.recipient}",
+        "source": "${payload.source}"
+      },
+      "merge_strategy": "REPLACE"
+    }
+  ]
+}

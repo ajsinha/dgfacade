@@ -84,6 +84,50 @@
                     </div>
                 </div>
             </div>
+            <!-- Full Request JSON -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-arrow-right me-2 text-success"></i>Full Request JSON</h5>
+                        <span class="badge bg-success">INPUT</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre th:if="${state.requestJson != null}" class="bg-dark text-light p-3 mb-0 small" style="max-height: 450px; overflow-y: auto; white-space: pre-wrap;" th:text="${state.requestJson}">-</pre>
+                        <div th:if="${state.requestJson == null}" class="p-3 text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>Request data not captured for this execution.
+                            <div class="mt-2">
+                                <strong>curl example:</strong>
+                                <pre class="bg-dark text-light p-2 rounded mt-1" style="font-size: 0.75rem; white-space: pre-wrap;">curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "dgf-admin-key-0001",
+    "request_type": "<span th:text="${state.requestType}">ECHO</span>",
+    "payload": { }
+  }'</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Full Response JSON -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-arrow-left me-2 text-primary"></i>Full Response JSON</h5>
+                        <span class="badge" th:classappend="${state.status == 'COMPLETED'} ? 'bg-success' : 'bg-danger'"
+                              th:text="${state.status == 'COMPLETED'} ? 'SUCCESS' : ${state.status}">OUTPUT</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre th:if="${state.responseJson != null}" class="bg-dark text-light p-3 mb-0 small" style="max-height: 450px; overflow-y: auto; white-space: pre-wrap;" th:text="${state.responseJson}">-</pre>
+                        <div th:if="${state.responseJson == null}" class="p-3 text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>Response data not captured for this execution.
+                            <span th:if="${state.status == 'RUNNING'}" class="text-primary d-block mt-1">
+                                <i class="fas fa-spinner fa-spin me-1"></i>Handler is still executing — response will appear once completed.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Handler Not Found -->

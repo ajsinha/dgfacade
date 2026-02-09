@@ -105,7 +105,7 @@ public class ExecutionEngine {
             // 3. Submit to actor system
             CompletableFuture<DGResponse> responseFuture = new CompletableFuture<>();
             HandlerMessages.ExecuteRequest execReq = new HandlerMessages.ExecuteRequest(
-                    request, handlerConfig, handlerId, responseFuture);
+                    request, handlerConfig, handlerId, responseFuture, state);
 
             actorSystem.tell(new HandlerMessages.WrappedExecute(execReq));
 

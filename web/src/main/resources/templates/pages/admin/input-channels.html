@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Input Channels')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Input Channels</h2>
+                <p class="text-muted mb-0">Subscribe to destinations (topics, queues, paths, tables) and consume messages into DGFacade <span class="badge bg-info">Fan-Out</span></p>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/input-channels/create}" class="btn btn-success"><i class="fas fa-plus me-1"></i>Create Input Channel</a>
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr><th class="ps-4">Channel ID</th><th>Type</th><th>Broker</th><th>Description</th><th>Destinations</th><th>Queue Depth</th><th>State</th><th>Enabled</th><th class="text-end pe-4">Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="ch : ${channels}">
+                                <td class="ps-4"><strong th:text="${ch['_channel_id']}">-</strong></td>
+                                <td><span class="badge bg-secondary" th:text="${ch['type']}">kafka</span></td>
+                                <td th:text="${ch['broker']}">-</td>
+                                <td class="text-muted small" th:text="${ch['description']}">-</td>
+                                <td>
+                                    <th:block th:if="${ch['destinations'] != null}">
+                                        <span th:each="d : ${ch['destinations']}" class="badge bg-primary me-1" th:text="${d['name']} + ' (' + ${d['type']} + ')'">dest</span>
+                                    </th:block>
+                                </td>
+                                <td th:text="${ch['queue'] != null ? ch['queue']['depth'] : '-'}">10000</td>
+                                <td>
+                                    <span th:if="${ch['_state'] == 'RUNNING'}" class="badge bg-success">RUNNING</span>
+                                    <span th:if="${ch['_state'] == 'STOPPED'}" class="badge bg-secondary">STOPPED</span>
+                                    <span th:if="${ch['_state'] == 'ERROR'}" class="badge bg-danger">ERROR</span>
+                                </td>
+                                <td><span th:if="${ch['enabled'] == true}" class="badge bg-success">Yes</span><span th:unless="${ch['enabled'] == true}" class="badge bg-secondary">No</span></td>
+                                <td class="text-end pe-4">
+                                    <form th:if="${ch['_state'] != 'RUNNING'}" th:action="@{/admin/input-channels/start}" method="post" class="d-inline"><input type="hidden" name="channelId" th:value="${ch['_channel_id']}"><button class="btn btn-sm btn-outline-success" title="Start"><i class="fas fa-play"></i></button></form>
+                                    <form th:if="${ch['_state'] == 'RUNNING'}" th:action="@{/admin/input-channels/stop}" method="post" class="d-inline"><input type="hidden" name="channelId" th:value="${ch['_channel_id']}"><button class="btn btn-sm btn-outline-warning" title="Stop"><i class="fas fa-stop"></i></button></form>
+                                    <a th:href="@{/admin/input-channels/edit/{id}(id=${ch['_channel_id']})}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
+                                    <form th:action="@{/admin/input-channels/delete}" method="post" class="d-inline" onsubmit="return confirm('Delete this input channel?');"><input type="hidden" name="channelId" th:value="${ch['_channel_id']}"><button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button></form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(channels)}">
+                                <td colspan="9" class="text-center py-5 text-muted">
+                                    <i class="fas fa-sign-in-alt fa-3x mb-3 d-block"></i>No input channels configured
+                                    <br><a th:href="@{/admin/input-channels/create}" class="btn btn-primary mt-3">Create Your First Input Channel</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm bg-light mt-4"><div class="card-body">
+            <h6 class="text-muted mb-2"><i class="fas fa-info-circle me-2"></i>About Input Channels</h6>
+            <p class="small text-muted mb-0">An <strong>Input Channel</strong> subscribes to one or more <strong>destinations</strong> (Kafka topics, JMS queues, filesystem paths, SQL tables) via a configured broker and consumes messages into DGFacade for handler processing. This provides a <strong>fan-out</strong> capability — one channel, many destinations.</p>
+        </div></div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

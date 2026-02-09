@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Phase 3: Handler configuration loading
  * Phase 4: Execution engine verification
  * Phase 5: Broker configuration scanning
- * Phase 6: Channel configuration scanning
+ * Phase 6: Input Channel configuration scanning
  * Phase 7: WebSocket server verification
  * FINAL:   System Ready announcement with all URLs
  * </pre>
@@ -70,8 +70,11 @@ public class StartupOrchestrator {
     @Value("${dgfacade.brokers.config-dir:config/brokers}")
     private String brokersConfigDir;
 
-    @Value("${dgfacade.channels.config-dir:config/channels}")
-    private String channelsConfigDir;
+    @Value("${dgfacade.input-channels.config-dir:config/input-channels}")
+    private String inputChannelsConfigDir;
+
+    @Value("${dgfacade.output-channels.config-dir:config/output-channels}")
+    private String outputChannelsConfigDir;
 
     @Value("${dgfacade.config.handlers-dir:config/handlers}")
     private String handlersDir;
@@ -85,16 +88,16 @@ public class StartupOrchestrator {
     @Value("${dgfacade.config.external-libs-dir:./libs}")
     private String externalLibsDir;
 
-    @Value("${dgfacade.channels.default-queue-depth:10000}")
+    @Value("${dgfacade.input-channels.default-queue-depth:10000}")
     private int defaultQueueDepth;
 
-    @Value("${dgfacade.channels.backpressure-warning-pct:70}")
+    @Value("${dgfacade.input-channels.backpressure-warning-pct:70}")
     private int backpressureWarningPct;
 
-    @Value("${dgfacade.channels.backpressure-critical-pct:90}")
+    @Value("${dgfacade.input-channels.backpressure-critical-pct:90}")
     private int backpressureCriticalPct;
 
-    @Value("${dgfacade.channels.fanout-thread-pool-size:16}")
+    @Value("${dgfacade.input-channels.fanout-thread-pool-size:16}")
     private int fanoutThreadPoolSize;
 
     private final AtomicBoolean startupComplete = new AtomicBoolean(false);
@@ -168,15 +171,15 @@ public class StartupOrchestrator {
 
             // Phase 6: Channel Configuration Scanning
             phaseDelay();
-            logPhase(6, "Channel Configuration Scanning",
-                    "Scanning " + channelsConfigDir + " for channel JSON files...");
-            int channelCount = countFiles(channelsConfigDir, ".json");
-            String[] channelNames = listFileNames(channelsConfigDir, ".json");
+            logPhase(6, "Input Channel Configuration Scanning",
+                    "Scanning " + inputChannelsConfigDir + " for channel JSON files...");
+            int channelCount = countFiles(inputChannelsConfigDir, ".json");
+            String[] channelNames = listFileNames(inputChannelsConfigDir, ".json");
             StringBuilder channelDetail = new StringBuilder();
-            channelDetail.append(channelCount).append(" channel(s) discovered in ").append(channelsConfigDir);
-            logPhaseComplete(6, "Channel Configuration Scanning", channelDetail.toString());
+            channelDetail.append(channelCount).append(" input channel(s) discovered in ").append(inputChannelsConfigDir);
+            logPhaseComplete(6, "Input Channel Configuration Scanning", channelDetail.toString());
             for (String name : channelNames) {
-                log.info("  → Loaded channel: {}", name);
+                log.info("  → Loaded input channel: {}", name);
             }
 
             // Phase 7: WebSocket Server Verification
@@ -306,8 +309,8 @@ public class StartupOrchestrator {
         log.info("║   Configuration:                                                   ║");
         log.info("║   • Brokers Dir    : {}{}║", brokersConfigDir,
                 pad("• Brokers Dir    : " + brokersConfigDir, 52));
-        log.info("║   • Channels Dir   : {}{}║", channelsConfigDir,
-                pad("• Channels Dir   : " + channelsConfigDir, 52));
+        log.info("║   • Input Ch Dir   : {}{}║", inputChannelsConfigDir,
+                pad("• Input Ch Dir   : " + inputChannelsConfigDir, 52));
         log.info("║   • Handlers Dir   : {}{}║", handlersDir,
                 pad("• Handlers Dir   : " + handlersDir, 52));
         log.info("║   • Queue Depth    : {} (default){}║", defaultQueueDepth,

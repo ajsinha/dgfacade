@@ -5,19 +5,19 @@
  */
 package com.dgfacade.web.config;
 
+import com.dgfacade.common.util.ConfigPropertyResolver;
 import com.dgfacade.server.config.ExternalJarLoader;
 import com.dgfacade.server.config.HandlerConfigRegistry;
 import com.dgfacade.server.engine.ExecutionEngine;
 import com.dgfacade.server.metrics.MetricsService;
 import com.dgfacade.server.service.BrokerService;
-import com.dgfacade.server.service.ChannelService;
+import com.dgfacade.server.service.InputChannelService;
+import com.dgfacade.server.service.OutputChannelService;
 import com.dgfacade.server.service.UserService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import jakarta.annotation.PostConstruct;
 
 @Configuration
 public class AppConfig {
@@ -37,8 +37,18 @@ public class AppConfig {
     @Value("${dgfacade.brokers.config-dir:config/brokers}")
     private String brokersConfigDir;
 
-    @Value("${dgfacade.channels.config-dir:config/channels}")
-    private String channelsConfigDir;
+    @Value("${dgfacade.input-channels.config-dir:config/input-channels}")
+    private String inputChannelsConfigDir;
+
+    @Value("${dgfacade.output-channels.config-dir:config/output-channels}")
+    private String outputChannelsConfigDir;
+
+    @Bean
+    public ConfigPropertyResolver configPropertyResolver() {
+        ConfigPropertyResolver resolver = new ConfigPropertyResolver();
+        resolver.loadClasspathProperties("application.properties");
+        return resolver;
+    }
 
     @Bean
     public ExternalJarLoader externalJarLoader() {
@@ -63,13 +73,24 @@ public class AppConfig {
     }
 
     @Bean
-    public BrokerService brokerService() {
-        return new BrokerService(brokersConfigDir);
+    public BrokerService brokerService(ConfigPropertyResolver resolver) {
+        BrokerService svc = new BrokerService(brokersConfigDir);
+        svc.setPropertyResolver(resolver);
+        return svc;
     }
 
     @Bean
-    public ChannelService channelService() {
-        return new ChannelService(channelsConfigDir);
+    public InputChannelService inputChannelService(ConfigPropertyResolver resolver) {
+        InputChannelService svc = new InputChannelService(inputChannelsConfigDir);
+        svc.setPropertyResolver(resolver);
+        return svc;
+    }
+
+    @Bean
+    public OutputChannelService outputChannelService(ConfigPropertyResolver resolver) {
+        OutputChannelService svc = new OutputChannelService(outputChannelsConfigDir);
+        svc.setPropertyResolver(resolver);
+        return svc;
     }
 
     @Bean

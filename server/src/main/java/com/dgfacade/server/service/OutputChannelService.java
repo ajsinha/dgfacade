@@ -6,6 +6,7 @@
 package com.dgfacade.server.service;
 
 import com.dgfacade.common.util.JsonUtil;
+import com.dgfacade.common.util.ConfigPropertyResolver;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,28 +17,36 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Service that manages channel configuration JSON files in the channels config directory.
+ * Manages Output Channel configuration JSON files.
  *
- * <p>Each channel is a single JSON file named {@code <channel-name>.json} containing
- * free-form JSON with type, broker, subscriptions, queue, and retry sections.</p>
+ * <p>An Output Channel defines how DGFacade publishes (writes to) one or more
+ * <b>destinations</b>. A destination can be a Kafka topic, JMS queue,
+ * RabbitMQ exchange/queue, IBM MQ queue, filesystem path, or SQL table.</p>
+ *
+ * <p>Output Channels provide <b>fan-in</b> — messages arriving from one or
+ * multiple sources are funnelled and published to the configured destinations
+ * using the broker bound to this channel.</p>
  */
-public class ChannelService {
+public class OutputChannelService {
 
-    private static final Logger log = LoggerFactory.getLogger(ChannelService.class);
+    private static final Logger log = LoggerFactory.getLogger(OutputChannelService.class);
 
-    private final String channelsDir;
+    private final String configDir;
+    private ConfigPropertyResolver propertyResolver;
     private final Map<String, String> channelStates = new ConcurrentHashMap<>();
 
-    public ChannelService(String channelsDir) {
-        this.channelsDir = channelsDir;
+    public OutputChannelService(String configDir) {
+        this.configDir = configDir;
         ensureDir();
         for (String id : listChannelIds()) {
             channelStates.put(id, "STOPPED");
         }
     }
 
+    public void setPropertyResolver(ConfigPropertyResolver resolver) { this.propertyResolver = resolver; }
+
     public List<String> listChannelIds() {
-        File dir = new File(channelsDir);
+        File dir = new File(configDir);
         if (!dir.exists() || !dir.isDirectory()) return Collections.emptyList();
         File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
         if (files == null) return Collections.emptyList();
@@ -52,11 +61,12 @@ public class ChannelService {
         if (!file.exists()) return null;
         try {
             Map<String, Object> config = JsonUtil.fromFile(file, new TypeReference<Map<String, Object>>() {});
+            if (propertyResolver != null) { try { propertyResolver.resolveMap(config); } catch (Exception e) { log.error("Property resolution failed for output channel {}: {}", channelId, e.getMessage()); } }
             config.put("_channel_id", channelId);
             config.put("_state", channelStates.getOrDefault(channelId, "STOPPED"));
             return config;
         } catch (IOException e) {
-            log.error("Failed to load channel {}", channelId, e);
+            log.error("Failed to load output channel {}", channelId, e);
             return null;
         }
     }
@@ -77,7 +87,7 @@ public class ChannelService {
         clean.remove("_state");
         JsonUtil.toFile(channelFile(channelId), clean);
         channelStates.putIfAbsent(channelId, "STOPPED");
-        log.info("Saved channel config: {}", channelId);
+        log.info("Saved output channel config: {}", channelId);
     }
 
     public boolean deleteChannel(String channelId) {
@@ -86,7 +96,7 @@ public class ChannelService {
             boolean deleted = file.delete();
             if (deleted) {
                 channelStates.remove(channelId);
-                log.info("Deleted channel config: {}", channelId);
+                log.info("Deleted output channel config: {}", channelId);
             }
             return deleted;
         }
@@ -96,13 +106,13 @@ public class ChannelService {
     public void startChannel(String channelId) {
         if (getChannel(channelId) != null) {
             channelStates.put(channelId, "RUNNING");
-            log.info("Channel started: {}", channelId);
+            log.info("Output channel started: {}", channelId);
         }
     }
 
     public void stopChannel(String channelId) {
         channelStates.put(channelId, "STOPPED");
-        log.info("Channel stopped: {}", channelId);
+        log.info("Output channel stopped: {}", channelId);
     }
 
     public String getChannelState(String channelId) {
@@ -110,11 +120,11 @@ public class ChannelService {
     }
 
     private File channelFile(String channelId) {
-        return new File(channelsDir, channelId + ".json");
+        return new File(configDir, channelId + ".json");
     }
 
     private void ensureDir() {
-        File dir = new File(channelsDir);
+        File dir = new File(configDir);
         if (!dir.exists()) dir.mkdirs();
     }
 }

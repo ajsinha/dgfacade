@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Input Channel')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a th:href="@{/admin/input-channels}">Input Channels</a></li>
+                    <li class="breadcrumb-item active" th:text="${channelId != '' ? 'Edit: ' + channelId : 'Create New'}">Create</li>
+                </ol></nav>
+                <h2 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i><span th:text="${channelId != '' ? 'Edit Input Channel: ' + channelId : 'Create Input Channel'}">Create Input Channel</span></h2>
+            </div>
+            <div class="col-auto"><a th:href="@{/admin/input-channels}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back</a></div>
+        </div>
+        <form th:action="${channelId != '' ? '/admin/input-channels/edit/' + channelId : '/admin/input-channels/create'}" method="post">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <!-- Basic Info -->
+                <div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i>Basic Information</h5></div>
+                <div class="card-body"><div class="row g-3">
+                    <div class="col-md-6"><label class="form-label fw-semibold">Channel ID <span class="text-danger">*</span></label>
+                        <input type="text" name="channelId" class="form-control" required pattern="[a-z0-9\-_]+" th:value="${channelId}" th:readonly="${channelId != ''}" placeholder="e.g. order-events">
+                        <div class="form-text">Lowercase letters, numbers, hyphens, underscores.</div></div>
+                    <div class="col-md-6"><label class="form-label fw-semibold">Type</label>
+                        <select name="type" class="form-select"><option value="kafka" th:selected="${channel['type'] == 'kafka'}">Kafka</option><option value="jms" th:selected="${channel['type'] == 'jms'}">JMS (ActiveMQ)</option><option value="amqp" th:selected="${channel['type'] == 'amqp'}">AMQP (RabbitMQ)</option><option value="filesystem" th:selected="${channel['type'] == 'filesystem'}">FileSystem</option><option value="sql" th:selected="${channel['type'] == 'sql'}">SQL</option></select></div>
+                    <div class="col-12"><label class="form-label fw-semibold">Description</label><input type="text" name="description" class="form-control" th:value="${channel['description']}" placeholder="e.g. Order lifecycle events from Kafka"></div>
+                    <div class="col-md-6"><label class="form-label fw-semibold">Broker</label>
+                        <select name="broker" class="form-select"><option value="">— Select Broker —</option><option th:each="b : ${brokerIds}" th:value="${b}" th:text="${b}" th:selected="${b == channel['broker']}">broker</option></select></div>
+                    <div class="col-md-6"><div class="form-check mt-4 pt-2"><input class="form-check-input" type="checkbox" name="enabled" value="true" id="enabledCheck" th:checked="${channel['enabled'] != false}"><label class="form-check-label" for="enabledCheck">Enabled</label></div></div>
+                </div></div></div>
+                <!-- Destinations -->
+                <div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-map-marker-alt me-2 text-success"></i>Destinations</h5></div>
+                <div class="card-body"><div class="row g-3">
+                    <div class="col-md-8"><label class="form-label fw-semibold">Destination Names (comma-separated)</label>
+                        <input type="text" name="dest_name" class="form-control" placeholder="e.g. orders.created, orders.updated" th:value="${channel['destinations'] != null ? #strings.listJoin(channel['destinations'].![get('name')], ', ') : ''}">
+                        <div class="form-text">Kafka topics, JMS queues, filesystem paths, SQL table names — depending on the channel type.</div></div>
+                    <div class="col-md-4"><label class="form-label fw-semibold">Destination Type</label>
+                        <select name="dest_type" class="form-select"><option value="topic">Topic</option><option value="queue">Queue</option><option value="path">Path</option><option value="table">Table</option></select></div>
+                </div>
+                <div class="alert alert-info mt-3 small mb-0"><i class="fas fa-lightbulb me-1"></i><strong>Destination Examples:</strong> Kafka → <code>orders.created</code> (topic), ActiveMQ → <code>TRADE.INPUT</code> (queue), FileSystem → <code>/data/inbox/orders</code> (path), SQL → <code>dg_inbound_messages</code> (table)</div>
+                </div></div>
+                <!-- Queue & Backpressure -->
+                <div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-tachometer-alt me-2 text-warning"></i>Queue &amp; Backpressure</h5></div>
+                <div class="card-body"><div class="row g-3">
+                    <div class="col-md-3"><label class="form-label">Queue Depth</label><input type="number" name="queue_depth" class="form-control" th:value="${channel['queue'] != null ? channel['queue']['depth'] : 10000}"></div>
+                    <div class="col-md-3"><label class="form-label">Warning %</label><input type="number" name="queue_warning_pct" class="form-control" th:value="${channel['queue'] != null ? channel['queue']['warning_threshold_pct'] : 70}"></div>
+                    <div class="col-md-3"><label class="form-label">Critical %</label><input type="number" name="queue_critical_pct" class="form-control" th:value="${channel['queue'] != null ? channel['queue']['critical_threshold_pct'] : 90}"></div>
+                    <div class="col-md-3"><label class="form-label">Drain Resume %</label><input type="number" name="queue_drain_pct" class="form-control" th:value="${channel['queue'] != null ? channel['queue']['drain_resume_pct'] : 60}"></div>
+                </div></div></div>
+                <!-- Retry -->
+                <div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-redo me-2 text-danger"></i>Retry Configuration</h5></div>
+                <div class="card-body"><div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Max Attempts</label><input type="number" name="retry_max_attempts" class="form-control" th:value="${channel['retry'] != null ? channel['retry']['max_attempts'] : 3}"></div>
+                    <div class="col-md-4"><label class="form-label">Backoff (ms)</label><input type="number" name="retry_backoff_ms" class="form-control" th:value="${channel['retry'] != null ? channel['retry']['backoff_ms'] : 1000}"></div>
+                    <div class="col-md-4"><label class="form-label">Backoff Multiplier</label><input type="text" name="retry_backoff_multiplier" class="form-control" th:value="${channel['retry'] != null ? channel['retry']['backoff_multiplier'] : 2.0}"></div>
+                </div></div></div>
+                <div class="d-flex gap-2 mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save me-1"></i><span th:text="${channelId != '' ? 'Update Input Channel' : 'Create Input Channel'}">Create</span></button>
+                    <a th:href="@{/admin/input-channels}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                </div>
+            </div>
+            <!-- Sidebar -->
+            <div class="col-lg-4"><div class="card border-0 shadow-sm sticky-top" style="top:80px"><div class="card-header bg-primary text-white py-3"><h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Input Channel Guide</h6></div>
+            <div class="card-body small">
+                <h6 class="fw-bold text-primary">What is an Input Channel?</h6>
+                <p class="text-muted">An Input Channel <strong>subscribes</strong> to one or more destinations via a broker and <strong>consumes</strong> messages into DGFacade for handler processing. Think of it as the "ears" of the system.</p>
+                <h6 class="fw-bold text-primary">Destinations</h6>
+                <p class="text-muted">A destination is where messages originate. Depending on the broker type:</p>
+                <ul class="text-muted ps-3"><li><strong>Kafka:</strong> topic name (e.g. <code>orders.created</code>)</li><li><strong>JMS:</strong> queue or topic (e.g. <code>TRADE.INPUT</code>)</li><li><strong>AMQP:</strong> RabbitMQ queue/exchange</li><li><strong>FileSystem:</strong> directory path (e.g. <code>/data/inbox</code>)</li><li><strong>SQL:</strong> table name (e.g. <code>dg_inbound</code>)</li></ul>
+                <h6 class="fw-bold text-primary">Fan-Out Pattern</h6>
+                <p class="text-muted">A single input channel can subscribe to multiple destinations simultaneously. All messages from all destinations are delivered to DGFacade for processing.</p>
+                <h6 class="fw-bold text-primary">Backpressure</h6>
+                <p class="text-muted mb-0">When the internal queue reaches <strong>critical %</strong>, consumption pauses. It resumes when the queue drains below <strong>drain resume %</strong>.</p>
+            </div></div></div>
+        </div>
+        </form>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

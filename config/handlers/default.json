@@ -46,5 +46,12 @@
     "config": {
       "default_delay_seconds": 5
     }
+  },
+  "WS_DEMO": {
+    "handler_class": "com.dgfacade.server.handler.WebSocketDemoHandler",
+    "description": "WebSocket demo handler: SYSTEM_PROBE, MARKET_TICK, PING_BURST, DATA_GENERATE operations for the WebSocket Playground",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {}
   }
 }

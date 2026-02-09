@@ -62,9 +62,8 @@ public class HandlerActor extends AbstractBehavior<HandlerActor.Command> {
     private Behavior<Command> onExecute(Execute cmd) {
         HandlerMessages.ExecuteRequest req = cmd.req();
         this.responseFuture = req.responseFuture();
-        this.state = new HandlerState(handlerId, req.request().getRequestId(), req.request().getRequestType());
-        state.setUserId(req.request().getResolvedUserId());
-        state.setHandlerClass(req.handlerConfig().getHandlerClass());
+        // Use the state object from ExecutionEngine (already in the recentStates buffer)
+        this.state = req.state();
 
         // Schedule TTL timeout
         int ttl = req.handlerConfig().getTtlMinutes();

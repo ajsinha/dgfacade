@@ -156,9 +156,9 @@
                         <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
                             <i class="fas fa-exchange-alt fa-2x"></i>
                         </div>
-                        <h5 class="card-title">Fan-Out Channels</h5>
+                        <h5 class="card-title">Input Fan-Out Channelsamp; Output Channels</h5>
                         <p class="card-text opacity-75">
-                            Data channels with multi-listener fan-out distribution and backpressure control.
+                            Input Channels (fan-out, subscribe) and Output Channels (fan-in, publish) with destinations and backpressure.
                             Decouple producers from consumers with bounded queues.
                         </p>
                         <span class="badge bg-light text-dark">v1.2.0</span>
@@ -248,10 +248,10 @@
                         <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
                             <i class="fas fa-tools fa-2x"></i>
                         </div>
-                        <h5 class="card-title">Broker &amp; Channel Admin</h5>
+                        <h5 class="card-title">Broker Broker &amp; Channel Adminamp; Channel Admin (Input/Output)</h5>
                         <p class="card-text opacity-75">
                             Full-page admin UI for creating, editing, and managing broker connections
-                            and delivery channels with SSL/TLS config, start/stop controls, and live status.
+                            input and output channels with SSL/TLS config, start/stop controls, and live status.
                         </p>
                         <span class="badge bg-light text-dark">v1.2.0</span>
                     </div>
@@ -579,7 +579,7 @@
                                     </li>
                                     <li class="mb-3">
                                         <i class="fas fa-check-circle text-warning me-2"></i>
-                                        <strong>Channel Manager</strong> — Fan-out data channels with backpressure
+                                        <strong>Channel Manager</strong> — Input (fan-out) and Output (fan-in) channels with destinations and backpressure
                                     </li>
                                     <li class="mb-3">
                                         <i class="fas fa-check-circle text-success me-2"></i>
@@ -739,7 +739,7 @@
                                 <li><strong>Alert Rules</strong>: Recommended Prometheus alerting rules for production</li>
                                 <li><strong>Docker Compose</strong>: Full observability stack (DGFacade + Prometheus + Grafana)</li>
                                 <li><strong>Broker Admin UI</strong>: Full-page CRUD for all 6 broker types with SSL/TLS config, start/stop controls</li>
-                                <li><strong>Channel Admin UI</strong>: Full-page CRUD for channels with queue, backpressure, retry configuration</li>
+                                <li><strong>Input/Output Channel Admin</strong>: Separate admin pages for input channels (fan-out) and output channels (fan-in) with destinations, queue, backpressure, retry</li>
                                 <li><strong>Global Error Handler</strong>: Detailed error pages with stack traces, explanations, and suggestions</li>
                                 <li><strong>Handler Detail Fix</strong>: Graceful handling of expired/missing handler execution records</li>
                             </ul>
@@ -756,7 +756,7 @@
                                 <li><strong>New Handlers</strong>: SystemInfo, JsonTransform, Hash, HttpProbe, BatchArithmetic</li>
                                 <li><strong>Admin Protection</strong>: Built-in admin user/key locked from UI modification</li>
                                 <li><strong>Request Processing Guide</strong>: End-to-end documentation with 5 runnable examples</li>
-                                <li><strong>Fan-Out Channels</strong>: Data channels with backpressure and multi-listener support</li>
+                                <li><strong>Input Fan-Out Channelsamp; Output Channels</strong>: Data channels with backpressure and multi-listener support</li>
                                 <li><strong>Streaming Handlers</strong>: Multi-update WebSocket responses with sequence numbers</li>
                             </ul>
                         </div>

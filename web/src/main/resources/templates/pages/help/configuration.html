@@ -59,7 +59,7 @@ dgfacade.brokers.reconnect-backoff-ms=1000</code></pre>
                 <h3 class="mt-4">Channel Configuration</h3>
 <pre class="bg-dark text-light p-3 rounded"><code># Directory containing channel JSON files (one file per channel)
 # Each .json file defines a data channel with broker reference, subscriptions, and queue settings
-dgfacade.channels.config-dir=config/channels
+dgfacade.input-channels.config-dir / dgfacade.output-channels.config-dir=config/channels
 
 # Default internal queue depth when not specified per channel
 dgfacade.channels.default-queue-depth=10000

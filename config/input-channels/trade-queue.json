@@ -1,9 +1,9 @@
 {
   "type": "jms",
-  "description": "Trade execution queue from ActiveMQ",
+  "description": "Trade execution queue from ActiveMQ — listens for incoming trade messages",
   "enabled": true,
   "broker": "dev-activemq",
-  "subscriptions": [
+  "destinations": [
     {
       "name": "TRADE.INPUT",
       "type": "queue"

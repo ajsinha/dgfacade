@@ -45,6 +45,11 @@
                         <i class="fas fa-cogs me-1"></i> Handlers
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/playground}">
+                        <i class="fas fa-flask me-1"></i> Playground
+                    </a>
+                </li>
                 <li class="nav-item dropdown" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                         <i class="fas fa-shield-alt me-1"></i> Admin
@@ -53,7 +58,8 @@
                         <li><a class="dropdown-item" th:href="@{/admin/users}"><i class="fas fa-users me-2"></i>Users</a></li>
                         <li><a class="dropdown-item" th:href="@{/admin/apikeys}"><i class="fas fa-key me-2"></i>API Keys</a></li>
                         <li><a class="dropdown-item" th:href="@{/admin/brokers}"><i class="fas fa-server me-2"></i>Brokers</a></li>
-                        <li><a class="dropdown-item" th:href="@{/admin/channels}"><i class="fas fa-exchange-alt me-2"></i>Channels</a></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/input-channels}"><i class="fas fa-sign-in-alt me-2"></i>Input Channels</a></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/output-channels}"><i class="fas fa-sign-out-alt me-2"></i>Output Channels</a></li>
                     </ul>
                 </li>
                 <li class="nav-item">

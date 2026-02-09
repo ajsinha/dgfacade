@@ -8,6 +8,7 @@ package com.dgfacade.server.actor;
 import com.dgfacade.common.model.DGRequest;
 import com.dgfacade.common.model.DGResponse;
 import com.dgfacade.common.model.HandlerConfig;
+import com.dgfacade.common.model.HandlerState;
 import java.io.Serializable;
 
 /**
@@ -23,7 +24,8 @@ public final class HandlerMessages {
         DGRequest request,
         HandlerConfig handlerConfig,
         String handlerId,
-        java.util.concurrent.CompletableFuture<DGResponse> responseFuture
+        java.util.concurrent.CompletableFuture<DGResponse> responseFuture,
+        HandlerState state
     ) implements Serializable {}
 
     /** Signal that a handler has completed. */

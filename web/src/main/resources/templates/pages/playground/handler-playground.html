@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Handler Playground')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <div class="row mb-3">
+            <div class="col"><h2 class="mb-0"><i class="fas fa-flask me-2"></i>Handler Playground</h2>
+                <p class="text-muted mb-0">Test handlers via REST API or WebSocket in real-time. <a th:href="@{/help/handlers}" class="small">View tutorials &rarr;</a></p></div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" id="pgTabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" id="rest-tab" data-bs-toggle="tab" href="#restPane" role="tab"><i class="fas fa-globe me-1"></i>REST API</a></li>
+            <li class="nav-item"><a class="nav-link" id="ws-tab" data-bs-toggle="tab" href="#wsPane" role="tab"><i class="fas fa-plug me-1"></i>WebSocket</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- ════════════════ REST TAB ════════════════ -->
+            <div class="tab-pane fade show active" id="restPane" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <div class="card border-0 shadow-sm"><div class="card-header bg-success text-white py-2"><h6 class="mb-0"><i class="fas fa-paper-plane me-2"></i>REST Request Builder</h6></div>
+                        <div class="card-body">
+                            <div class="mb-3"><label class="form-label fw-semibold small">API Key</label>
+                                <input type="text" id="restApiKey" class="form-control form-control-sm" value="dgf-admin-key-0001"></div>
+                            <div class="mb-3"><label class="form-label fw-semibold small">Request Type</label>
+                                <select id="restRequestType" class="form-select form-select-sm" onchange="loadRestTemplate()">
+                                    <option value="">— Select Handler —</option>
+                                    <option value="ECHO">ECHO — Echo back payload</option>
+                                    <option value="ARITHMETIC">ARITHMETIC — Math operations</option>
+                                    <option value="STRING_TRANSFORM">STRING_TRANSFORM — Text ops</option>
+                                    <option value="HASH">HASH — Hashing &amp; encoding</option>
+                                    <option value="JSON_TRANSFORM">JSON_TRANSFORM — JSON ops</option>
+                                    <option value="SYSTEM_INFO">SYSTEM_INFO — JVM diagnostics</option>
+                                    <option value="HTTP_PROBE">HTTP_PROBE — URL health check</option>
+                                    <option value="PDC_PROCESS">PDC_PROCESS — Publish-Deliver-Consume</option>
+                                </select></div>
+                            <div class="mb-3"><label class="form-label fw-semibold small">Payload (JSON)</label>
+                                <textarea id="restPayload" class="form-control font-monospace" rows="10" style="font-size:0.8rem;">{}</textarea></div>
+                            <div class="d-flex gap-2">
+                                <button id="restSendBtn" class="btn btn-success btn-sm" onclick="sendRestRequest()"><i class="fas fa-play me-1"></i>Send Request</button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearRestResult()"><i class="fas fa-eraser me-1"></i>Clear</button>
+                            </div>
+                            <div class="form-text mt-2"><code>POST /api/v1/request</code> — synchronous response</div>
+                        </div></div>
+                        <!-- Quick templates -->
+                        <div class="card border-0 shadow-sm mt-3"><div class="card-header bg-light py-2"><h6 class="mb-0 small"><i class="fas fa-magic me-2"></i>Quick Templates</h6></div>
+                        <div class="card-body p-2">
+                            <div class="d-flex flex-wrap gap-1">
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('ECHO',{message:'Hello DGFacade!',number:42})">Echo</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('ARITHMETIC',{operation:'ADD',operands:[10,20,30]})">Add 10+20+30</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('STRING_TRANSFORM',{operation:'REVERSE',input:'DGFacade rocks'})">Reverse String</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('HASH',{operation:'SHA256',input:'Hello World'})">SHA256</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('SYSTEM_INFO',{})">System Info</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setRestTemplate('HTTP_PROBE',{url:'https://httpbin.org/get',method:'GET'})">HTTP Probe</button>
+                            </div>
+                        </div></div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-terminal me-2"></i>REST Response</h6>
+                            <span id="restStatus" class="badge bg-secondary">Ready</span></div>
+                        <div class="card-body p-0"><pre id="restResult" class="p-3 mb-0 bg-dark text-light" style="min-height:450px;max-height:600px;overflow-y:auto;font-size:0.78rem;white-space:pre-wrap;">Send a request to see the response here...</pre></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════ WEBSOCKET TAB ════════════════ -->
+            <div class="tab-pane fade" id="wsPane" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <div class="card border-0 shadow-sm"><div class="card-header bg-primary text-white py-2"><h6 class="mb-0"><i class="fas fa-plug me-2"></i>WebSocket Client</h6></div>
+                        <div class="card-body">
+                            <div class="mb-3 d-flex gap-2 align-items-end">
+                                <div class="flex-grow-1"><label class="form-label fw-semibold small">WebSocket URL</label>
+                                    <input type="text" id="wsUrl" class="form-control form-control-sm" readonly></div>
+                                <button id="wsConnectBtn" class="btn btn-primary btn-sm" onclick="toggleWs()"><i class="fas fa-plug me-1"></i>Connect</button>
+                            </div>
+                            <div class="mb-2"><span class="small fw-semibold">Status: </span><span id="wsStatus" class="badge bg-secondary">Disconnected</span></div>
+                            <hr>
+                            <div class="mb-3"><label class="form-label fw-semibold small">API Key</label>
+                                <input type="text" id="wsApiKey" class="form-control form-control-sm" value="dgf-admin-key-0001"></div>
+                            <div class="mb-3"><label class="form-label fw-semibold small">Request Type</label>
+                                <select id="wsRequestType" class="form-select form-select-sm">
+                                    <option value="WS_DEMO">WS_DEMO — WebSocket Demo</option>
+                                    <option value="ECHO">ECHO — Echo Handler</option>
+                                    <option value="ARITHMETIC">ARITHMETIC — Math</option>
+                                    <option value="SYSTEM_INFO">SYSTEM_INFO — JVM</option>
+                                </select></div>
+                            <div class="mb-3"><label class="form-label fw-semibold small">Payload (JSON)</label>
+                                <textarea id="wsPayload" class="form-control font-monospace" rows="8" style="font-size:0.8rem;">{"operation": "SYSTEM_PROBE"}</textarea></div>
+                            <div class="d-flex gap-2">
+                                <button id="wsSendBtn" class="btn btn-primary btn-sm" onclick="sendWsMessage()" disabled><i class="fas fa-paper-plane me-1"></i>Send</button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearWsLog()"><i class="fas fa-eraser me-1"></i>Clear Log</button>
+                            </div>
+                        </div></div>
+                        <!-- WS Quick templates -->
+                        <div class="card border-0 shadow-sm mt-3"><div class="card-header bg-light py-2"><h6 class="mb-0 small"><i class="fas fa-magic me-2"></i>WebSocket Templates</h6></div>
+                        <div class="card-body p-2"><div class="d-flex flex-wrap gap-1">
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('WS_DEMO',{operation:'SYSTEM_PROBE'})">System Probe</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('WS_DEMO',{operation:'MARKET_TICK',symbols:['AAPL','GOOG','TSLA'],ticks_per_symbol:3})">Market Ticks</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('WS_DEMO',{operation:'PING_BURST'})">Ping Burst</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('WS_DEMO',{operation:'DATA_GENERATE',count:5})">Generate Data</button>
+                            <button class="btn btn-outline-info btn-sm" onclick="setWsTemplate('ECHO',{hello:'from WebSocket!'})">Echo via WS</button>
+                        </div></div></div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-stream me-2"></i>WebSocket Log</h6>
+                            <span id="wsMsgCount" class="badge bg-info">0 messages</span></div>
+                        <div class="card-body p-0"><div id="wsLog" class="p-3 bg-dark text-light" style="min-height:450px;max-height:600px;overflow-y:auto;font-size:0.78rem;">Connect to WebSocket to begin...</div></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<script>
+// ════════════ REST ════════════
+function sendRestRequest() {
+    const btn = document.getElementById('restSendBtn');
+    const status = document.getElementById('restStatus');
+    const result = document.getElementById('restResult');
+    btn.disabled = true; status.className = 'badge bg-warning'; status.textContent = 'Sending...';
+    let payload;
+    try { payload = JSON.parse(document.getElementById('restPayload').value); } catch(e) { result.textContent = 'ERROR: Invalid JSON payload\n' + e.message; status.className = 'badge bg-danger'; status.textContent = 'Error'; btn.disabled = false; return; }
+    const body = { api_key: document.getElementById('restApiKey').value, request_type: document.getElementById('restRequestType').value, payload: payload };
+    const startTime = performance.now();
+    fetch('/api/v1/request', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) })
+        .then(r => r.json()).then(data => {
+            const elapsed = (performance.now() - startTime).toFixed(1);
+            status.className = data.status === 'SUCCESS' ? 'badge bg-success' : 'badge bg-danger';
+            status.textContent = data.status + ' (' + elapsed + 'ms)';
+            result.textContent = JSON.stringify(data, null, 2);
+        }).catch(e => { status.className = 'badge bg-danger'; status.textContent = 'Failed'; result.textContent = 'FETCH ERROR:\n' + e.message; })
+        .finally(() => btn.disabled = false);
+}
+function setRestTemplate(type, payload) { document.getElementById('restRequestType').value = type; document.getElementById('restPayload').value = JSON.stringify(payload, null, 2); }
+function loadRestTemplate() {
+    const t = document.getElementById('restRequestType').value;
+    const templates = { 'ECHO': {message:'Hello!',ts:new Date().toISOString()}, 'ARITHMETIC': {operation:'ADD',operands:[10,20]}, 'STRING_TRANSFORM': {operation:'UPPER',input:'hello world'}, 'HASH': {operation:'SHA256',input:'test'}, 'JSON_TRANSFORM': {operation:'FLATTEN',input:{a:{b:{c:1}},d:2}}, 'SYSTEM_INFO': {}, 'HTTP_PROBE': {url:'https://httpbin.org/get',method:'GET'}, 'PDC_PROCESS': {order_id:'ORD-001',customer:'Acme Corp',items:[{sku:'WIDGET-A',qty:100}]} };
+    if (templates[t]) document.getElementById('restPayload').value = JSON.stringify(templates[t], null, 2);
+}
+function clearRestResult() { document.getElementById('restResult').textContent = 'Send a request to see the response here...'; document.getElementById('restStatus').className = 'badge bg-secondary'; document.getElementById('restStatus').textContent = 'Ready'; }
+
+// ════════════ WEBSOCKET ════════════
+let ws = null; let wsMsgIdx = 0;
+window.addEventListener('load', () => { document.getElementById('wsUrl').value = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/gateway'; });
+function toggleWs() {
+    if (ws && ws.readyState === WebSocket.OPEN) { ws.close(); return; }
+    const url = document.getElementById('wsUrl').value;
+    ws = new WebSocket(url);
+    document.getElementById('wsStatus').className = 'badge bg-warning'; document.getElementById('wsStatus').textContent = 'Connecting...';
+    ws.onopen = () => { document.getElementById('wsStatus').className = 'badge bg-success'; document.getElementById('wsStatus').textContent = 'Connected'; document.getElementById('wsConnectBtn').innerHTML = '<i class="fas fa-times me-1"></i>Disconnect'; document.getElementById('wsSendBtn').disabled = false; appendWsLog('system', 'Connected to ' + url); };
+    ws.onclose = () => { document.getElementById('wsStatus').className = 'badge bg-secondary'; document.getElementById('wsStatus').textContent = 'Disconnected'; document.getElementById('wsConnectBtn').innerHTML = '<i class="fas fa-plug me-1"></i>Connect'; document.getElementById('wsSendBtn').disabled = true; appendWsLog('system', 'Disconnected'); };
+    ws.onerror = (e) => { appendWsLog('error', 'WebSocket error'); };
+    ws.onmessage = (e) => { let data; try { data = JSON.parse(e.data); } catch(ex) { data = e.data; } appendWsLog('recv', JSON.stringify(data, null, 2)); };
+}
+function sendWsMessage() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    let payload; try { payload = JSON.parse(document.getElementById('wsPayload').value); } catch(e) { appendWsLog('error', 'Invalid JSON: ' + e.message); return; }
+    const msg = { api_key: document.getElementById('wsApiKey').value, request_type: document.getElementById('wsRequestType').value, payload: payload };
+    ws.send(JSON.stringify(msg));
+    appendWsLog('sent', JSON.stringify(msg, null, 2));
+}
+function appendWsLog(type, text) {
+    const log = document.getElementById('wsLog');
+    if (wsMsgIdx === 0) log.innerHTML = '';
+    wsMsgIdx++;
+    const colors = { system: '#6c757d', sent: '#28a745', recv: '#0d6efd', error: '#dc3545' };
+    const labels = { system: '⚙ SYSTEM', sent: '→ SENT', recv: '← RECEIVED', error: '✗ ERROR' };
+    const ts = new Date().toLocaleTimeString();
+    const el = document.createElement('div'); el.style.borderBottom = '1px solid #333'; el.style.padding = '6px 0';
+    el.innerHTML = '<span style="color:' + (colors[type]||'#aaa') + ';font-weight:bold">[' + ts + '] ' + (labels[type]||type) + '</span><pre style="margin:4px 0 0;white-space:pre-wrap;color:#e0e0e0;font-size:0.75rem;">' + escapeHtml(text) + '</pre>';
+    log.appendChild(el); log.scrollTop = log.scrollHeight;
+    document.getElementById('wsMsgCount').textContent = wsMsgIdx + ' messages';
+}
+function setWsTemplate(type, payload) { document.getElementById('wsRequestType').value = type; document.getElementById('wsPayload').value = JSON.stringify(payload, null, 2); }
+function clearWsLog() { document.getElementById('wsLog').innerHTML = 'Connect to WebSocket to begin...'; wsMsgIdx = 0; document.getElementById('wsMsgCount').textContent = '0 messages'; }
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+</script>
+</body>
+</html>

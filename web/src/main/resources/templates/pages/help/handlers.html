@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Handlers Tutorial')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2"><li class="breadcrumb-item"><a th:href="@{/help}">Help</a></li><li class="breadcrumb-item active">Handlers Tutorial</li></ol></nav>
+        <h2 class="mb-1"><i class="fas fa-cogs me-2"></i>Handler Tutorial &amp; Reference</h2>
+        <p class="text-muted mb-4">Learn how to execute handlers via REST and WebSocket, and write your own. <a th:href="@{/playground}" class="btn btn-sm btn-success ms-2"><i class="fas fa-flask me-1"></i>Open Playground</a></p>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+
+                <!-- REST Handler Tutorial -->
+                <div class="card border-0 shadow-sm mb-4" id="rest-tutorial"><div class="card-body">
+                    <h4 class="text-success"><i class="fas fa-globe me-2"></i>Tutorial: REST Handler (Synchronous)</h4>
+                    <p>The simplest way to invoke a handler. Send a JSON request, receive a JSON response — all in one HTTP call.</p>
+                    <h5>Step 1: Build the Request</h5>
+                    <pre class="bg-dark text-light p-3 rounded small">POST /api/v1/request
+Content-Type: application/json
+
+{
+  "api_key": "dgf-admin-key-0001",
+  "request_type": "ECHO",
+  "payload": {
+    "message": "Hello DGFacade!",
+    "number": 42
+  }
+}</pre>
+                    <h5>Step 2: Receive the Response</h5>
+                    <pre class="bg-dark text-light p-3 rounded small">{
+  "requestId": "a1b2c3d4",
+  "status": "SUCCESS",
+  "data": {
+    "echo_payload": { "message": "Hello DGFacade!", "number": 42 },
+    "echo_request_type": "ECHO",
+    "echo_request_id": "a1b2c3d4",
+    "echo_timestamp": "2025-06-15T10:30:00Z",
+    "handler_config": {}
+  },
+  "executionTimeMs": 3,
+  "timestamp": "2025-06-15T10:30:00Z"
+}</pre>
+                    <div class="alert alert-success small"><i class="fas fa-lightbulb me-1"></i><strong>Key point:</strong> REST is <strong>synchronous</strong> — the HTTP response is the handler result. The client blocks until the handler completes (or TTL expires). Ideal for quick operations under 30 seconds.</div>
+                    <h5>curl Example</h5>
+                    <pre class="bg-dark text-light p-3 rounded small">curl -s -X POST http://localhost:8080/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"dgf-admin-key-0001","request_type":"ARITHMETIC","payload":{"operation":"ADD","operands":[10,20,30]}}' \
+  | python3 -m json.tool</pre>
+                    <h5>Available REST Handlers</h5>
+                    <table class="table table-sm table-bordered small"><thead class="table-light"><tr><th>Request Type</th><th>Description</th><th>Example Payload</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>ECHO</code></td><td>Echoes back the payload</td><td><code>{"message": "test"}</code></td></tr>
+                        <tr><td><code>ARITHMETIC</code></td><td>Math: ADD, SUB, MUL, DIV, POW</td><td><code>{"operation":"MUL","operands":[6,7]}</code></td></tr>
+                        <tr><td><code>STRING_TRANSFORM</code></td><td>UPPER, LOWER, REVERSE, WORD_COUNT</td><td><code>{"operation":"REVERSE","input":"hello"}</code></td></tr>
+                        <tr><td><code>HASH</code></td><td>MD5, SHA256, SHA512, BASE64, UUID</td><td><code>{"operation":"SHA256","input":"data"}</code></td></tr>
+                        <tr><td><code>JSON_TRANSFORM</code></td><td>FLATTEN, MERGE, PICK, OMIT</td><td><code>{"operation":"FLATTEN","input":{"a":{"b":1}}}</code></td></tr>
+                        <tr><td><code>SYSTEM_INFO</code></td><td>JVM metrics and diagnostics</td><td><code>{}</code></td></tr>
+                        <tr><td><code>HTTP_PROBE</code></td><td>Probe a URL's health</td><td><code>{"url":"https://httpbin.org/get"}</code></td></tr>
+                    </tbody></table>
+                </div></div>
+
+                <!-- WebSocket Handler Tutorial -->
+                <div class="card border-0 shadow-sm mb-4" id="websocket-tutorial"><div class="card-body">
+                    <h4 class="text-primary"><i class="fas fa-plug me-2"></i>Tutorial: WebSocket Handler (Real-Time)</h4>
+                    <p>WebSocket provides a persistent connection for real-time, bidirectional communication. Send requests and receive responses without creating new HTTP connections.</p>
+                    <h5>Step 1: Connect</h5>
+                    <pre class="bg-dark text-light p-3 rounded small">// JavaScript
+const ws = new WebSocket('ws://localhost:8080/ws/gateway');
+ws.onopen = () => console.log('Connected!');
+ws.onmessage = (e) => console.log('Response:', JSON.parse(e.data));</pre>
+                    <h5>Step 2: Send a Request</h5>
+                    <pre class="bg-dark text-light p-3 rounded small">ws.send(JSON.stringify({
+  "api_key": "dgf-admin-key-0001",
+  "request_type": "WS_DEMO",
+  "payload": {
+    "operation": "MARKET_TICK",
+    "symbols": ["AAPL", "GOOG", "TSLA"],
+    "ticks_per_symbol": 5
+  }
+}));</pre>
+                    <h5>Step 3: Receive Response</h5>
+                    <pre class="bg-dark text-light p-3 rounded small">// ws.onmessage handler receives:
+{
+  "requestId": "...",
+  "status": "SUCCESS",
+  "data": {
+    "market_data": [
+      { "seq": 1, "symbol": "AAPL", "price": 185.42, "change": 0.73, "volume": 12340 },
+      ...
+    ],
+    "_operation": "MARKET_TICK",
+    "_source": "WebSocket",
+    "_execution_ms": 12
+  }
+}</pre>
+                    <div class="alert alert-info small"><i class="fas fa-lightbulb me-1"></i><strong>When to use WebSocket:</strong> Real-time dashboards, streaming data, interactive probes, multiple rapid requests without connection overhead. The connection stays open — send as many requests as you want.</div>
+                    <h5>WS_DEMO Operations</h5>
+                    <table class="table table-sm table-bordered small"><thead class="table-light"><tr><th>Operation</th><th>Description</th><th>Payload</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>SYSTEM_PROBE</code></td><td>Live JVM memory, CPU, threads, uptime</td><td><code>{"operation":"SYSTEM_PROBE"}</code></td></tr>
+                        <tr><td><code>MARKET_TICK</code></td><td>Simulated market data with bid/ask</td><td><code>{"operation":"MARKET_TICK","symbols":["AAPL"]}</code></td></tr>
+                        <tr><td><code>PING_BURST</code></td><td>5-ping latency measurement</td><td><code>{"operation":"PING_BURST"}</code></td></tr>
+                        <tr><td><code>DATA_GENERATE</code></td><td>Random records (max 500)</td><td><code>{"operation":"DATA_GENERATE","count":20}</code></td></tr>
+                    </tbody></table>
+                </div></div>
+
+                <!-- PDCHandler Tutorial -->
+                <div class="card border-0 shadow-sm mb-4" id="pdc-tutorial"><div class="card-body">
+                    <h4 class="text-danger"><i class="fas fa-exchange-alt me-2"></i>Tutorial: PDCHandler (Publish-Deliver-Consume)</h4>
+                    <p>The <code>PDCHandler</code> is a specialized long-running handler that bridges a REST endpoint with Kafka messaging via Input and Output Channels.</p>
+                    <h5>How It Works</h5>
+                    <div class="bg-light p-3 rounded mb-3 small font-monospace">
+DGRequest.payload<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+POST → REST Endpoint → returns { "topic": "dynamic-topic-xyz" }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+Subscribe to "dynamic-topic-xyz" via Input Channel broker<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+For each message consumed → publish to Output Channel destination<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+Continue until TTL expires → stop &amp; return summary
+                    </div>
+                    <h5>Handler Configuration</h5>
+                    <pre class="bg-dark text-light p-3 rounded small">{
+  "PDC_PROCESS": {
+    "handler_class": "com.dgfacade.server.handler.PDCHandler",
+    "ttl_minutes": 60,
+    "config": {
+      "rest_endpoint": "${pdc.rest.endpoint:http://localhost:9090/api/v1/stream-request}",
+      "rest_timeout_seconds": 30,
+      "input_channel": "order-events",
+      "output_channel": "order-notifications",
+      "output_destination": "notifications.orders.confirmed",
+      "kafka_poll_ms": 100,
+      "kafka_group_id": "dgfacade-pdc-consumer"
+    }
+  }
+}</pre>
+                    <h5>Configuration Fields</h5>
+                    <table class="table table-sm table-bordered small"><thead class="table-light"><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>rest_endpoint</code></td><td>Yes</td><td>URL where DGRequest payload is POSTed. Must return JSON with a <code>"topic"</code> field.</td></tr>
+                        <tr><td><code>rest_timeout_seconds</code></td><td>No</td><td>HTTP timeout for the REST call (default: 30)</td></tr>
+                        <tr><td><code>input_channel</code></td><td>Yes</td><td>ID of an Input Channel whose broker will be used to subscribe to the dynamic Kafka topic</td></tr>
+                        <tr><td><code>output_channel</code></td><td>Yes</td><td>ID of an Output Channel whose broker will be used to publish consumed messages</td></tr>
+                        <tr><td><code>output_destination</code></td><td>Yes</td><td>Destination name (topic/queue) where consumed messages are published</td></tr>
+                        <tr><td><code>kafka_poll_ms</code></td><td>No</td><td>Kafka consumer poll interval in milliseconds (default: 100)</td></tr>
+                        <tr><td><code>kafka_group_id</code></td><td>No</td><td>Consumer group ID for Kafka subscription</td></tr>
+                    </tbody></table>
+                    <div class="alert alert-warning small"><i class="fas fa-info-circle me-1"></i><strong>Note:</strong> The PDCHandler uses <code>${key:default}</code> property placeholders. The <code>rest_endpoint</code> can be overridden with <code>-Dpdc.rest.endpoint=https://prod-api/stream</code> at JVM startup. See <a th:href="@{/help/channels#property-resolution}">Property Resolution</a>.</div>
+                    <h5>Response Format</h5>
+                    <pre class="bg-dark text-light p-3 rounded small">{
+  "status": "SUCCESS",
+  "data": {
+    "dynamic_topic": "stream-response-abc123",
+    "input_channel": "order-events",
+    "output_channel": "order-notifications",
+    "output_destination": "notifications.orders.confirmed",
+    "messages_consumed": 47,
+    "messages_published": 47,
+    "duration_seconds": 3600,
+    "stopped_reason": "TTL_EXPIRED"
+  }
+}</pre>
+                </div></div>
+
+                <!-- Writing Custom Handlers -->
+                <div class="card border-0 shadow-sm mb-4" id="custom-handlers"><div class="card-body">
+                    <h4 class="text-info"><i class="fas fa-code me-2"></i>Writing Custom Handlers</h4>
+                    <p>All handlers implement the <code>DGHandler</code> interface with 4 lifecycle methods:</p>
+                    <pre class="bg-dark text-light p-3 rounded small">public class MyHandler implements DGHandler {
+
+    private Map&lt;String, Object&gt; config;
+    private volatile boolean stopped = false;
+
+    @Override
+    public void construct(Map&lt;String, Object&gt; config) {
+        // Called once with config from handler JSON
+        this.config = config;
+    }
+
+    @Override
+    public DGResponse execute(DGRequest request) {
+        // Business logic here
+        Map&lt;String, Object&gt; result = new LinkedHashMap&lt;&gt;();
+        result.put("greeting", "Hello " + request.getPayload().get("name"));
+        return DGResponse.success(request.getRequestId(), result);
+    }
+
+    @Override
+    public void stop() { stopped = true; }  // TTL or cancel signal
+
+    @Override
+    public void cleanup() { config = null; }  // Release resources
+}</pre>
+                    <h5>Register in Handler Config</h5>
+                    <pre class="bg-dark text-light p-3 rounded small">// config/handlers/default.json — add entry:
+{
+  "MY_HANDLER": {
+    "handler_class": "com.example.MyHandler",
+    "ttl_minutes": 10,
+    "enabled": true,
+    "config": { "greeting_prefix": "Hello" }
+  }
+}</pre>
+                    <div class="alert alert-success small"><i class="fas fa-check me-1"></i>After adding, restart DGFacade or call <code>POST /api/v1/reload</code> to pick up the new handler. Then test it in the <a th:href="@{/playground}">Playground</a>!</div>
+                </div></div>
+
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4"><div class="card border-0 shadow-sm sticky-top" style="top:80px">
+                <div class="card-header bg-dark text-white py-3"><h6 class="mb-0"><i class="fas fa-list me-2"></i>On This Page</h6></div>
+                <div class="list-group list-group-flush">
+                    <a href="#rest-tutorial" class="list-group-item list-group-item-action"><i class="fas fa-globe text-success me-2"></i>REST Handler Tutorial</a>
+                    <a href="#websocket-tutorial" class="list-group-item list-group-item-action"><i class="fas fa-plug text-primary me-2"></i>WebSocket Handler Tutorial</a>
+                    <a href="#pdc-tutorial" class="list-group-item list-group-item-action"><i class="fas fa-exchange-alt text-danger me-2"></i>PDCHandler Tutorial</a>
+                    <a href="#custom-handlers" class="list-group-item list-group-item-action"><i class="fas fa-code text-info me-2"></i>Writing Custom Handlers</a>
+                </div>
+                <div class="card-body small">
+                    <h6 class="fw-bold">Quick Links</h6>
+                    <a th:href="@{/playground}" class="btn btn-sm btn-success w-100 mb-2"><i class="fas fa-flask me-1"></i>Handler Playground</a>
+                    <a th:href="@{/monitoring/handlers}" class="btn btn-sm btn-outline-primary w-100 mb-2"><i class="fas fa-cogs me-1"></i>Handler Monitor</a>
+                    <a th:href="@{/help/channels}" class="btn btn-sm btn-outline-secondary w-100"><i class="fas fa-exchange-alt me-1"></i>Channel Docs</a>
+                </div>
+                <div class="card-body border-top small">
+                    <h6 class="fw-bold">REST vs WebSocket</h6>
+                    <table class="table table-sm small mb-0"><tbody>
+                        <tr><td></td><td><strong>REST</strong></td><td><strong>WebSocket</strong></td></tr>
+                        <tr><td>Connection</td><td>Per-request</td><td>Persistent</td></tr>
+                        <tr><td>Pattern</td><td>Request/Response</td><td>Bidirectional</td></tr>
+                        <tr><td>Best for</td><td>Single operations</td><td>Real-time, streaming</td></tr>
+                        <tr><td>Endpoint</td><td><code>/api/v1/request</code></td><td><code>/ws/gateway</code></td></tr>
+                    </tbody></table>
+                </div>
+            </div></div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

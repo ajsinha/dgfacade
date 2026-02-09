@@ -1,27 +1,27 @@
 {
   "type": "kafka",
-  "description": "Order lifecycle events from Kafka",
+  "description": "Fan-in channel that publishes order notification messages to Kafka topics",
   "enabled": true,
   "broker": "dev-kafka",
-  "subscriptions": [
+  "destinations": [
     {
-      "name": "orders.created",
+      "name": "notifications.orders.confirmed",
       "type": "topic"
     },
     {
-      "name": "orders.updated",
+      "name": "notifications.orders.shipped",
       "type": "topic"
     }
   ],
   "queue": {
-    "depth": 10000,
+    "depth": 5000,
     "warning_threshold_pct": 70,
     "critical_threshold_pct": 90,
     "drain_resume_pct": 60
   },
   "retry": {
-    "max_attempts": 3,
-    "backoff_ms": 1000,
+    "max_attempts": 5,
+    "backoff_ms": 2000,
     "backoff_multiplier": 2.0
   }
 }

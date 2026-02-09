@@ -112,4 +112,19 @@ public class DashboardController {
         model.addAttribute("appName", appName);
         return "pages/info/docs";
     }
+
+    @GetMapping("/playground")
+    public String playground(Model model) {
+        model.addAttribute("appName", appName);
+        model.addAttribute("version", version);
+        model.addAttribute("handlers", engine.getRegisteredRequestTypes());
+        return "pages/playground/handler-playground";
+    }
+
+    @GetMapping("/help/handlers")
+    public String helpHandlers(Model model) {
+        model.addAttribute("appName", appName);
+        model.addAttribute("version", version);
+        return "pages/help/handlers";
+    }
 }

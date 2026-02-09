@@ -47,7 +47,7 @@
                                     th:text="${state.status}">-</span>
                             </dd>
                             <dt class="col-sm-4">User</dt><dd class="col-sm-8" th:text="${state.userId} ?: '-'">-</dd>
-                            <dt class="col-sm-4">Source Channel</dt><dd class="col-sm-8" th:text="${state.sourceChannel} ?: '-'">-</dd>
+                            <dt class="col-sm-4">Source</dt><dd class="col-sm-8" th:text="${state.sourceChannel} ?: '-'">-</dd>
                             <dt class="col-sm-4">Handler Class</dt><dd class="col-sm-8"><small th:text="${state.handlerClass} ?: '-'">-</small></dd>
                             <dt class="col-sm-4">Duration</dt><dd class="col-sm-8" th:text="${state.durationMs != null} ? ${state.durationMs} + ' ms' : '-'">-</dd>
                         </dl>

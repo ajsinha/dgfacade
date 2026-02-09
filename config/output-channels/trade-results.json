@@ -1,0 +1,22 @@
+{
+  "type": "jms",
+  "description": "Fan-in channel that publishes trade execution results to ActiveMQ queues",
+  "enabled": true,
+  "broker": "dev-activemq",
+  "destinations": [
+    {
+      "name": "TRADE.RESULTS",
+      "type": "queue"
+    },
+    {
+      "name": "TRADE.AUDIT",
+      "type": "queue"
+    }
+  ],
+  "queue": {
+    "depth": 10000,
+    "warning_threshold_pct": 80,
+    "critical_threshold_pct": 95,
+    "drain_resume_pct": 65
+  }
+}

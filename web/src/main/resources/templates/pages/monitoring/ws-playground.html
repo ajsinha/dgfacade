@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('WebSocket Playground')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+
+        <!-- Header Row -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-0"><i class="fas fa-plug me-2"></i>WebSocket Playground</h2>
+                <p class="text-muted mb-0">Connect to DGFacade via WebSocket, execute handlers in real time, and inspect results</p>
+            </div>
+            <div class="col-auto d-flex align-items-center gap-2">
+                <span id="connBadge" class="badge bg-secondary fs-6"><i class="fas fa-circle me-1"></i>Disconnected</span>
+                <button id="btnConnect" class="btn btn-success" onclick="wsConnect()"><i class="fas fa-plug me-1"></i>Connect</button>
+                <button id="btnDisconnect" class="btn btn-outline-danger d-none" onclick="wsDisconnect()"><i class="fas fa-times me-1"></i>Disconnect</button>
+            </div>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Left: Request Panel -->
+            <div class="col-lg-5">
+                <!-- Operation Templates -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-th-large me-2 text-primary"></i>Operation Templates</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-outline-success" onclick="loadTemplate('SYSTEM_PROBE')"><i class="fas fa-microchip me-1"></i>System Probe</button>
+                            <button class="btn btn-outline-warning" onclick="loadTemplate('MARKET_TICK')"><i class="fas fa-chart-line me-1"></i>Market Tick</button>
+                            <button class="btn btn-outline-info" onclick="loadTemplate('PING_BURST')"><i class="fas fa-satellite-dish me-1"></i>Ping Burst</button>
+                            <button class="btn btn-outline-secondary" onclick="loadTemplate('DATA_GENERATE')"><i class="fas fa-database me-1"></i>Data Generate</button>
+                            <button class="btn btn-outline-primary" onclick="loadTemplate('ECHO')"><i class="fas fa-reply me-1"></i>Echo</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request Editor -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-paper-plane me-2 text-warning"></i>Request</h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="formatEditor()"><i class="fas fa-align-left me-1"></i>Format</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="clearAll()"><i class="fas fa-eraser me-1"></i>Clear</button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <textarea id="reqEditor" class="form-control font-monospace border-0 rounded-0" rows="14" spellcheck="false"
+                            style="resize:vertical;font-size:13px;background:#1e1e1e;color:#d4d4d4;"></textarea>
+                    </div>
+                    <div class="card-footer bg-white d-flex gap-2">
+                        <button id="btnSend" class="btn btn-primary flex-fill" onclick="wsSend()" disabled>
+                            <i class="fas fa-bolt me-1"></i>Send via WebSocket
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="restSend()">
+                            <i class="fas fa-arrow-right me-1"></i>Send via REST
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Message Log -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-stream me-2 text-info"></i>Message Log <span id="msgCount" class="badge bg-secondary ms-2">0</span></h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="clearLog()"><i class="fas fa-trash me-1"></i>Clear</button>
+                    </div>
+                    <div id="msgLog" class="card-body p-2" style="max-height:250px;overflow-y:auto;font-size:12px;background:#f8f9fa;">
+                        <div class="text-muted text-center py-3"><i class="fas fa-info-circle me-1"></i>Messages will appear here</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Results Panel -->
+            <div class="col-lg-7">
+                <!-- Status Bar -->
+                <div id="statusBar" class="alert alert-secondary d-flex align-items-center mb-4" role="alert" style="display:none !important;">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span id="statusText">Connect to the WebSocket server to begin</span>
+                    <span id="statusLatency" class="ms-auto badge bg-dark d-none">0ms</span>
+                </div>
+
+                <!-- Response Viewer -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-eye me-2 text-success"></i>Response</h5>
+                        <div class="d-flex gap-2">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary active" onclick="switchView('rendered')" id="btnRendered">Rendered</button>
+                                <button class="btn btn-outline-primary" onclick="switchView('raw')" id="btnRaw">Raw JSON</button>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="copyResponse()"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Rendered View -->
+                        <div id="viewRendered">
+                            <div id="renderedContent" class="p-4">
+                                <div class="text-center text-muted py-5">
+                                    <i class="fas fa-satellite-dish fa-3x mb-3 d-block opacity-50"></i>
+                                    <p>Send a request to see results here</p>
+                                    <p class="small">Use a template above or write your own request JSON</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Raw JSON View (hidden by default) -->
+                        <div id="viewRaw" style="display:none;">
+                            <pre id="rawJson" class="mb-0 p-3" style="max-height:600px;overflow:auto;font-size:13px;background:#1e1e1e;color:#d4d4d4;white-space:pre-wrap;"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-history me-2 text-secondary"></i>Execution History</h5>
+                        <span id="histCount" class="badge bg-secondary">0</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm align-middle mb-0">
+                                <thead class="table-light"><tr><th class="ps-3">#</th><th>Operation</th><th>Status</th><th>Transport</th><th>Latency</th><th>Time</th><th class="text-end pe-3">Action</th></tr></thead>
+                                <tbody id="histBody">
+                                    <tr><td colspan="7" class="text-center py-3 text-muted">No executions yet</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Card -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm bg-light">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-2"><i class="fas fa-question-circle me-2"></i>WebSocket Playground Guide</h6>
+                        <div class="row small text-muted">
+                            <div class="col-md-3">
+                                <strong class="text-dark">System Probe</strong><br>Live JVM and OS metrics: heap memory, thread counts, CPU load, uptime. Useful for monitoring system health.
+                            </div>
+                            <div class="col-md-3">
+                                <strong class="text-dark">Market Tick</strong><br>Simulated stock market ticks with price, change, volume, bid/ask. Customize symbols and tick count.
+                            </div>
+                            <div class="col-md-3">
+                                <strong class="text-dark">Ping Burst</strong><br>Measures round-trip latency with 5 sequential pings. Shows nanosecond timing for each ping.
+                            </div>
+                            <div class="col-md-3">
+                                <strong class="text-dark">Data Generate</strong><br>Generates random data records. Use the <code>count</code> field (max 500) to control volume.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   WebSocket Playground — Client-Side Logic
+   ══════════════════════════════════════════════════════════════ */
+var ws = null;
+var msgCounter = 0;
+var histEntries = [];
+var lastResponse = null;
+var sendTime = null;
+
+// ── Templates ────────────────────────────────────────────────
+
+var templates = {
+    SYSTEM_PROBE: {
+        api_key: "dgf-admin-key-0001",
+        request_type: "WS_DEMO",
+        payload: { operation: "SYSTEM_PROBE" }
+    },
+    MARKET_TICK: {
+        api_key: "dgf-admin-key-0001",
+        request_type: "WS_DEMO",
+        payload: {
+            operation: "MARKET_TICK",
+            symbols: ["AAPL", "GOOG", "MSFT", "TSLA"],
+            ticks_per_symbol: 5
+        }
+    },
+    PING_BURST: {
+        api_key: "dgf-admin-key-0001",
+        request_type: "WS_DEMO",
+        payload: { operation: "PING_BURST" }
+    },
+    DATA_GENERATE: {
+        api_key: "dgf-admin-key-0001",
+        request_type: "WS_DEMO",
+        payload: { operation: "DATA_GENERATE", count: 15 }
+    },
+    ECHO: {
+        api_key: "dgf-admin-key-0001",
+        request_type: "ECHO",
+        payload: { message: "Hello from WebSocket Playground!", timestamp: new Date().toISOString() }
+    }
+};
+
+function loadTemplate(name) {
+    var t = JSON.parse(JSON.stringify(templates[name]));
+    if (name === 'ECHO') t.payload.timestamp = new Date().toISOString();
+    document.getElementById('reqEditor').value = JSON.stringify(t, null, 2);
+    logMsg('info', 'Loaded template: ' + name);
+}
+
+// ── WebSocket Connection ─────────────────────────────────────
+
+function wsConnect() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+    var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    var url = proto + '//' + location.host + '/ws/gateway';
+    logMsg('info', 'Connecting to ' + url + ' ...');
+    try {
+        ws = new WebSocket(url);
+    } catch(e) {
+        logMsg('error', 'Connection failed: ' + e.message);
+        return;
+    }
+    ws.onopen = function() {
+        setConnState(true);
+        logMsg('success', 'Connected to ' + url);
+        setStatus('Connected and ready', 'success');
+    };
+    ws.onmessage = function(evt) {
+        var latencyMs = sendTime ? (Date.now() - sendTime) : null;
+        sendTime = null;
+        msgCounter++;
+        logMsg('recv', 'Response received (' + evt.data.length + ' bytes)');
+        try {
+            var resp = JSON.parse(evt.data);
+            lastResponse = resp;
+            renderResponse(resp, latencyMs, 'WebSocket');
+        } catch(e) {
+            document.getElementById('rawJson').textContent = evt.data;
+            setStatus('Received non-JSON response', 'warning');
+        }
+    };
+    ws.onclose = function(e) {
+        setConnState(false);
+        logMsg('warn', 'Disconnected (code=' + e.code + ')');
+        setStatus('Disconnected', 'secondary');
+    };
+    ws.onerror = function() {
+        logMsg('error', 'WebSocket error');
+        setStatus('Connection error', 'danger');
+    };
+}
+
+function wsDisconnect() {
+    if (ws) { ws.close(); ws = null; }
+    setConnState(false);
+}
+
+function wsSend() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) { logMsg('error', 'Not connected'); return; }
+    var txt = document.getElementById('reqEditor').value.trim();
+    if (!txt) { logMsg('warn', 'Empty request'); return; }
+    try { JSON.parse(txt); } catch(e) { logMsg('error', 'Invalid JSON: ' + e.message); return; }
+    sendTime = Date.now();
+    ws.send(txt);
+    logMsg('send', 'Sent (' + txt.length + ' bytes)');
+    setStatus('Request sent, waiting for response...', 'info');
+}
+
+function restSend() {
+    var txt = document.getElementById('reqEditor').value.trim();
+    if (!txt) { logMsg('warn', 'Empty request'); return; }
+    try { JSON.parse(txt); } catch(e) { logMsg('error', 'Invalid JSON: ' + e.message); return; }
+    sendTime = Date.now();
+    logMsg('send', 'Sending via REST POST /api/v1/request');
+    setStatus('Sending via REST...', 'info');
+    fetch('/api/v1/request', { method:'POST', headers:{'Content-Type':'application/json'}, body:txt })
+    .then(function(r) { return r.json(); })
+    .then(function(resp) {
+        var latencyMs = sendTime ? (Date.now() - sendTime) : null;
+        sendTime = null;
+        lastResponse = resp;
+        logMsg('recv', 'REST response received');
+        renderResponse(resp, latencyMs, 'REST');
+    })
+    .catch(function(err) {
+        sendTime = null;
+        logMsg('error', 'REST error: ' + err.message);
+        setStatus('REST call failed: ' + err.message, 'danger');
+    });
+}
+
+// ── Rendering ────────────────────────────────────────────────
+
+function renderResponse(resp, latencyMs, transport) {
+    // Raw JSON
+    document.getElementById('rawJson').textContent = JSON.stringify(resp, null, 2);
+
+    // Status
+    var statusOk = resp.status === 'SUCCESS';
+    setStatus(statusOk ? 'Handler returned SUCCESS' : ('Handler returned ' + resp.status), statusOk ? 'success' : 'danger');
+    if (latencyMs !== null) {
+        var el = document.getElementById('statusLatency');
+        el.textContent = latencyMs + 'ms';
+        el.className = 'ms-auto badge ' + (latencyMs < 100 ? 'bg-success' : latencyMs < 500 ? 'bg-warning text-dark' : 'bg-danger');
+        el.classList.remove('d-none');
+    }
+
+    // History entry
+    var data = resp.data || {};
+    var op = data._operation || resp.status || 'UNKNOWN';
+    addHistory(op, resp.status, transport, latencyMs);
+
+    // Rendered view
+    var box = document.getElementById('renderedContent');
+    if (!statusOk) {
+        box.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i><strong>Error:</strong> ' + esc(resp.errorMessage || resp.status) + '</div>'
+            + '<pre class="bg-dark text-light p-3 rounded small" style="max-height:400px;overflow:auto">' + esc(JSON.stringify(resp, null, 2)) + '</pre>';
+        return;
+    }
+
+    var html = '';
+
+    // Response header
+    html += '<div class="d-flex flex-wrap gap-2 mb-3">';
+    html += '<span class="badge bg-success fs-6"><i class="fas fa-check me-1"></i>' + esc(resp.status) + '</span>';
+    if (data._operation) html += '<span class="badge bg-primary fs-6">' + esc(data._operation) + '</span>';
+    if (data._execution_ms !== undefined) html += '<span class="badge bg-info fs-6"><i class="fas fa-clock me-1"></i>' + data._execution_ms + 'ms handler</span>';
+    if (latencyMs !== null) html += '<span class="badge bg-dark fs-6"><i class="fas fa-satellite-dish me-1"></i>' + latencyMs + 'ms round-trip</span>';
+    html += '<span class="badge bg-secondary fs-6"><i class="fas fa-' + (transport === 'WebSocket' ? 'plug' : 'arrow-right') + ' me-1"></i>' + transport + '</span>';
+    html += '</div>';
+
+    // Operation-specific rendering
+    if (data._operation === 'SYSTEM_PROBE' && data.memory) {
+        html += renderSystemProbe(data);
+    } else if (data._operation === 'MARKET_TICK' && data.market_data) {
+        html += renderMarketTick(data);
+    } else if (data._operation === 'PING_BURST' && data.pings) {
+        html += renderPingBurst(data);
+    } else if (data._operation === 'DATA_GENERATE' && data.records) {
+        html += renderDataGenerate(data);
+    } else {
+        // Generic render for ECHO or unknown
+        html += renderGeneric(data);
+    }
+
+    box.innerHTML = html;
+}
+
+function renderSystemProbe(d) {
+    var h = '<div class="row g-3">';
+    // Memory gauge
+    var pct = d.memory.heap_pct || 0;
+    var memColor = pct < 60 ? 'success' : pct < 80 ? 'warning' : 'danger';
+    h += '<div class="col-md-6"><div class="card border"><div class="card-body">';
+    h += '<h6 class="text-muted mb-3"><i class="fas fa-memory me-2"></i>Heap Memory</h6>';
+    h += '<div class="progress mb-2" style="height:24px"><div class="progress-bar bg-' + memColor + '" style="width:' + pct + '%"><strong>' + pct + '%</strong></div></div>';
+    h += '<div class="small text-muted">' + d.memory.heap_used_mb + ' MB used / ' + d.memory.heap_max_mb + ' MB max &middot; Non-heap: ' + d.memory.non_heap_used_mb + ' MB</div>';
+    h += '</div></div></div>';
+    // Threads
+    h += '<div class="col-md-6"><div class="card border"><div class="card-body">';
+    h += '<h6 class="text-muted mb-3"><i class="fas fa-stream me-2"></i>Threads</h6>';
+    h += '<div class="row text-center">';
+    h += metric('Active', d.threads.active_count, 'primary');
+    h += metric('Total', d.threads.thread_count, 'success');
+    h += metric('Peak', d.threads.peak_thread_count, 'warning');
+    h += metric('Daemon', d.threads.daemon_thread_count, 'secondary');
+    h += '</div></div></div></div>';
+    // System info
+    h += '<div class="col-md-6"><div class="card border"><div class="card-body">';
+    h += '<h6 class="text-muted mb-3"><i class="fas fa-server me-2"></i>System</h6>';
+    h += kvRow('OS', d.system.os_name + ' (' + d.system.os_arch + ')');
+    h += kvRow('CPUs', d.system.available_processors);
+    h += kvRow('Load Avg', d.system.system_load_average);
+    h += '</div></div></div>';
+    // Runtime
+    h += '<div class="col-md-6"><div class="card border"><div class="card-body">';
+    h += '<h6 class="text-muted mb-3"><i class="fas fa-coffee me-2"></i>JVM Runtime</h6>';
+    h += kvRow('JVM', d.runtime.jvm_name);
+    h += kvRow('Version', d.runtime.jvm_version);
+    h += kvRow('Uptime', d.runtime.uptime_display);
+    h += '</div></div></div>';
+    h += '</div>';
+    return h;
+}
+
+function renderMarketTick(d) {
+    var h = '<div class="mb-3 small text-muted"><i class="fas fa-chart-line me-1"></i>' + d.total_ticks + ' ticks across ' + d.symbols_count + ' symbols &middot; Exchange: ' + d.exchange + '</div>';
+    h += '<div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">';
+    h += '<thead class="table-dark"><tr><th>#</th><th>Symbol</th><th class="text-end">Price</th><th class="text-end">Change</th><th class="text-end">%</th><th class="text-end">Volume</th><th class="text-end">Bid</th><th class="text-end">Ask</th></tr></thead><tbody>';
+    d.market_data.forEach(function(t) {
+        var up = t.change >= 0;
+        var cls = up ? 'text-success' : 'text-danger';
+        var icon = up ? 'fa-caret-up' : 'fa-caret-down';
+        h += '<tr><td class="text-muted">' + t.seq + '</td>';
+        h += '<td><strong>' + esc(t.symbol) + '</strong></td>';
+        h += '<td class="text-end font-monospace">$' + t.price.toFixed(2) + '</td>';
+        h += '<td class="text-end ' + cls + ' font-monospace"><i class="fas ' + icon + ' me-1"></i>' + (up ? '+' : '') + t.change.toFixed(2) + '</td>';
+        h += '<td class="text-end ' + cls + ' font-monospace">' + (up ? '+' : '') + t.change_pct + '%</td>';
+        h += '<td class="text-end font-monospace">' + t.volume.toLocaleString() + '</td>';
+        h += '<td class="text-end font-monospace text-muted">' + t.bid.toFixed(2) + '</td>';
+        h += '<td class="text-end font-monospace text-muted">' + t.ask.toFixed(2) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    return h;
+}
+
+function renderPingBurst(d) {
+    var h = '<div class="row g-3 mb-3">';
+    h += '<div class="col-md-4"><div class="card border bg-light text-center p-3"><div class="text-muted small">Total Pings</div><div class="fs-3 fw-bold text-primary">' + d.total_pings + '</div></div></div>';
+    h += '<div class="col-md-4"><div class="card border bg-light text-center p-3"><div class="text-muted small">Avg Latency</div><div class="fs-3 fw-bold text-success">' + Math.round(d.avg_ping_nanos) + '<span class="fs-6 text-muted"> ns</span></div></div></div>';
+    h += '<div class="col-md-4"><div class="card border bg-light text-center p-3"><div class="text-muted small">Handler Start</div><div class="small fw-bold text-info">' + formatTs(d.handler_started_at) + '</div></div></div>';
+    h += '</div>';
+    h += '<div class="table-responsive"><table class="table table-sm table-hover mb-0">';
+    h += '<thead class="table-light"><tr><th>Ping #</th><th class="text-end">Latency (ns)</th><th>Hash</th><th>Timestamp</th></tr></thead><tbody>';
+    d.pings.forEach(function(p) {
+        var bar = Math.min(100, Math.max(5, p.nanos / 100));
+        h += '<tr><td><strong>' + p.ping_seq + '</strong></td>';
+        h += '<td class="text-end"><div class="d-flex align-items-center justify-content-end gap-2"><div class="progress flex-fill" style="height:8px;max-width:80px"><div class="progress-bar bg-info" style="width:' + bar + '%"></div></div><span class="font-monospace">' + p.nanos.toLocaleString() + '</span></div></td>';
+        h += '<td class="font-monospace text-muted">' + p.hash + '</td>';
+        h += '<td class="small text-muted">' + formatTs(p.timestamp) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    return h;
+}
+
+function renderDataGenerate(d) {
+    var h = '<div class="mb-3 small text-muted"><i class="fas fa-database me-1"></i>' + d.total_generated + ' records generated &middot; Schema: ' + d.schema.join(', ') + '</div>';
+    h += '<div class="table-responsive" style="max-height:350px;overflow-y:auto"><table class="table table-sm table-striped table-hover align-middle mb-0">';
+    h += '<thead class="table-dark sticky-top"><tr><th>ID</th><th>Name</th><th>Department</th><th>Status</th><th class="text-end">Score</th><th class="text-end">Metric</th></tr></thead><tbody>';
+    d.records.forEach(function(r) {
+        var sBadge = r.status === 'ACTIVE' ? 'success' : r.status === 'PENDING' ? 'warning' : r.status === 'REVIEW' ? 'info' : 'secondary';
+        h += '<tr><td class="font-monospace small">' + esc(r.id) + '</td>';
+        h += '<td>' + esc(r.name) + '</td><td>' + esc(r.department) + '</td>';
+        h += '<td><span class="badge bg-' + sBadge + '">' + esc(r.status) + '</span></td>';
+        h += '<td class="text-end font-monospace">' + r.score + '</td>';
+        h += '<td class="text-end font-monospace">' + r.metric + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    return h;
+}
+
+function renderGeneric(data) {
+    var h = '<div class="row g-3">';
+    Object.keys(data).forEach(function(k) {
+        if (k.startsWith('_')) return;
+        var v = data[k];
+        if (typeof v === 'object' && v !== null) {
+            h += '<div class="col-md-6"><div class="card border"><div class="card-body">';
+            h += '<h6 class="text-muted mb-2"><i class="fas fa-folder-open me-2"></i>' + esc(k) + '</h6>';
+            if (Array.isArray(v)) {
+                h += '<pre class="bg-light p-2 rounded small mb-0" style="max-height:200px;overflow:auto">' + esc(JSON.stringify(v, null, 2)) + '</pre>';
+            } else {
+                Object.keys(v).forEach(function(sk) { h += kvRow(sk, JSON.stringify(v[sk])); });
+            }
+            h += '</div></div></div>';
+        } else {
+            h += '<div class="col-md-4"><div class="card border bg-light text-center p-3"><div class="text-muted small">' + esc(k) + '</div><div class="fw-bold">' + esc(String(v)) + '</div></div></div>';
+        }
+    });
+    h += '</div>';
+    return h;
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function metric(label, val, color) { return '<div class="col-3"><div class="fs-4 fw-bold text-' + color + '">' + val + '</div><div class="text-muted small">' + label + '</div></div>'; }
+function kvRow(k, v) { return '<div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted small">' + esc(k) + '</span><span class="small fw-semibold">' + esc(String(v)) + '</span></div>'; }
+function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function formatTs(ts) { if (!ts) return '-'; try { return new Date(ts).toLocaleTimeString(); } catch(e) { return ts; } }
+
+function setConnState(connected) {
+    var badge = document.getElementById('connBadge');
+    var btnC = document.getElementById('btnConnect');
+    var btnD = document.getElementById('btnDisconnect');
+    var btnS = document.getElementById('btnSend');
+    if (connected) {
+        badge.className = 'badge bg-success fs-6'; badge.innerHTML = '<i class="fas fa-circle me-1"></i>Connected';
+        btnC.classList.add('d-none'); btnD.classList.remove('d-none'); btnS.disabled = false;
+    } else {
+        badge.className = 'badge bg-secondary fs-6'; badge.innerHTML = '<i class="fas fa-circle me-1"></i>Disconnected';
+        btnC.classList.remove('d-none'); btnD.classList.add('d-none'); btnS.disabled = true;
+    }
+}
+
+function setStatus(text, type) {
+    var bar = document.getElementById('statusBar');
+    bar.style.display = ''; bar.removeAttribute('style');
+    bar.className = 'alert alert-' + type + ' d-flex align-items-center mb-4';
+    document.getElementById('statusText').textContent = text;
+}
+
+function logMsg(type, text) {
+    var log = document.getElementById('msgLog');
+    var colors = { info:'text-primary', success:'text-success', send:'text-warning', recv:'text-info', warn:'text-warning', error:'text-danger' };
+    var icons = { info:'info-circle', success:'check-circle', send:'arrow-up', recv:'arrow-down', warn:'exclamation-triangle', error:'times-circle' };
+    var time = new Date().toLocaleTimeString();
+    var el = document.createElement('div');
+    el.className = 'py-1 border-bottom ' + (colors[type] || '');
+    el.innerHTML = '<small class="text-muted me-2">' + time + '</small><i class="fas fa-' + (icons[type] || 'circle') + ' me-1"></i>' + esc(text);
+    // Remove placeholder
+    if (log.querySelector('.text-center')) log.innerHTML = '';
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+    document.getElementById('msgCount').textContent = log.children.length;
+}
+
+function addHistory(op, status, transport, latencyMs) {
+    histEntries.push({ op: op, status: status, transport: transport, latency: latencyMs, time: new Date() });
+    var tbody = document.getElementById('histBody');
+    var idx = histEntries.length;
+    var statusBadge = status === 'SUCCESS' ? 'bg-success' : 'bg-danger';
+    var transportIcon = transport === 'WebSocket' ? 'fa-plug text-success' : 'fa-arrow-right text-primary';
+    var row = '<tr style="cursor:pointer" onclick="reloadHistory(' + (idx-1) + ')">';
+    row += '<td class="ps-3 text-muted">' + idx + '</td>';
+    row += '<td><strong>' + esc(op) + '</strong></td>';
+    row += '<td><span class="badge ' + statusBadge + '">' + esc(status) + '</span></td>';
+    row += '<td><i class="fas ' + transportIcon + ' me-1"></i>' + transport + '</td>';
+    row += '<td class="font-monospace">' + (latencyMs !== null ? latencyMs + 'ms' : '-') + '</td>';
+    row += '<td class="small text-muted">' + new Date().toLocaleTimeString() + '</td>';
+    row += '<td class="text-end pe-3"><button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();reloadHistory(' + (idx-1) + ')"><i class="fas fa-eye"></i></button></td></tr>';
+    if (idx === 1) tbody.innerHTML = '';
+    tbody.insertAdjacentHTML('afterbegin', row);
+    document.getElementById('histCount').textContent = idx;
+}
+
+function reloadHistory(idx) {
+    // Scroll to response
+    document.getElementById('renderedContent').scrollIntoView({ behavior: 'smooth' });
+}
+
+function switchView(view) {
+    document.getElementById('viewRendered').style.display = view === 'rendered' ? '' : 'none';
+    document.getElementById('viewRaw').style.display = view === 'raw' ? '' : 'none';
+    document.getElementById('btnRendered').className = 'btn btn-outline-primary' + (view === 'rendered' ? ' active' : '');
+    document.getElementById('btnRaw').className = 'btn btn-outline-primary' + (view === 'raw' ? ' active' : '');
+}
+
+function formatEditor() {
+    var ed = document.getElementById('reqEditor');
+    try { ed.value = JSON.stringify(JSON.parse(ed.value), null, 2); } catch(e) { logMsg('error', 'Cannot format: ' + e.message); }
+}
+
+function copyResponse() {
+    var text = document.getElementById('rawJson').textContent;
+    if (text) { navigator.clipboard.writeText(text).then(function() { logMsg('info', 'Copied response to clipboard'); }); }
+}
+
+function clearLog() { document.getElementById('msgLog').innerHTML = '<div class="text-muted text-center py-3"><i class="fas fa-info-circle me-1"></i>Messages will appear here</div>'; document.getElementById('msgCount').textContent = '0'; }
+function clearAll() { document.getElementById('reqEditor').value = ''; clearLog(); }
+
+// Load default template on page load
+loadTemplate('SYSTEM_PROBE');
+</script>
+</body>
+</html>

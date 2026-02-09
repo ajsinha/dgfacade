@@ -28,8 +28,8 @@ public class ChannelConfig {
     @JsonProperty("broker_id")
     private String brokerId;
 
-    @JsonProperty("topic_or_queue")
-    private String topicOrQueue;
+    @JsonProperty("destination")
+    private String destination;
 
     @JsonProperty("delivery_mode")
     private DeliveryMode deliveryMode;
@@ -60,8 +60,8 @@ public class ChannelConfig {
     public void setDirection(ChannelDirection direction) { this.direction = direction; }
     public String getBrokerId() { return brokerId; }
     public void setBrokerId(String brokerId) { this.brokerId = brokerId; }
-    public String getTopicOrQueue() { return topicOrQueue; }
-    public void setTopicOrQueue(String topicOrQueue) { this.topicOrQueue = topicOrQueue; }
+    public String getDestination() { return destination; }
+    public void setDestination(String destination) { this.destination = destination; }
     public DeliveryMode getDeliveryMode() { return deliveryMode; }
     public void setDeliveryMode(DeliveryMode deliveryMode) { this.deliveryMode = deliveryMode; }
     public String getScheduleCron() { return scheduleCron; }

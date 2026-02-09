@@ -140,8 +140,8 @@
 
                     <div class="glossary-term card border-0 shadow-sm mb-3">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Channel</h5>
-                            <p class="card-text">A logical data pipe that connects a broker's topics/queues to application listeners. Each channel is defined by a JSON file in <code>config/channels/</code>. A channel references a broker by name, subscribes to topics or queues, buffers messages in an internal bounded queue, and distributes every message to all registered listeners via fan-out.</p>
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Channel (Input / Output)</h5>
+                            <p class="card-text">A logical data pipe that connects a broker to DGFacade via destinations (topics, queues, paths, tables). <strong>Input Channels</strong> subscribe to destinations and consume messages into DGFacade (fan-out). <strong>Output Channels</strong> publish messages from handlers to destinations (fan-in). Defined in <code>config/input-channels/</code> and <code>config/output-channels/</code>.</p>
                             <span class="badge bg-light text-dark">Core Concept</span>
                             <span class="badge bg-light text-dark">Configuration</span>
                         </div>
@@ -149,8 +149,8 @@
 
                     <div class="glossary-term card border-0 shadow-sm mb-3">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Channel Config Directory</h5>
-                            <p class="card-text">The filesystem directory scanned at startup for channel JSON files. Default: <code>config/channels/</code>. Configurable via <code>dgfacade.channels.config-dir</code> in <code>application.properties</code>.</p>
+                            <h5 class="card-title"><i class="fas fa-bookmark text-primary me-2"></i>Channel Config Directories</h5>
+                            <p class="card-text">Input channels: <code>config/input-channels/</code> (property: <code>dgfacade.input-channels.config-dir</code>). Output channels: <code>config/output-channels/</code> (property: <code>dgfacade.output-channels.config-dir</code>).</p>
                             <span class="badge bg-light text-dark">Configuration</span>
                         </div>
                     </div>

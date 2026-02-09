@@ -6,6 +6,7 @@
 package com.dgfacade.server.service;
 
 import com.dgfacade.common.util.JsonUtil;
+import com.dgfacade.common.util.ConfigPropertyResolver;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ public class BrokerService {
     private static final Logger log = LoggerFactory.getLogger(BrokerService.class);
 
     private final String brokersDir;
+    private ConfigPropertyResolver propertyResolver;
     private final Map<String, String> brokerStates = new ConcurrentHashMap<>(); // brokerId -> STOPPED|RUNNING|ERROR
 
     public BrokerService(String brokersDir) {
@@ -37,6 +39,8 @@ public class BrokerService {
             brokerStates.put(id, "STOPPED");
         }
     }
+
+    public void setPropertyResolver(ConfigPropertyResolver resolver) { this.propertyResolver = resolver; }
 
     /** List all broker IDs (filenames without .json extension). */
     public List<String> listBrokerIds() {
@@ -58,6 +62,7 @@ public class BrokerService {
         if (!file.exists()) return null;
         try {
             Map<String, Object> config = JsonUtil.fromFile(file, new TypeReference<Map<String, Object>>() {});
+            if (propertyResolver != null) { try { propertyResolver.resolveMap(config); } catch (Exception e) { log.error("Property resolution failed for broker {}: {}", brokerId, e.getMessage()); } }
             config.put("_broker_id", brokerId);
             config.put("_state", brokerStates.getOrDefault(brokerId, "STOPPED"));
             return config;

@@ -15,6 +15,8 @@ import org.apache.pekko.actor.typed.javadsl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
@@ -38,6 +40,7 @@ public class HandlerActor extends AbstractBehavior<HandlerActor.Command> {
     public record Stop() implements Command {}
 
     private final String handlerId;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private DGHandler handler;
     private HandlerState state;
     private CompletableFuture<DGResponse> responseFuture;
@@ -114,6 +117,8 @@ public class HandlerActor extends AbstractBehavior<HandlerActor.Command> {
                     Duration.between(state.getStartedAt(), Instant.now()).toMillis() : 0;
             response.setExecutionTimeMs(duration);
             state.markCompleted(true, null);
+            // Set response JSON immediately so handler-detail page has it
+            try { state.setResponseJson(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response)); } catch (Exception ignored) {}
             responseFuture.complete(response);
 
             log.info("Handler {} completed in {}ms", handlerId, duration);
@@ -125,6 +130,7 @@ public class HandlerActor extends AbstractBehavior<HandlerActor.Command> {
             DGResponse errorResp = DGResponse.error(
                     req.request().getRequestId(), "Handler execution failed: " + e.getMessage());
             errorResp.setHandlerId(handlerId);
+            try { state.setResponseJson(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(errorResp)); } catch (Exception ignored) {}
             responseFuture.complete(errorResp);
         } finally {
             if (handler != null) {
@@ -145,6 +151,9 @@ public class HandlerActor extends AbstractBehavior<HandlerActor.Command> {
         if (responseFuture != null && !responseFuture.isDone()) {
             DGResponse timeoutResp = DGResponse.timeout(state != null ? state.getRequestId() : "unknown");
             timeoutResp.setHandlerId(handlerId);
+            if (state != null) {
+                try { state.setResponseJson(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(timeoutResp)); } catch (Exception ignored) {}
+            }
             responseFuture.complete(timeoutResp);
         }
         return Behaviors.stopped();

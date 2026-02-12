@@ -2,7 +2,7 @@
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
  *
- * Kuber Cache - Custom Styles
+ * DGFacade — Custom Styles (v1.6.0)
  */
 
 /* ============================================
@@ -306,4 +306,180 @@ pre code {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ============================================
+   Dark Mode (Enhancement 9)
+   ============================================ */
+body.dg-dark-mode {
+    background: #1a1d23 !important;
+    color: #e0e0e0;
+}
+
+body.dg-dark-mode .navbar {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+}
+
+body.dg-dark-mode .card {
+    background-color: #252830;
+    border-color: #3a3d45;
+    color: #e0e0e0;
+}
+
+body.dg-dark-mode .card-header {
+    border-color: #3a3d45;
+}
+
+body.dg-dark-mode .table {
+    color: #e0e0e0;
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: rgba(255,255,255,0.03);
+    --bs-table-hover-bg: rgba(255,255,255,0.05);
+}
+
+body.dg-dark-mode .table-light {
+    --bs-table-bg: #2a2d35;
+    --bs-table-color: #e0e0e0;
+}
+
+body.dg-dark-mode .table > :not(caption) > * > * {
+    border-color: #3a3d45;
+}
+
+body.dg-dark-mode .bg-light {
+    background-color: #1e2028 !important;
+}
+
+body.dg-dark-mode .text-muted {
+    color: #8a8d95 !important;
+}
+
+body.dg-dark-mode .footer {
+    background-color: #1e2028 !important;
+    border-color: #3a3d45 !important;
+}
+
+body.dg-dark-mode .dropdown-menu {
+    background-color: #252830;
+    border-color: #3a3d45;
+}
+
+body.dg-dark-mode .dropdown-item {
+    color: #e0e0e0;
+}
+
+body.dg-dark-mode .dropdown-item:hover {
+    background-color: #3a3d45;
+    color: #fff;
+}
+
+body.dg-dark-mode .dropdown-divider {
+    border-color: #3a3d45;
+}
+
+body.dg-dark-mode .form-control,
+body.dg-dark-mode .form-select {
+    background-color: #2a2d35;
+    border-color: #3a3d45;
+    color: #e0e0e0;
+}
+
+body.dg-dark-mode .form-control:focus,
+body.dg-dark-mode .form-select:focus {
+    background-color: #2e3138;
+    border-color: #4a90d9;
+    color: #e0e0e0;
+}
+
+body.dg-dark-mode .modal-content {
+    background-color: #252830;
+    border-color: #3a3d45;
+    color: #e0e0e0;
+}
+
+body.dg-dark-mode .modal-header,
+body.dg-dark-mode .modal-footer {
+    border-color: #3a3d45;
+}
+
+body.dg-dark-mode .alert {
+    border-color: transparent;
+}
+
+body.dg-dark-mode .progress {
+    background-color: #3a3d45;
+}
+
+body.dg-dark-mode .border-top {
+    border-color: #3a3d45 !important;
+}
+
+body.dg-dark-mode a:not(.nav-link):not(.navbar-brand):not(.dropdown-item):not(.btn) {
+    color: #6bb3e0;
+}
+
+body.dg-dark-mode code {
+    color: #ff8ac0;
+}
+
+body.dg-dark-mode .list-group-item {
+    background-color: #252830;
+    border-color: #3a3d45;
+    color: #e0e0e0;
+}
+
+body.dg-dark-mode ::-webkit-scrollbar-track {
+    background: #1a1d23;
+}
+
+body.dg-dark-mode ::-webkit-scrollbar-thumb {
+    background: #4a4d55;
+}
+
+/* ============================================
+   Command Palette (Enhancement 12)
+   ============================================ */
+#commandPalette a:hover {
+    background: var(--bs-primary-bg-subtle, #e7f1ff) !important;
+}
+
+body.dg-dark-mode #commandPalette > div {
+    background: #252830 !important;
+}
+
+body.dg-dark-mode #commandPalette input {
+    background: #2a2d35;
+    color: #e0e0e0;
+    border-bottom: 1px solid #3a3d45;
+}
+
+body.dg-dark-mode #commandPalette a {
+    color: #e0e0e0 !important;
+}
+
+body.dg-dark-mode #commandPalette a:hover,
+body.dg-dark-mode #commandPalette a[style*="background"] {
+    background: #3a3d45 !important;
+}
+
+/* ============================================
+   Help Page Hover Cards
+   ============================================ */
+.hover-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ============================================
+   KBD Styling
+   ============================================ */
+kbd {
+    background-color: #343a40;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 0.85em;
 }

@@ -1,0 +1,12 @@
+{
+  "type": "filesystem",
+  "description": "Batch request files — polls directory for JSON request files in chronological order",
+  "enabled": true,
+  "broker": "dev-filesystem",
+  "destinations": [
+    {
+      "name": "requests",
+      "type": "directory"
+    }
+  ]
+}

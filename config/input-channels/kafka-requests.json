@@ -1,0 +1,18 @@
+{
+  "type": "kafka",
+  "description": "DGFacade request ingestion — subscribes to the main request topic",
+  "enabled": true,
+  "broker": "dev-kafka",
+  "destinations": [
+    {
+      "name": "dgfacade.requests",
+      "type": "topic"
+    }
+  ],
+  "queue": {
+    "depth": 10000,
+    "warning_threshold_pct": 70,
+    "critical_threshold_pct": 90,
+    "drain_resume_pct": 60
+  }
+}

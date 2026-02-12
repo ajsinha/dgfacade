@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "description": "Kafka request ingestion — uses kafka-requests input channel on dev-kafka broker",
+  "input_channel": "kafka-requests",
+  "overrides": {
+    "group_id": "dgfacade-ingester-kafka-requests"
+  }
+}

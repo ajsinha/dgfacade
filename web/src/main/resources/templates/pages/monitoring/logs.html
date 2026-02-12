@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Live Logs')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2><i class="fas fa-scroll me-2 text-info"></i>Live Log Viewer</h2>
+            <div class="d-flex gap-2 align-items-center">
+                <select id="logSource" class="form-select form-select-sm" style="width:160px;" onchange="switchSource()">
+                    <option value="main" selected>Application Log</option>
+                    <option value="handler">Handler Executions</option>
+                </select>
+                <select id="logLevel" class="form-select form-select-sm" style="width:120px;" onchange="applyFilter()">
+                    <option value="ALL" selected>All Levels</option>
+                    <option value="ERROR">ERROR</option>
+                    <option value="WARN">WARN</option>
+                    <option value="INFO">INFO</option>
+                    <option value="DEBUG">DEBUG</option>
+                </select>
+                <input type="text" id="logSearch" class="form-control form-control-sm" placeholder="Search logs..."
+                       style="width:200px;" oninput="applyFilter()">
+                <button class="btn btn-sm btn-outline-success" id="btnStream" onclick="toggleStream()">
+                    <i class="fas fa-play me-1"></i><span>Stream</span>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearLog()">
+                    <i class="fas fa-eraser me-1"></i> Clear
+                </button>
+                <div class="form-check form-switch ms-2">
+                    <input class="form-check-input" type="checkbox" id="autoScroll" checked>
+                    <label class="form-check-label small" for="autoScroll">Auto-scroll</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+                <span id="logHeader">
+                    <i class="fas fa-file-alt me-2"></i>Application Log
+                </span>
+                <span>
+                    <span id="lineCount" class="badge bg-secondary me-2">0 lines</span>
+                    <span id="streamStatus" class="badge bg-secondary">Stopped</span>
+                </span>
+            </div>
+            <div id="logContainer" class="bg-dark text-light p-0"
+                 style="height: 65vh; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.8rem;">
+                <pre id="logOutput" class="m-0 p-3" style="white-space: pre-wrap; word-break: break-all;"></pre>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<script>
+let eventSource = null;
+let allLines = [];
+let streaming = false;
+
+function loadInitialLog() {
+    const source = document.getElementById('logSource').value;
+    fetch('/api/v1/logs/tail?lines=500&source=' + source)
+        .then(r => r.json())
+        .then(data => {
+            allLines = data.lines || [];
+            applyFilter();
+        })
+        .catch(err => {
+            document.getElementById('logOutput').textContent = 'Error loading log: ' + err.message;
+        });
+}
+
+function toggleStream() {
+    if (streaming) { stopStream(); } else { startStream(); }
+}
+
+function startStream() {
+    if (eventSource) eventSource.close();
+    const source = document.getElementById('logSource').value;
+    eventSource = new EventSource('/api/v1/logs/stream?source=' + source);
+
+    eventSource.addEventListener('log', function(e) {
+        allLines.push(e.data);
+        // Keep buffer bounded
+        if (allLines.length > 5000) allLines = allLines.slice(-3000);
+        applyFilter();
+    });
+
+    eventSource.addEventListener('error', function() {
+        if (eventSource.readyState === EventSource.CLOSED) {
+            updateStreamUI(false);
+        }
+    });
+
+    streaming = true;
+    updateStreamUI(true);
+}
+
+function stopStream() {
+    if (eventSource) { eventSource.close(); eventSource = null; }
+    streaming = false;
+    updateStreamUI(false);
+}
+
+function updateStreamUI(active) {
+    const btn = document.getElementById('btnStream');
+    const status = document.getElementById('streamStatus');
+    if (active) {
+        btn.innerHTML = '<i class="fas fa-stop me-1"></i><span>Stop</span>';
+        btn.className = 'btn btn-sm btn-outline-danger';
+        status.textContent = 'Streaming';
+        status.className = 'badge bg-success';
+    } else {
+        btn.innerHTML = '<i class="fas fa-play me-1"></i><span>Stream</span>';
+        btn.className = 'btn btn-sm btn-outline-success';
+        status.textContent = 'Stopped';
+        status.className = 'badge bg-secondary';
+    }
+}
+
+function applyFilter() {
+    const level = document.getElementById('logLevel').value;
+    const search = document.getElementById('logSearch').value.toLowerCase();
+    const output = document.getElementById('logOutput');
+    const container = document.getElementById('logContainer');
+
+    let filtered = allLines;
+    if (level !== 'ALL') {
+        filtered = filtered.filter(line => line.includes(level));
+    }
+    if (search) {
+        filtered = filtered.filter(line => line.toLowerCase().includes(search));
+    }
+
+    // Colorize lines
+    const html = filtered.map(line => {
+        let cls = '';
+        if (line.includes('ERROR')) cls = 'color: #ff6b6b;';
+        else if (line.includes('WARN')) cls = 'color: #ffd93d;';
+        else if (line.includes('INFO')) cls = 'color: #6bcb77;';
+        else if (line.includes('DEBUG')) cls = 'color: #4d96ff;';
+        return '<span style="' + cls + '">' + escapeHtml(line) + '</span>';
+    }).join('\n');
+
+    output.innerHTML = html;
+    document.getElementById('lineCount').textContent = filtered.length + ' lines';
+
+    if (document.getElementById('autoScroll').checked) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+function switchSource() {
+    stopStream();
+    allLines = [];
+    const source = document.getElementById('logSource').value;
+    document.getElementById('logHeader').innerHTML =
+        '<i class="fas fa-file-alt me-2"></i>' +
+        (source === 'handler' ? 'Handler Executions Log' : 'Application Log');
+    loadInitialLog();
+}
+
+function clearLog() {
+    allLines = [];
+    document.getElementById('logOutput').textContent = '';
+    document.getElementById('lineCount').textContent = '0 lines';
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', loadInitialLog);
+</script>
+</body>
+</html>

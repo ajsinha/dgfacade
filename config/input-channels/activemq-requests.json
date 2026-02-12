@@ -1,0 +1,18 @@
+{
+  "type": "jms",
+  "description": "DGFacade request ingestion — listens on the main request queue",
+  "enabled": true,
+  "broker": "dev-activemq",
+  "destinations": [
+    {
+      "name": "DGFACADE.REQUESTS",
+      "type": "queue"
+    }
+  ],
+  "queue": {
+    "depth": 5000,
+    "warning_threshold_pct": 75,
+    "critical_threshold_pct": 95,
+    "drain_resume_pct": 70
+  }
+}

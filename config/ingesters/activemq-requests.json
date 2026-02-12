@@ -1,0 +1,5 @@
+{
+  "enabled": true,
+  "description": "ActiveMQ request ingestion — uses activemq-requests input channel on dev-activemq broker",
+  "input_channel": "activemq-requests"
+}

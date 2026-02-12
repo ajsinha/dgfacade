@@ -40,7 +40,12 @@
                                     <span th:if="${ch['_state'] == 'ERROR'}" class="badge bg-danger">ERROR</span>
                                 </td>
                                 <td><span th:if="${ch['enabled'] == true}" class="badge bg-success">Yes</span><span th:unless="${ch['enabled'] == true}" class="badge bg-secondary">No</span></td>
-                                <td class="text-end pe-4">
+                                <td class="text-end pe-4 text-nowrap">
+                                    <button class="btn btn-sm btn-outline-info" title="View Config"
+                                            th:data-url="@{'/admin/api/output-channels/' + ${ch['_channel_id']} + '/config'}"
+                                            th:data-title="${'Output Channel: ' + ch['_channel_id']}"
+                                            onclick="viewConfig(this.dataset.url, this.dataset.title)">
+                                        <i class="fas fa-eye"></i></button>
                                     <form th:if="${ch['_state'] != 'RUNNING'}" th:action="@{/admin/output-channels/start}" method="post" class="d-inline"><input type="hidden" name="channelId" th:value="${ch['_channel_id']}"><button class="btn btn-sm btn-outline-success" title="Start"><i class="fas fa-play"></i></button></form>
                                     <form th:if="${ch['_state'] == 'RUNNING'}" th:action="@{/admin/output-channels/stop}" method="post" class="d-inline"><input type="hidden" name="channelId" th:value="${ch['_channel_id']}"><button class="btn btn-sm btn-outline-warning" title="Stop"><i class="fas fa-stop"></i></button></form>
                                     <a th:href="@{/admin/output-channels/edit/{id}(id=${ch['_channel_id']})}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
@@ -66,5 +71,6 @@
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<th:block th:replace="~{fragments/layout :: configViewerModal}"></th:block>
 </body>
 </html>

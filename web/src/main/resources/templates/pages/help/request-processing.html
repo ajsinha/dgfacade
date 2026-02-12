@@ -32,7 +32,7 @@
                             <div class="col-md-6">
                                 <ol class="mb-0">
                                     <li><a href="#overview">Processing Pipeline Overview</a></li>
-                                    <li><a href="#ingestion">Request Ingestion (4 Channels)</a></li>
+                                    <li><a href="#ingestion">Request Ingestion (5 Channels)</a></li>
                                     <li><a href="#normalization">Normalization to DGRequest</a></li>
                                     <li><a href="#auth">API Key Validation &amp; User Resolution</a></li>
                                     <li><a href="#handler-resolution">Handler Resolution</a></li>
@@ -57,17 +57,17 @@
                     <div class="card bg-dark text-light mb-4">
                         <div class="card-body">
 <pre class="mb-0 text-light" style="font-family: 'Courier New', monospace; font-size: 0.85rem;"><code>
-  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-  │   REST API   │  │  WebSocket  │  │    Kafka     │  │  ActiveMQ   │
-  │  POST /api/  │  │ ws://…/ws/  │  │  Consumer    │  │  Subscriber │
-  │  v1/request  │  │  gateway    │  │  (Topic)     │  │  (Queue)    │
-  └──────┬───────┘  └──────┬──────┘  └──────┬───────┘  └──────┬──────┘
-         │                 │                 │                 │
-         └────────┬────────┴────────┬────────┘                 │
-                  │                 │                           │
-                  ▼                 ▼                           ▼
-         ┌────────────────────────────────────────────────────────────┐
-         │              NORMALIZE  →  DGRequest                      │
+  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+  │   REST API   │  │  WebSocket  │  │    Kafka     │  │  ActiveMQ   │  │  FileSystem  │
+  │  POST /api/  │  │ ws://…/ws/  │  │  Ingester    │  │  Ingester   │  │  Ingester    │
+  │  v1/request  │  │  gateway    │  │  (Topic)     │  │  (Queue)    │  │  (Dir Watch) │
+  └──────┬───────┘  └──────┬──────┘  └──────┬───────┘  └──────┬──────┘  └──────┬───────┘
+         │                 │                 │                 │                 │
+         └────────┬────────┴────────┬────────┴────────┬────────┘                │
+                  │                 │                  │                         │
+                  ▼                 ▼                  ▼                         ▼
+         ┌────────────────────────────────────────────────────────────────────────────┐
+         │              NORMALIZE  →  DGRequest                                      │
          │  { request_id, request_type, api_key, payload, ttl }      │
          └───────────────────────────┬────────────────────────────────┘
                                      │
@@ -121,8 +121,8 @@
 
                 <!-- ═══════════════════ 2. INGESTION ═══════════════════ -->
                 <section id="ingestion" class="mb-5">
-                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-inbox me-2 text-success"></i>2. Request Ingestion (4 Channels)</h2>
-                    <p>Requests can arrive on any of four channels. Each channel normalizes the request into a <code>DGRequest</code> before submitting to the execution engine.</p>
+                    <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-inbox me-2 text-success"></i>2. Request Ingestion (5 Channels)</h2>
+                    <p>Requests can arrive on any of five channels. Each channel normalizes the request into a <code>DGRequest</code> before submitting to the execution engine.</p>
 
                     <div class="row g-4">
                         <!-- REST -->
@@ -203,6 +203,25 @@ ws.onmessage = (e) =&gt; console.log(JSON.parse(e.data));</code></pre>
                                 </div>
                             </div>
                         </div>
+                        <!-- FileSystem -->
+                        <div class="col-md-6">
+                            <div class="card h-100" style="border-color: #22c55e;">
+                                <div class="card-header text-white" style="background-color: #22c55e;"><h6 class="mb-0"><i class="fas fa-folder me-2"></i>FileSystem</h6></div>
+                                <div class="card-body">
+                                    <p><strong>Source:</strong> JSON files in a watched directory configured in <code>config/ingesters/*.json</code></p>
+                                    <p><strong>Direction:</strong> <code>POLL</code> (scheduled at configurable interval)</p>
+                                    <p><strong>Format:</strong> One JSON file per request, processed in <strong>chronological order</strong> (oldest modification time first)</p>
+                                    <p><strong>Response:</strong> Fire-and-forget; file moved to <code>processed/</code> or <code>error/</code></p>
+<pre class="bg-dark text-light p-2 rounded small"><code>// File: ./data/ingest/requests/order-001.json
+{
+  "request_type": "ECHO",
+  "api_key": "dg-api-admin-001",
+  "payload": { "message": "Batch file request",
+               "source": "upstream-etl" }
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -234,7 +253,7 @@ ws.onmessage = (e) =&gt; console.log(JSON.parse(e.data));</code></pre>
                             <tr><td><code>ttl_minutes</code></td><td>No</td><td>Overrides handler&rsquo;s default TTL. Handler is stopped if exceeded.</td></tr>
                         </tbody>
                     </table>
-                    <p>Internal fields set by the server: <code>resolvedUserId</code>, <code>sourceChannel</code> (REST|WebSocket|Kafka|ActiveMQ), <code>receivedAt</code>, <code>executionStartedAt</code>.</p>
+                    <p>Internal fields set by the server: <code>resolvedUserId</code>, <code>sourceChannel</code> (REST|WebSocket|KAFKA|ACTIVEMQ|FILESYSTEM), <code>receivedAt</code>, <code>executionStartedAt</code>.</p>
                 </section>
 
                 <!-- ═══════════════════ 4. AUTH ═══════════════════ -->
@@ -491,6 +510,7 @@ private Behavior&lt;Command&gt; onTimeout(Timeout cmd) {
                             <tr><td><strong>WebSocket</strong></td><td>JSON text frame on same session</td><td>Also publishes to specified Kafka/MQ topic</td></tr>
                             <tr><td><strong>Kafka</strong></td><td>Published to configured response topic</td><td>Overrides response topic with destination</td></tr>
                             <tr><td><strong>ActiveMQ/RabbitMQ/IBM MQ</strong></td><td>Published to configured response queue</td><td>Overrides response queue with destination</td></tr>
+                            <tr><td><strong>FileSystem</strong></td><td>Fire-and-forget (file moved to processed/)</td><td>Publishes to specified destination if configured</td></tr>
                         </tbody>
                     </table>
 
@@ -812,7 +832,7 @@ INFO  DGHandlerProxy - Resolved: construct=initialize(), execute=handle()(MAP_TO
 
         <footer class="py-4 mt-5 border-top">
             <div class="row">
-                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.4.0'">1.4.0</span></p></div>
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.0'">1.6.0</span></p></div>
                 <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br><span class="badge bg-warning text-dark">Patent Pending</span></p></div>
             </div>
         </footer>

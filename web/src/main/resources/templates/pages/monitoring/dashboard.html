@@ -70,6 +70,54 @@
             </div>
         </div>
 
+        <!-- Metrics Time Series (Enhancement 7) -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Requests</small>
+                            <small class="fw-bold text-primary" id="sparkReqVal">0</small>
+                        </div>
+                        <canvas id="sparkRequests" height="40" style="width:100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Errors</small>
+                            <small class="fw-bold text-danger" id="sparkErrVal">0</small>
+                        </div>
+                        <canvas id="sparkErrors" height="40" style="width:100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Heap Usage</small>
+                            <small class="fw-bold text-warning" id="sparkHeapVal">0%</small>
+                        </div>
+                        <canvas id="sparkHeap" height="40" style="width:100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Avg Latency</small>
+                            <small class="fw-bold text-info" id="sparkLatVal">0ms</small>
+                        </div>
+                        <canvas id="sparkLatency" height="40" style="width:100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <!-- Registered Handler Types -->
             <div class="col-lg-5">
@@ -224,6 +272,98 @@ function sendTestRequest() {
     .then(function(data){ placeholder.style.display='none'; resultDiv.style.display='block'; responseBox.textContent=JSON.stringify(data,null,2); })
     .catch(function(err){ placeholder.style.display='none'; resultDiv.style.display='block'; responseBox.textContent='Error: '+err.message; });
 }
+
+// ─── Enhancement 7: Metrics Time Series Sparklines ─────────────────
+(function() {
+    var MAX_POINTS = 60;
+    var series = { requests: [], errors: [], heap: [], latency: [] };
+    var lastTotal = null, lastErrors = null;
+
+    function drawSparkline(canvasId, data, color, fillColor, maxY) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var w = canvas.width = canvas.offsetWidth * (window.devicePixelRatio || 1);
+        var h = canvas.height = 40 * (window.devicePixelRatio || 1);
+        ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+        var dw = canvas.offsetWidth, dh = 40;
+        ctx.clearRect(0, 0, dw, dh);
+        if (data.length < 2) return;
+
+        var min = 0, max = maxY || Math.max.apply(null, data);
+        if (max === 0) max = 1;
+        var stepX = dw / (MAX_POINTS - 1);
+        var padY = 3;
+        var rangeH = dh - padY * 2;
+
+        ctx.beginPath();
+        for (var i = 0; i < data.length; i++) {
+            var x = i * stepX;
+            var y = padY + rangeH - ((data[i] - min) / max) * rangeH;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        // Fill area
+        if (fillColor) {
+            ctx.lineTo((data.length - 1) * stepX, dh);
+            ctx.lineTo(0, dh);
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+        }
+    }
+
+    function pollMetrics() {
+        fetch('/api/v1/metrics/snapshot')
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(d) {
+                if (!d) return;
+
+                // Compute request rate (delta per interval)
+                var reqRate = 0;
+                if (lastTotal !== null) reqRate = Math.max(0, d.totalRequests - lastTotal);
+                lastTotal = d.totalRequests;
+
+                var errRate = 0;
+                if (lastErrors !== null) errRate = Math.max(0, d.totalErrors - lastErrors);
+                lastErrors = d.totalErrors;
+
+                series.requests.push(reqRate);
+                series.errors.push(errRate);
+                series.heap.push(d.heapPct);
+                series.latency.push(d.avgLatencyMs);
+
+                // Trim
+                if (series.requests.length > MAX_POINTS) series.requests.shift();
+                if (series.errors.length > MAX_POINTS) series.errors.shift();
+                if (series.heap.length > MAX_POINTS) series.heap.shift();
+                if (series.latency.length > MAX_POINTS) series.latency.shift();
+
+                // Update labels
+                document.getElementById('sparkReqVal').textContent = d.totalRequests;
+                document.getElementById('sparkErrVal').textContent = d.totalErrors;
+                document.getElementById('sparkHeapVal').textContent = d.heapPct + '%';
+                document.getElementById('sparkLatVal').textContent = d.avgLatencyMs + 'ms';
+
+                // Draw
+                drawSparkline('sparkRequests', series.requests, '#0d6efd', 'rgba(13,110,253,0.1)');
+                drawSparkline('sparkErrors', series.errors, '#dc3545', 'rgba(220,53,69,0.1)');
+                drawSparkline('sparkHeap', series.heap, '#ffc107', 'rgba(255,193,7,0.1)', 100);
+                drawSparkline('sparkLatency', series.latency, '#0dcaf0', 'rgba(13,202,240,0.1)');
+            })
+            .catch(function() { /* silent */ });
+    }
+
+    // Poll every 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        pollMetrics();
+        setInterval(pollMetrics, 5000);
+    });
+})();
 </script>
 </body>
 </html>

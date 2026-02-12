@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Operational Tooling')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/help">Help</a></li>
+                <li class="breadcrumb-item active">Operational Tooling</li>
+            </ol>
+        </nav>
+
+        <h2 class="mb-4"><i class="fas fa-tools me-2 text-primary"></i>Operational Tooling <span class="badge bg-primary">v1.6.0</span></h2>
+        <p class="lead text-muted mb-4">
+            DGFacade v1.6.0 introduces a comprehensive suite of operational features for monitoring, diagnostics,
+            configuration management, and user experience enhancements. All monitoring and health endpoints are
+            accessible without authentication.
+        </p>
+
+        <!-- Ping & Health Check -->
+        <div class="card border-0 shadow-sm mb-4" id="ping">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-heartbeat me-2"></i>Ping &amp; Health Check</h4>
+            </div>
+            <div class="card-body">
+                <p>DGFacade provides multiple health check endpoints for different use cases, all accessible without authentication:</p>
+
+                <table class="table table-sm">
+                    <thead class="table-light">
+                        <tr><th style="width:30%">Endpoint</th><th style="width:20%">Response</th><th>Purpose</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>GET /ping</code></td>
+                            <td>Text: <code>pong</code></td>
+                            <td>Minimal health check for load balancers and uptime monitors. Returns instantly with no JSON overhead.</td>
+                        </tr>
+                        <tr>
+                            <td><code>GET /api/ping</code></td>
+                            <td>JSON</td>
+                            <td>Returns status, app name, version, timestamp, and uptime. Useful for automated monitoring scripts.</td>
+                        </tr>
+                        <tr>
+                            <td><code>GET /health</code></td>
+                            <td>HTML page</td>
+                            <td>Full health dashboard with JVM metrics, component status, environment info, and API endpoints.</td>
+                        </tr>
+                        <tr>
+                            <td><code>GET /api/health</code></td>
+                            <td>JSON</td>
+                            <td>Comprehensive JSON health check with component counts, JVM metrics, and cluster size.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h6 class="mt-3">Example Responses</h6>
+                <div class="bg-dark text-light p-3 rounded small" style="font-family: monospace;">
+                    <div class="text-success mb-1"># Simple ping</div>
+                    <div class="mb-2">$ curl http://localhost:8090/ping<br>pong</div>
+                    <div class="text-success mb-1"># JSON ping</div>
+                    <div class="mb-2">$ curl http://localhost:8090/api/ping<br>{"status":"UP","app":"DGFacade","version":"1.6.0","timestamp":"...","uptime":"2h 15m 30s"}</div>
+                    <div class="text-success mb-1"># JSON health</div>
+                    <div>$ curl http://localhost:8090/api/health<br>{"status":"UP","version":"1.6.0","uptime":"2h 15m","components":{...},"jvm":{...}}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Log Viewer -->
+        <div class="card border-0 shadow-sm mb-4" id="logs">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-scroll me-2"></i>Live Log Viewer</h4>
+            </div>
+            <div class="card-body">
+                <p>The Live Log Viewer at <code>/monitoring/logs</code> provides a real-time, browser-based log tail using Server-Sent Events (SSE).</p>
+
+                <h6>Features</h6>
+                <p>
+                    The viewer supports two log sources (Application Log and Handler Executions), severity-level filtering
+                    (ERROR, WARN, INFO, DEBUG), free-text search across log lines, auto-scroll toggle, and a streaming
+                    mode that pushes new log lines to the browser as they appear. The initial view loads the last 500 lines,
+                    and the in-browser buffer is capped at 5,000 lines for performance.
+                </p>
+
+                <h6>API Endpoints</h6>
+                <table class="table table-sm">
+                    <thead class="table-light">
+                        <tr><th>Endpoint</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>GET /api/v1/logs/tail?lines=200&amp;source=main</code></td><td>Returns last N lines as JSON array</td></tr>
+                        <tr><td><code>GET /api/v1/logs/stream?source=main</code></td><td>SSE stream of new log lines (5-minute timeout)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Metrics Time Series -->
+        <div class="card border-0 shadow-sm mb-4" id="metrics">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>Metrics Time Series</h4>
+            </div>
+            <div class="card-body">
+                <p>
+                    The dashboard includes real-time sparkline charts that visualize key metrics over time: request throughput,
+                    error rate, JVM heap usage, and average handler latency. These charts poll the metrics snapshot API every
+                    5 seconds and accumulate up to 60 data points (5 minutes of history).
+                </p>
+
+                <h6>Metrics Snapshot API</h6>
+                <div class="bg-dark text-light p-3 rounded small mb-3" style="font-family: monospace;">
+                    $ curl http://localhost:8090/api/v1/metrics/snapshot<br>
+                    {"timestamp":"...","heapUsedMB":245,"heapMaxMB":512,"heapPct":47,"activeRequests":0,<br>
+                    &nbsp;"activeIngesters":2,"clusterSize":1,"totalRequests":1542,"totalErrors":3,<br>
+                    &nbsp;"totalTimeouts":0,"avgLatencyMs":12}
+                </div>
+
+                <p>
+                    For more comprehensive metrics including percentile histograms and per-handler breakdowns,
+                    use the Prometheus endpoint at <code>/actuator/prometheus</code> with a Grafana dashboard.
+                    See the <a href="/help/prometheus">Prometheus &amp; Grafana</a> help page for details.
+                </p>
+            </div>
+        </div>
+
+        <!-- Config Validation -->
+        <div class="card border-0 shadow-sm mb-4" id="validation">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-check-double me-2"></i>Configuration Validation</h4>
+            </div>
+            <div class="card-body">
+                <p>
+                    Before saving or deploying configuration files, you can validate them against expected schemas
+                    using the REST validation endpoints. These check for required fields, valid type values, and
+                    broken reference chains (e.g., an ingester referencing a non-existent channel).
+                </p>
+
+                <table class="table table-sm">
+                    <thead class="table-light">
+                        <tr><th>Endpoint</th><th>Validates</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>POST /admin/api/validate/broker</code></td><td>Broker JSON config (type, connection, SSL)</td></tr>
+                        <tr><td><code>POST /admin/api/validate/input-channel</code></td><td>Input channel (type, broker reference, destinations)</td></tr>
+                        <tr><td><code>POST /admin/api/validate/output-channel</code></td><td>Output channel (type, broker reference, destinations)</td></tr>
+                        <tr><td><code>POST /admin/api/validate/ingester</code></td><td>Ingester (input_channel reference chain)</td></tr>
+                    </tbody>
+                </table>
+
+                <p>Each validation returns a JSON response with <code>valid</code> (boolean), <code>errors</code> (blocking issues), and <code>warnings</code> (recommendations).</p>
+            </div>
+        </div>
+
+        <!-- Bulk Config Export -->
+        <div class="card border-0 shadow-sm mb-4" id="export">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-file-export me-2"></i>Bulk Config Export</h4>
+            </div>
+            <div class="card-body">
+                <p>
+                    Download all configuration files (brokers, input channels, output channels, ingesters, handlers)
+                    as a single ZIP archive for backup or environment migration:
+                </p>
+                <div class="bg-dark text-light p-3 rounded small" style="font-family: monospace;">
+                    curl -o dgfacade-config-export.zip http://localhost:8090/admin/api/config/export
+                </div>
+                <p class="mt-2 text-muted small">
+                    The ZIP preserves the directory structure: <code>brokers/</code>, <code>input-channels/</code>,
+                    <code>output-channels/</code>, <code>ingesters/</code>, <code>handlers/</code>.
+                </p>
+            </div>
+        </div>
+
+        <!-- Dark Mode -->
+        <div class="card border-0 shadow-sm mb-4" id="darkmode">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-moon me-2"></i>Dark Mode</h4>
+            </div>
+            <div class="card-body">
+                <p>
+                    Toggle dark mode using the moon/sun icon in the navbar or the <kbd>Ctrl</kbd>+<kbd>D</kbd> keyboard shortcut.
+                    The preference is saved to localStorage and persists across sessions. Dark mode applies to all pages
+                    including cards, tables, forms, modals, dropdowns, and the command palette.
+                </p>
+            </div>
+        </div>
+
+        <!-- Keyboard Shortcuts & Command Palette -->
+        <div class="card border-0 shadow-sm mb-4" id="shortcuts">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-keyboard me-2"></i>Keyboard Shortcuts &amp; Command Palette</h4>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead class="table-light">
+                        <tr><th style="width:30%">Shortcut</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Open Command Palette — fuzzy search across all pages</td></tr>
+                        <tr><td><kbd>Ctrl</kbd>+<kbd>D</kbd></td><td>Toggle Dark Mode</td></tr>
+                        <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd></td><td>Jump to Live Logs</td></tr>
+                        <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd></td><td>Jump to Health Check</td></tr>
+                        <tr><td><kbd>?</kbd></td><td>Show keyboard shortcuts dialog</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-muted small mb-0">
+                    The Command Palette (<kbd>Ctrl</kbd>+<kbd>K</kbd>) provides fuzzy search across all pages with
+                    keyboard navigation (Arrow Up/Down + Enter). It supports the search icon button in the navbar as well.
+                </p>
+            </div>
+        </div>
+
+        <!-- Toast Notifications & Favicon Badge -->
+        <div class="card border-0 shadow-sm mb-4" id="toasts">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-bell me-2"></i>Toast Notifications &amp; Favicon Badge</h4>
+            </div>
+            <div class="card-body">
+                <p>
+                    <strong>Toast Notifications:</strong> Non-blocking notifications that appear in the top-right corner
+                    when actions complete (e.g., starting/stopping ingesters, copying config). Toasts auto-dismiss after
+                    4 seconds and can be manually closed.
+                </p>
+                <p>
+                    <strong>Favicon Badge:</strong> The browser tab icon displays a red badge showing the number of
+                    active ingesters. This updates every 30 seconds by polling <code>/api/v1/ingesters</code>.
+                    When no ingesters are active, the badge disappears.
+                </p>
+            </div>
+        </div>
+
+        <!-- Public Endpoints Summary -->
+        <div class="card border-0 shadow-sm mb-4" id="public">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-lock-open me-2"></i>Public Endpoints (No Auth Required)</h4>
+            </div>
+            <div class="card-body">
+                <p>The following paths are accessible without authentication, suitable for load balancers, monitoring systems, and read-only dashboards:</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Health &amp; Status</h6>
+                        <table class="table table-sm small">
+                            <tbody>
+                                <tr><td><code>/ping</code></td><td>Text ping</td></tr>
+                                <tr><td><code>/api/ping</code></td><td>JSON ping</td></tr>
+                                <tr><td><code>/health</code></td><td>Health dashboard</td></tr>
+                                <tr><td><code>/api/health</code></td><td>JSON health</td></tr>
+                                <tr><td><code>/api/v1/health</code></td><td>Legacy health</td></tr>
+                                <tr><td><code>/api/v1/metrics/snapshot</code></td><td>Metrics snapshot</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Monitoring &amp; Info</h6>
+                        <table class="table table-sm small">
+                            <tbody>
+                                <tr><td><code>/monitoring/handlers</code></td><td>Handler states</td></tr>
+                                <tr><td><code>/monitoring/logs</code></td><td>Live log viewer</td></tr>
+                                <tr><td><code>/monitoring/cluster</code></td><td>Cluster status</td></tr>
+                                <tr><td><code>/monitoring/ingestion</code></td><td>Ingestion stats</td></tr>
+                                <tr><td><code>/about</code></td><td>About page</td></tr>
+                                <tr><td><code>/help</code>, <code>/help/*</code></td><td>Documentation</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

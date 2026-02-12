@@ -12,11 +12,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${title} + ' - ' + (${appName} ?: 'DGFacade')">DGFacade</title>
-    <!-- Bootstrap CSS -->
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
-    <!-- Font Awesome -->
     <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.5.1/css/all.min.css}">
-    <!-- Custom CSS -->
     <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
     <link rel="stylesheet" th:href="@{/css/dgfacade.css}">
     <link rel="stylesheet" th:href="@{/css/dg-table.css}">
@@ -30,32 +27,32 @@
             <i class="fas fa-network-wired me-2"></i>
             <strong th:text="${appName} ?: 'DGFacade'">DGFacade</strong>
         </a>
-
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
-
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/}">
-                        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
-                    </a>
+                    <a class="nav-link" th:href="@{/}"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/monitoring/handlers}">
-                        <i class="fas fa-cogs me-1"></i> Handlers
-                    </a>
+                    <a class="nav-link" th:href="@{/monitoring/handlers}"><i class="fas fa-cogs me-1"></i> Handlers</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/monitoring/cluster}">
-                        <i class="fas fa-network-wired me-1"></i> Cluster
-                    </a>
+                    <a class="nav-link" th:href="@{/playground}"><i class="fas fa-flask me-1"></i> Playground</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/playground}">
-                        <i class="fas fa-flask me-1"></i> Playground
+                <!-- Monitoring dropdown (public — no auth required) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="fas fa-chart-line me-1"></i> Monitoring
                     </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:href="@{/health}"><i class="fas fa-heartbeat me-2"></i>Health Check</a></li>
+                        <li><a class="dropdown-item" th:href="@{/monitoring/logs}"><i class="fas fa-scroll me-2"></i>Live Logs</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" th:href="@{/monitoring/cluster}"><i class="fas fa-network-wired me-2"></i>Cluster</a></li>
+                        <li><a class="dropdown-item" th:href="@{/monitoring/ingestion}"><i class="fas fa-download me-2"></i>Ingestion</a></li>
+                    </ul>
                 </li>
                 <li class="nav-item dropdown" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
@@ -64,48 +61,48 @@
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" th:href="@{/admin/users}"><i class="fas fa-users me-2"></i>Users</a></li>
                         <li><a class="dropdown-item" th:href="@{/admin/apikeys}"><i class="fas fa-key me-2"></i>API Keys</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" th:href="@{/admin/brokers}"><i class="fas fa-server me-2"></i>Brokers</a></li>
                         <li><a class="dropdown-item" th:href="@{/admin/input-channels}"><i class="fas fa-sign-in-alt me-2"></i>Input Channels</a></li>
                         <li><a class="dropdown-item" th:href="@{/admin/output-channels}"><i class="fas fa-sign-out-alt me-2"></i>Output Channels</a></li>
                     </ul>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/help}">
-                        <i class="fas fa-book me-1"></i> Help
-                    </a>
+                    <a class="nav-link" th:href="@{/help}"><i class="fas fa-book me-1"></i> Help</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/about}">
-                        <i class="fas fa-info-circle me-1"></i> About
-                    </a>
+                    <a class="nav-link" th:href="@{/about}"><i class="fas fa-info-circle me-1"></i> About</a>
                 </li>
             </ul>
-
-            <!-- User Menu -->
-            <ul class="navbar-nav">
+            <ul class="navbar-nav align-items-center">
+                <li class="nav-item me-2">
+                    <button class="btn btn-sm btn-outline-light" id="darkModeToggle" onclick="DGFacade.toggleDarkMode()" title="Toggle Dark Mode (Ctrl+D)">
+                        <i class="fas fa-moon" id="darkModeIcon"></i>
+                    </button>
+                </li>
+                <li class="nav-item me-2">
+                    <button class="btn btn-sm btn-outline-light" onclick="DGFacade.showCommandPalette()" title="Quick Search (Ctrl+K)">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </li>
                 <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown"
-                       role="button" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
                         <span sec:authentication="name">User</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li sec:authorize="hasRole('ADMIN')">
-                            <a class="dropdown-item" th:href="@{/admin/users}">
-                                <i class="fas fa-users me-2"></i> Manage Users
-                            </a>
+                            <a class="dropdown-item" th:href="@{/admin/users}"><i class="fas fa-users me-2"></i> Manage Users</a>
                         </li>
                         <li sec:authorize="hasRole('ADMIN')">
-                            <a class="dropdown-item" th:href="@{/admin/apikeys}">
-                                <i class="fas fa-key me-2"></i> API Keys
-                            </a>
+                            <a class="dropdown-item" th:href="@{/admin/apikeys}"><i class="fas fa-key me-2"></i> API Keys</a>
                         </li>
                         <li sec:authorize="hasRole('ADMIN')"><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="DGFacade.showKeyboardShortcuts()"><i class="fas fa-keyboard me-2"></i> Keyboard Shortcuts</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
                             <form th:action="@{/logout}" method="post" class="d-inline">
-                                <button type="submit" class="dropdown-item">
-                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                </button>
+                                <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i> Logout</button>
                             </form>
                         </li>
                     </ul>
@@ -115,21 +112,21 @@
     </div>
 </nav>
 
+<!-- ======== TOAST CONTAINER (Enhancement 10) ======== -->
+<div th:fragment="toasts" id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
 <!-- ======== ALERTS FRAGMENT ======== -->
 <div th:fragment="alerts" class="container-fluid mt-3">
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i>
-        <span th:text="${success}"></span>
+        <i class="fas fa-check-circle me-2"></i><span th:text="${success}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-circle me-2"></i>
-        <span th:text="${error}"></span>
+        <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     <div th:if="${warning}" class="alert alert-warning alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        <span th:text="${warning}"></span>
+        <i class="fas fa-exclamation-triangle me-2"></i><span th:text="${warning}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 </div>
@@ -141,13 +138,11 @@
             <div class="col-md-6">
                 <span class="text-muted">
                     <i class="fas fa-network-wired me-1"></i>
-                    <strong th:text="${appName} ?: 'DGFacade'">DGFacade</strong> &mdash; High-Performance Data Gateway Facade v1.4.0
+                    <strong th:text="${appName} ?: 'DGFacade'">DGFacade</strong> &mdash; High-Performance Data Gateway Facade v1.6.0
                 </span>
             </div>
             <div class="col-md-6 text-end">
-                <span class="text-muted small">
-                    Copyright &copy; 2025-2030 Ashutosh Sinha. All Rights Reserved. Patent Pending.
-                </span>
+                <span class="text-muted small">Copyright &copy; 2025-2030 Ashutosh Sinha. All Rights Reserved. Patent Pending.</span>
             </div>
         </div>
     </div>
@@ -155,14 +150,56 @@
 
 <!-- ======== SCRIPTS FRAGMENT ======== -->
 <th:block th:fragment="scripts">
-    <!-- jQuery -->
     <script th:src="@{/webjars/jquery/3.7.1/jquery.min.js}"></script>
-    <!-- Bootstrap JS -->
     <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
-    <!-- Custom JS -->
     <script th:src="@{/js/dgfacade.js}"></script>
-    <!-- DGFacade Table Enhancement (pagination, sort, search) -->
     <script th:src="@{/js/dg-table.js}"></script>
+</th:block>
+
+<!-- Config Viewer Modal (reusable across admin pages) -->
+<th:block th:fragment="configViewerModal">
+<div class="modal fade" id="configModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-code me-2"></i><span id="configModalTitle">Configuration</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <pre id="configModalBody" class="bg-dark text-light p-3 mb-0" style="max-height: 500px; overflow-y: auto; font-size: 0.82rem; border-radius: 0;"><span class="text-muted">Loading...</span></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyConfig()"><i class="fas fa-copy me-1"></i>Copy</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function viewConfig(apiUrl, title) {
+    document.getElementById('configModalTitle').textContent = title || 'Configuration';
+    document.getElementById('configModalBody').innerHTML = '<span class="text-muted">Loading...</span>';
+    new bootstrap.Modal(document.getElementById('configModal')).show();
+    fetch(apiUrl)
+        .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+        .then(data => {
+            const json = JSON.stringify(data, (k, v) => k.startsWith('_') ? undefined : v, 2);
+            document.getElementById('configModalBody').textContent = json;
+        })
+        .catch(err => {
+            document.getElementById('configModalBody').innerHTML = '<span class="text-danger">Error: ' + err.message + '</span>';
+        });
+}
+function copyConfig() {
+    const text = document.getElementById('configModalBody').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target.closest('button');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+        setTimeout(() => btn.innerHTML = orig, 1500);
+    });
+}
+</script>
 </th:block>
 
 </body>

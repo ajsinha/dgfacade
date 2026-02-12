@@ -25,7 +25,7 @@
                     SSL/TLS with PEM certificates, and enterprise-grade messaging across 6 broker types.
                 </p>
                 <div class="mt-4">
-                    <span class="badge bg-primary fs-6 me-2">Version <span th:text="${version} ?: '1.4.0'">1.4.0</span></span>
+                    <span class="badge bg-primary fs-6 me-2">Version <span th:text="${version} ?: '1.6.0'">1.6.0</span></span>
                     <span class="badge bg-success fs-6 me-2">Production Ready</span>
                     <span class="badge bg-info fs-6">Patent Pending</span>
                 </div>
@@ -52,7 +52,7 @@
                         </div>
                         <h5 class="card-title">Multi-Channel Ingestion</h5>
                         <p class="card-text text-muted">
-                            Accept requests via REST API, WebSocket, Kafka, ActiveMQ, RabbitMQ, or IBM MQ.
+                            Accept requests via REST API, WebSocket, Kafka, ActiveMQ, or FileSystem ingester.
                             Every request is normalized into a canonical DGRequest for uniform processing.
                         </p>
                     </div>
@@ -145,7 +145,7 @@
                             Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, and SQL — all with
                             unified publish/subscribe abstraction and SSL support.
                         </p>
-                        <span class="badge bg-light text-dark">v1.4.0</span>
+                        <span class="badge bg-light text-dark">v1.6.0</span>
                     </div>
                 </div>
             </div>
@@ -161,7 +161,7 @@
                             Input Channels (fan-out, subscribe) and Output Channels (fan-in, publish) with destinations and backpressure.
                             Decouple producers from consumers with bounded queues.
                         </p>
-                        <span class="badge bg-light text-dark">v1.4.0</span>
+                        <span class="badge bg-light text-dark">v1.6.0</span>
                     </div>
                 </div>
             </div>
@@ -177,7 +177,7 @@
                             Handlers can emit multiple streaming updates via WebSocket.
                             Sequence-numbered partial results with final completion signals.
                         </p>
-                        <span class="badge bg-light text-dark">v1.4.0</span>
+                        <span class="badge bg-light text-dark">v1.6.0</span>
                     </div>
                 </div>
             </div>
@@ -193,7 +193,7 @@
                             Declarative pipeline composition: linear, conditional, and parallel handler
                             chains defined in JSON. Variable mapping, merge strategies, and execution tracing.
                         </p>
-                        <span class="badge bg-light text-dark">v1.4.0</span>
+                        <span class="badge bg-light text-dark">v1.6.0</span>
                     </div>
                 </div>
             </div>
@@ -254,7 +254,7 @@
                             Built-in Micrometer instrumentation with 13+ custom metrics, percentile
                             histograms, and a pre-built Grafana dashboard. Scrape via /actuator/prometheus.
                         </p>
-                        <span class="badge bg-light text-dark">v1.4.0</span>
+                        <span class="badge bg-light text-dark">v1.6.0</span>
                     </div>
                 </div>
             </div>
@@ -269,7 +269,55 @@
                             Full-page admin UI for creating, editing, and managing broker connections
                             input and output channels with SSL/TLS config, start/stop controls, and live status.
                         </p>
+                        <span class="badge bg-light text-dark">v1.6.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-network-wired fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Distributed Clustering</h5>
+                        <p class="card-text opacity-75">
+                            HTTP-based peer discovery, heartbeat health tracking, and distributed request
+                            forwarding. GATEWAY, EXECUTOR, and BOTH node roles with zero-overhead standalone mode.
+                        </p>
                         <span class="badge bg-light text-dark">v1.4.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-download fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Request Ingestion</h5>
+                        <p class="card-text opacity-75">
+                            Dedicated Kafka, ActiveMQ, and FileSystem ingesters with concurrent listeners,
+                            auto-start, and 3-layer config resolution (ingester → channel → broker).
+                        </p>
+                        <span class="badge bg-light text-dark">v1.5.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #475569 0%, #1e293b 100%);">
+                    <div class="card-body text-center p-4 text-white">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3 d-inline-block mb-3">
+                            <i class="fas fa-heartbeat fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Operational Tooling</h5>
+                        <p class="card-text opacity-75">
+                            Health check dashboard, live log viewer (SSE), dark mode, keyboard shortcuts,
+                            command palette, config validation, bulk export, toast notifications, and favicon badge.
+                        </p>
+                        <span class="badge bg-light text-dark">v1.6.0</span>
                     </div>
                 </div>
             </div>
@@ -410,8 +458,8 @@
                                             <div class="col-md-6 col-lg-3">
                                                 <div class="text-center p-3 rounded" style="background: rgba(255,255,255,0.1);">
                                                     <i class="fas fa-satellite-dish fa-2x text-white mb-2"></i>
-                                                    <h6 class="text-white mb-1">4 Ingestion Channels</h6>
-                                                    <small class="text-white-50">REST &bull; WebSocket &bull; Kafka &bull; MQ Brokers</small>
+                                                    <h6 class="text-white mb-1">5 Ingestion Channels</h6>
+                                                    <small class="text-white-50">REST &bull; WebSocket &bull; Kafka &bull; ActiveMQ &bull; FileSystem</small>
                                                 </div>
                                             </div>
                                             <div class="col-md-6 col-lg-3">
@@ -842,25 +890,68 @@
                     <div class="card-body">
                         <div class="mb-4">
                             <h6 class="mb-1">
-                                <span class="badge bg-primary me-2">v1.4.0</span>
+                                <span class="badge bg-primary me-2">v1.6.0</span>
                                 <span class="text-muted small">Current Release</span>
+                            </h6>
+                            <ul class="small text-muted mb-0">
+                                <li><strong>Health Check Dashboard</strong>: Unified /health page with JVM metrics, component status, and environment info</li>
+                                <li><strong>Ping Endpoints</strong>: /ping (text) and /api/ping (JSON) for load balancers and uptime monitors</li>
+                                <li><strong>Public Monitoring</strong>: All monitoring, health, and ping endpoints accessible without login</li>
+                                <li><strong>Metrics Time Series</strong>: Real-time sparkline charts on dashboard showing request rate, errors, heap, and latency</li>
+                                <li><strong>Configuration Validation</strong>: Schema validation for broker, channel, and ingester configs via REST API</li>
+                                <li><strong>Live Log Viewer</strong>: SSE-powered /monitoring/logs page with severity filtering, search, and auto-scroll</li>
+                                <li><strong>Bulk Config Export</strong>: Download all configs (brokers, channels, ingesters, handlers) as ZIP</li>
+                                <li><strong>Dark Mode</strong>: Full dark theme toggle (Ctrl+D) with localStorage persistence</li>
+                                <li><strong>Toast Notifications</strong>: Non-blocking Bootstrap toast alerts replacing page-reload flash messages</li>
+                                <li><strong>Favicon Badge</strong>: Browser tab badge showing active ingester count</li>
+                                <li><strong>Keyboard Shortcuts</strong>: Ctrl+K command palette, Ctrl+Shift+L logs, Ctrl+Shift+H health, ? shortcuts dialog</li>
+                                <li><strong>Monitoring Dropdown</strong>: New navbar dropdown grouping Health, Logs, Cluster, and Ingestion</li>
+                                <li><strong>Comprehensive Ingester Logging</strong>: Full lifecycle logging for Kafka, ActiveMQ, and FileSystem ingesters</li>
+                            </ul>
+                        </div>
+                        <div class="mb-4">
+                            <h6 class="mb-1">
+                                <span class="badge bg-secondary me-2">v1.5.0</span>
+                                <span class="text-muted small">Previous Release</span>
+                            </h6>
+                            <ul class="small text-muted mb-0">
+                                <li><strong>Request Ingestion</strong>: Kafka, ActiveMQ, and FileSystem ingestion with dedicated listener per ingester</li>
+                                <li><strong>Concurrent Ingesters</strong>: Multiple ingesters of same or different types running in parallel</li>
+                                <li><strong>FileSystem Ingester</strong>: Directory-watch with chronological (oldest-first) file processing, processed/error directories</li>
+                                <li><strong>Kafka Ingester</strong>: Multi-topic subscription, consumer group offset management, configurable poll batching</li>
+                                <li><strong>ActiveMQ Ingester</strong>: JMS queue/topic listeners with async message delivery and connection error handling</li>
+                                <li><strong>Ingestion Dashboard</strong>: Real-time stats, configuration view, and manual request submission UI</li>
+                                <li><strong>Manual Submission API</strong>: REST endpoint to submit requests through any running ingester</li>
+                                <li><strong>Universal Table Enhancement</strong>: Pagination, column sorting, and search on all 60+ HTML tables</li>
+                            </ul>
+                        </div>
+                        <div class="mb-4">
+                            <h6 class="mb-1">
+                                <span class="badge bg-secondary me-2">v1.4.0</span>
+                                <span class="text-muted small">Previous Release</span>
+                            </h6>
+                            <ul class="small text-muted mb-0">
+                                <li><strong>Clustering</strong>: HTTP-based peer discovery, heartbeat health tracking, distributed request forwarding</li>
+                                <li><strong>Cluster Roles</strong>: BOTH, GATEWAY, and EXECUTOR node roles with configurable routing</li>
+                                <li><strong>ChannelAccessor</strong>: Handler-level broker integration via pub/sub accessor pattern</li>
+                                <li><strong>PDCHandler</strong>: Real broker integration with channel-based message publishing</li>
+                                <li><strong>Clustering Help</strong>: 890-line 12-section reference with ASCII sequence diagrams</li>
+                                <li><strong>Standalone Safety</strong>: Zero cluster overhead when seed-nodes empty</li>
+                            </ul>
+                        </div>
+                        <div class="mb-4">
+                            <h6 class="mb-1">
+                                <span class="badge bg-secondary me-2">v1.3.0</span>
+                                <span class="text-muted small"></span>
                             </h6>
                             <ul class="small text-muted mb-0">
                                 <li><strong>Prometheus Metrics</strong>: 13+ custom Micrometer metrics (counters, timers, gauges, histograms)</li>
                                 <li><strong>Grafana Dashboard</strong>: Pre-built 20+ panel dashboard JSON for instant import</li>
-                                <li><strong>Actuator Endpoint</strong>: <code>/actuator/prometheus</code> OpenMetrics scrape target</li>
-                                <li><strong>Execution Instrumentation</strong>: Every handler submit/success/error/timeout tracked</li>
-                                <li><strong>Percentile Histograms</strong>: p50/p90/p95/p99 for handler execution duration</li>
-                                <li><strong>Alert Rules</strong>: Recommended Prometheus alerting rules for production</li>
-                                <li><strong>Docker Compose</strong>: Full observability stack (DGFacade + Prometheus + Grafana)</li>
                                 <li><strong>Handler Chaining</strong>: Declarative pipeline composition with linear, conditional, and parallel execution phases</li>
-                                <li><strong>Chain Variable Resolution</strong>: ${payload}, ${prev}, ${steps.alias} scoping with dot-path navigation</li>
-                                <li><strong>3 Chain Configs</strong>: ORDER_PROCESS (linear), DATA_ENRICH (conditional), PARALLEL_ANALYSIS (fan-out)</li>
                                 <li><strong>Handler Playground</strong>: Interactive REST &amp; WebSocket testing UI at /playground</li>
-                                <li><strong>Broker Admin UI</strong>: Full-page CRUD for all 6 broker types with SSL/TLS config, start/stop controls</li>
-                                <li><strong>Input/Output Channel Admin</strong>: Separate admin pages for input channels (fan-out) and output channels (fan-in) with destinations, queue, backpressure, retry</li>
-                                <li><strong>Global Error Handler</strong>: Detailed error pages with stack traces, explanations, and suggestions</li>
-                                <li><strong>Handler Detail Fix</strong>: Graceful handling of expired/missing handler execution records</li>
+                                <li><strong>Broker Admin UI</strong>: Full-page CRUD for all 6 broker types with SSL/TLS config</li>
+                                <li><strong>Input/Output Channel Admin</strong>: Separate admin pages for channels with destinations, queue, backpressure</li>
+                                <li><strong>Global Error Handler</strong>: Detailed error pages with stack traces and suggestions</li>
                             </ul>
                         </div>
                         <div class="mb-4">
@@ -906,19 +997,27 @@
                         <ul class="list-unstyled small">
                             <li class="mb-3">
                                 <i class="fas fa-check-circle text-success me-2" style="font-size: 0.8em; vertical-align: middle;"></i>
-                                <strong>v1.4.0</strong> — <del>Prometheus metrics and Grafana dashboard</del> <span class="badge bg-success">Done</span>
+                                <strong>v1.3.0</strong> — <del>Prometheus metrics and Grafana dashboard</del> <span class="badge bg-success">Done</span>
                             </li>
                             <li class="mb-3">
                                 <i class="fas fa-check-circle text-success me-2" style="font-size: 0.8em; vertical-align: middle;"></i>
-                                <strong>v1.4.0</strong> — <del>Handler chaining and pipeline composition</del> <span class="badge bg-success">Done</span>
+                                <strong>v1.3.0</strong> — <del>Handler chaining and pipeline composition</del> <span class="badge bg-success">Done</span>
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2" style="font-size: 0.8em; vertical-align: middle;"></i>
+                                <strong>v1.4.0</strong> — <del>Distributed execution across multiple nodes</del> <span class="badge bg-success">Done</span>
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2" style="font-size: 0.8em; vertical-align: middle;"></i>
+                                <strong>v1.5.0</strong> — <del>Request ingestion (Kafka, ActiveMQ, FileSystem)</del> <span class="badge bg-success">Done</span>
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2" style="font-size: 0.8em; vertical-align: middle;"></i>
+                                <strong>v1.6.0</strong> — <del>Operational tooling (health check, live logs, dark mode, config validation)</del> <span class="badge bg-success">Done</span>
                             </li>
                             <li class="mb-3">
                                 <i class="fas fa-circle text-secondary me-2" style="font-size: 0.6em; vertical-align: middle;"></i>
-                                <strong>v1.4.0</strong> — Distributed execution across multiple nodes
-                            </li>
-                            <li class="mb-3">
-                                <i class="fas fa-circle text-secondary me-2" style="font-size: 0.6em; vertical-align: middle;"></i>
-                                <strong>v1.5.0</strong> — gRPC ingestion channel
+                                <strong>v1.7.0</strong> — gRPC ingestion channel
                             </li>
                             <li class="mb-0">
                                 <i class="fas fa-circle text-secondary me-2" style="font-size: 0.6em; vertical-align: middle;"></i>
@@ -973,7 +1072,7 @@
                             </li>
                             <li class="mb-0">
                                 <i class="fas fa-code-branch fa-fw text-primary me-2"></i>
-                                <strong>Version:</strong> <span th:text="${version} ?: '1.4.0'">1.4.0</span>
+                                <strong>Version:</strong> <span th:text="${version} ?: '1.6.0'">1.6.0</span>
                             </li>
                         </ul>
                     </div>

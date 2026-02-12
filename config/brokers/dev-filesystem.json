@@ -1,0 +1,11 @@
+{
+  "type": "filesystem",
+  "description": "Local filesystem for batch file ingestion",
+  "enabled": true,
+  "connection": {
+    "base_dir": "./data/ingest",
+    "file_pattern": "*.json",
+    "poll_interval_seconds": 10,
+    "max_files_per_poll": 100
+  }
+}

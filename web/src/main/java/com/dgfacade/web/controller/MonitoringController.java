@@ -26,7 +26,7 @@ public class MonitoringController {
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.4.0}")
+    @Value("${dgfacade.version:1.6.0}")
     private String version;
 
     public MonitoringController(ExecutionEngine engine) {

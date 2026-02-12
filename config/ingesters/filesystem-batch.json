@@ -1,0 +1,5 @@
+{
+  "enabled": true,
+  "description": "FileSystem batch ingestion — uses batch-requests input channel on dev-filesystem broker",
+  "input_channel": "batch-requests"
+}

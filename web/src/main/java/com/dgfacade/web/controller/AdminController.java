@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -33,7 +34,7 @@ public class AdminController {
     private final OutputChannelService outputChannelService;
 
     @Value("${dgfacade.app-name:DGFacade}") private String appName;
-    @Value("${dgfacade.version:1.4.0}") private String version;
+    @Value("${dgfacade.version:1.6.0}") private String version;
 
     public AdminController(UserService userService, BrokerService brokerService,
                            InputChannelService inputChannelService,
@@ -242,6 +243,34 @@ public class AdminController {
         Map<String, Object> retry = new LinkedHashMap<>(); tryPutInt(retry, "max_attempts", param(req, "retry_max_attempts", "3")); tryPutInt(retry, "backoff_ms", param(req, "retry_backoff_ms", "1000")); try { retry.put("backoff_multiplier", Double.parseDouble(param(req, "retry_backoff_multiplier", "2.0"))); } catch (Exception ignored) {} config.put("retry", retry);
         return config;
     }
+
+    // ─── Config View API (JSON) ──────────────────────────────────────
+
+    @GetMapping("/api/brokers/{id}/config")
+    @ResponseBody
+    public ResponseEntity<?> brokerConfig(@PathVariable String id) {
+        Map<String, Object> cfg = brokerService.getBroker(id);
+        if (cfg == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(cfg);
+    }
+
+    @GetMapping("/api/input-channels/{id}/config")
+    @ResponseBody
+    public ResponseEntity<?> inputChannelConfig(@PathVariable String id) {
+        Map<String, Object> cfg = inputChannelService.getChannel(id);
+        if (cfg == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(cfg);
+    }
+
+    @GetMapping("/api/output-channels/{id}/config")
+    @ResponseBody
+    public ResponseEntity<?> outputChannelConfig(@PathVariable String id) {
+        Map<String, Object> cfg = outputChannelService.getChannel(id);
+        if (cfg == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(cfg);
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────
 
     private Map<String, Object> defaultBroker() { Map<String, Object> m = new LinkedHashMap<>(); m.put("type", "kafka"); m.put("description", ""); m.put("enabled", true); Map<String, Object> c = new LinkedHashMap<>(); c.put("bootstrap_servers", "localhost:9092"); c.put("client_id", "dgfacade-client"); c.put("group_id", "dgfacade-consumer-group"); m.put("connection", c); return m; }
     private Map<String, Object> defaultChannel() { Map<String, Object> m = new LinkedHashMap<>(); m.put("type", "kafka"); m.put("description", ""); m.put("enabled", true); m.put("broker", ""); Map<String, Object> q = new LinkedHashMap<>(); q.put("depth", 10000); q.put("warning_threshold_pct", 70); q.put("critical_threshold_pct", 90); q.put("drain_resume_pct", 60); m.put("queue", q); Map<String, Object> r = new LinkedHashMap<>(); r.put("max_attempts", 3); r.put("backoff_ms", 1000); r.put("backoff_multiplier", 2.0); m.put("retry", r); return m; }

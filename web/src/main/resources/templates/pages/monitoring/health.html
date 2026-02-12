@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Health Check')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-heartbeat me-2 text-danger"></i>System Health</h2>
+            <div>
+                <span class="badge fs-6"
+                      th:classappend="${overallStatus == 'UP'} ? 'bg-success' : 'bg-warning'"
+                      th:text="${overallStatus}">UP</span>
+                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="location.reload()">
+                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- System Overview Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4 col-lg-2">
+                <div class="card border-0 shadow-sm text-center">
+                    <div class="card-body py-3">
+                        <div class="text-muted small mb-1">Uptime</div>
+                        <div class="fs-5 fw-bold text-primary" th:text="${uptime}">0h 0m</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card border-0 shadow-sm text-center">
+                    <div class="card-body py-3">
+                        <div class="text-muted small mb-1">Handlers</div>
+                        <div class="fs-5 fw-bold text-success" th:text="${handlerCount}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card border-0 shadow-sm text-center">
+                    <div class="card-body py-3">
+                        <div class="text-muted small mb-1">Brokers</div>
+                        <div class="fs-5 fw-bold text-info" th:text="${brokerCount}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card border-0 shadow-sm text-center">
+                    <div class="card-body py-3">
+                        <div class="text-muted small mb-1">Ingesters</div>
+                        <div class="fs-5 fw-bold" th:text="${activeIngesters} + '/' + ${ingesterCount}">0/0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card border-0 shadow-sm text-center">
+                    <div class="card-body py-3">
+                        <div class="text-muted small mb-1">Cluster Nodes</div>
+                        <div class="fs-5 fw-bold text-warning" th:text="${clusterSize}">1</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card border-0 shadow-sm text-center">
+                    <div class="card-body py-3">
+                        <div class="text-muted small mb-1">CPUs</div>
+                        <div class="fs-5 fw-bold text-secondary" th:text="${cpuCount}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- JVM Memory -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white py-2">
+                        <h5 class="mb-0"><i class="fas fa-memory me-2"></i>JVM Memory</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Heap Used: <strong th:text="${heapUsed}">0</strong></span>
+                            <span>Max: <strong th:text="${heapMax}">0</strong></span>
+                        </div>
+                        <div class="progress" style="height: 24px;">
+                            <div class="progress-bar" role="progressbar"
+                                 th:style="'width:' + ${heapPct} + '%'"
+                                 th:classappend="${heapPct > 85} ? 'bg-danger' : (${heapPct > 70} ? 'bg-warning' : 'bg-success')"
+                                 th:text="${heapPct} + '%'">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environment -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white py-2">
+                        <h5 class="mb-0"><i class="fas fa-server me-2"></i>Environment</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <tr><td class="text-muted" style="width:40%">Java Version</td><td th:text="${javaVersion}">17</td></tr>
+                            <tr><td class="text-muted">OS</td><td th:text="${osName}">Linux</td></tr>
+                            <tr><td class="text-muted">Version</td><td th:text="${version}">1.6.0</td></tr>
+                            <tr><td class="text-muted">Channels (In/Out)</td><td th:text="${inputChannelCount} + ' / ' + ${outputChannelCount}">0 / 0</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Component Status -->
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white py-2">
+                        <h5 class="mb-0"><i class="fas fa-check-double me-2"></i>Component Status</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr><th>Component</th><th>Status</th><th>Details</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><i class="fas fa-cogs me-2 text-primary"></i>Execution Engine</td>
+                                    <td><span class="badge bg-success">UP</span></td>
+                                    <td th:text="${handlerCount} + ' handler type(s) registered'">0</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-server me-2 text-info"></i>Broker Configs</td>
+                                    <td><span class="badge bg-success">UP</span></td>
+                                    <td th:text="${brokerCount} + ' broker(s) configured'">0</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-download me-2 text-warning"></i>Ingestion Service</td>
+                                    <td>
+                                        <span class="badge" th:classappend="${activeIngesters > 0} ? 'bg-success' : 'bg-secondary'"
+                                              th:text="${activeIngesters > 0} ? 'ACTIVE' : 'IDLE'">IDLE</span>
+                                    </td>
+                                    <td th:text="${activeIngesters} + ' of ' + ${ingesterCount} + ' ingester(s) running'">0</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-network-wired me-2 text-success"></i>Cluster</td>
+                                    <td>
+                                        <span class="badge" th:classappend="${clusterSize > 1} ? 'bg-success' : 'bg-secondary'"
+                                              th:text="${clusterSize > 1} ? 'CLUSTERED' : 'STANDALONE'">STANDALONE</span>
+                                    </td>
+                                    <td th:text="${clusterSize} + ' node(s)'">1</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Endpoints -->
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white py-2">
+                        <h5 class="mb-0"><i class="fas fa-terminal me-2"></i>Health Check Endpoints</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="bg-dark text-light p-3 rounded small" style="font-family: monospace;">
+                            <div class="mb-2 text-success"># Simple ping (text response)</div>
+                            <div class="mb-3">curl http://localhost:8090/ping</div>
+                            <div class="mb-2 text-success"># JSON ping with metadata</div>
+                            <div class="mb-3">curl http://localhost:8090/api/ping</div>
+                            <div class="mb-2 text-success"># Full JSON health check</div>
+                            <div class="mb-3">curl http://localhost:8090/api/health</div>
+                            <div class="mb-2 text-success"># Spring Actuator health</div>
+                            <div>curl http://localhost:8090/actuator/health</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<script>
+    // Auto-refresh every 30 seconds
+    setTimeout(function() { location.reload(); }, 30000);
+</script>
+</body>
+</html>

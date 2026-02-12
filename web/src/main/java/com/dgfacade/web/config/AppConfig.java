@@ -11,6 +11,7 @@ import com.dgfacade.server.cluster.ClusterService;
 import com.dgfacade.server.config.ExternalJarLoader;
 import com.dgfacade.server.config.HandlerConfigRegistry;
 import com.dgfacade.server.engine.ExecutionEngine;
+import com.dgfacade.server.ingestion.IngestionService;
 import com.dgfacade.server.metrics.MetricsService;
 import com.dgfacade.server.service.BrokerService;
 import com.dgfacade.server.service.InputChannelService;
@@ -47,6 +48,9 @@ public class AppConfig {
     @Value("${dgfacade.output-channels.config-dir:config/output-channels}")
     private String outputChannelsConfigDir;
 
+    @Value("${dgfacade.ingesters.config-dir:config/ingesters}")
+    private String ingestersConfigDir;
+
     // --- Cluster Configuration ---
     @Value("${dgfacade.cluster.seed-nodes:}")
     private String clusterSeedNodes;
@@ -60,7 +64,7 @@ public class AppConfig {
     @Value("${server.port:8090}")
     private int serverPort;
 
-    @Value("${dgfacade.version:1.4.0}")
+    @Value("${dgfacade.version:1.6.0}")
     private String version;
 
     @Bean
@@ -143,5 +147,12 @@ public class AppConfig {
         engine.setChannelAccessor(channelAccessor);
         engine.setClusterService(clusterService);
         return engine;
+    }
+
+    @Bean
+    public IngestionService ingestionService(ExecutionEngine executionEngine,
+                                             BrokerService brokerService,
+                                             InputChannelService inputChannelService) {
+        return new IngestionService(ingestersConfigDir, executionEngine, brokerService, inputChannelService);
     }
 }

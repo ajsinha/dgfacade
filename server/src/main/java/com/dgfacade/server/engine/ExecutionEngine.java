@@ -121,6 +121,7 @@ public class ExecutionEngine {
      */
     public CompletableFuture<DGResponse> submitLocal(DGRequest request) {
         long submitTimeMs = System.currentTimeMillis();
+        HandlerState state = null;
         try {
             // 1. Validate API key and resolve user
             String userId = userService.resolveUserFromApiKey(request.getApiKey());
@@ -142,7 +143,7 @@ public class ExecutionEngine {
             String handlerId = "hdl-" + UUID.randomUUID().toString().substring(0, 12);
 
             // Track state
-            HandlerState state = new HandlerState(handlerId, request.getRequestId(), request.getRequestType());
+            state = new HandlerState(handlerId, request.getRequestId(), request.getRequestType());
             state.setUserId(userId);
             state.setHandlerClass(handlerConfig.getHandlerClass());
             state.setSourceChannel(request.getSourceChannel());
@@ -181,12 +182,13 @@ public class ExecutionEngine {
 
             // Apply TTL as a safeguard on the future itself
             int ttl = handlerConfig.getTtlMinutes();
+            final HandlerState stateRef = state;
             return responseFuture.orTimeout(ttl, TimeUnit.MINUTES)
                     .thenApply(response -> {
                         // Store response data in state for the detail view
-                        state.setResponseData(response.getData());
+                        stateRef.setResponseData(response.getData());
                         try {
-                            state.setResponseJson(new com.fasterxml.jackson.databind.ObjectMapper()
+                            stateRef.setResponseJson(new com.fasterxml.jackson.databind.ObjectMapper()
                                     .writerWithDefaultPrettyPrinter().writeValueAsString(response));
                         } catch (Exception ignored) {}
                         // ── Prometheus: record completion ──
@@ -207,18 +209,31 @@ public class ExecutionEngine {
                         return response;
                     })
                     .exceptionally(ex -> {
-                        state.markTimedOut();
+                        stateRef.markTimedOut();
+                        DGResponse timeoutResp = DGResponse.timeout(request.getRequestId());
+                        // Capture response JSON even on timeout/error for handler detail view
+                        try {
+                            stateRef.setResponseJson(new com.fasterxml.jackson.databind.ObjectMapper()
+                                    .writerWithDefaultPrettyPrinter().writeValueAsString(timeoutResp));
+                        } catch (Exception ignored) {}
                         // ── Prometheus: record timeout ──
                         if (metricsService != null) {
                             metricsService.recordRequestTimeout(request.getRequestType());
                         }
-                        return DGResponse.timeout(request.getRequestId());
+                        return timeoutResp;
                     });
 
         } catch (Exception e) {
             log.error("Error submitting request {}", request.getRequestId(), e);
-            return CompletableFuture.completedFuture(
-                    DGResponse.error(request.getRequestId(), "Internal error: " + e.getMessage()));
+            DGResponse errorResp = DGResponse.error(request.getRequestId(), "Internal error: " + e.getMessage());
+            // Capture response JSON for handler detail view
+            if (state != null) {
+                try {
+                    state.setResponseJson(new com.fasterxml.jackson.databind.ObjectMapper()
+                            .writerWithDefaultPrettyPrinter().writeValueAsString(errorResp));
+                } catch (Exception ignored) {}
+            }
+            return CompletableFuture.completedFuture(errorResp);
         }
     }
 

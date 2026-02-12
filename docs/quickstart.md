@@ -28,14 +28,20 @@ mvn clean package -DskipTests
 mvn spring-boot:run -pl web
 
 # Or using the JAR directly
-java -jar web/target/dgfacade-web-1.4.0.jar
+java -jar web/target/dgfacade-web-1.6.0.jar
 ```
 
 ## Verify
 
 ```bash
-# Health check
-curl http://localhost:8090/api/v1/health
+# Simple ping (no auth required)
+curl http://localhost:8090/ping
+
+# JSON ping with metadata
+curl http://localhost:8090/api/ping
+
+# Full health check
+curl http://localhost:8090/api/health
 
 # Submit an ECHO request
 curl -X POST http://localhost:8090/api/v1/request \

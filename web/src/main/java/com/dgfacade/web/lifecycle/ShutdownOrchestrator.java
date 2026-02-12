@@ -8,6 +8,7 @@ package com.dgfacade.web.lifecycle;
 import com.dgfacade.server.channel.ChannelAccessor;
 import com.dgfacade.server.cluster.ClusterService;
 import com.dgfacade.server.engine.ExecutionEngine;
+import com.dgfacade.server.ingestion.IngestionService;
 import com.dgfacade.web.websocket.DGFacadeWebSocketHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +31,13 @@ import java.time.format.DateTimeFormatter;
  *
  * <pre>
  * Phase 1: Stop accepting new REST / WebSocket connections
- * Phase 2: Drain channel internal queues and stop fan-out threads
- * Phase 3: Disconnect broker connections
- * Phase 4: Shutdown Execution Engine (Pekko actor system)
- * Phase 5: Close WebSocket sessions
- * Phase 6: Flush logs and release resources
+ * Phase 2: Stop request ingesters (Kafka, ActiveMQ, FileSystem)
+ * Phase 3: Drain channel internal queues and stop fan-out threads
+ * Phase 4: Leave cluster and close channel accessors
+ * Phase 5: Disconnect broker connections
+ * Phase 6: Shutdown Execution Engine (Pekko actor system)
+ * Phase 7: Close WebSocket sessions
+ * Phase 8: Flush logs and release resources
  * FINAL:   Shutdown Complete announcement
  * </pre>
  */
@@ -48,21 +51,24 @@ public class ShutdownOrchestrator {
     private final DGFacadeWebSocketHandler webSocketHandler;
     private final ClusterService clusterService;
     private final ChannelAccessor channelAccessor;
+    private final IngestionService ingestionService;
 
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.4.0}")
+    @Value("${dgfacade.version:1.6.0}")
     private String version;
 
     public ShutdownOrchestrator(ExecutionEngine executionEngine,
                                 DGFacadeWebSocketHandler webSocketHandler,
                                 ClusterService clusterService,
-                                ChannelAccessor channelAccessor) {
+                                ChannelAccessor channelAccessor,
+                                IngestionService ingestionService) {
         this.executionEngine = executionEngine;
         this.webSocketHandler = webSocketHandler;
         this.clusterService = clusterService;
         this.channelAccessor = channelAccessor;
+        this.ingestionService = ingestionService;
     }
 
     @EventListener(ContextClosedEvent.class)
@@ -91,14 +97,25 @@ public class ShutdownOrchestrator {
             phaseDelay();
             logShutdownPhaseComplete(1, "New connections blocked");
 
-            // Phase 2: Drain channel queues
-            logShutdownPhase(2, "Drain Channel Internal Queues",
+            // Phase 2: Stop request ingesters
+            logShutdownPhase(2, "Stop Request Ingesters",
+                    "Stopping Kafka consumers, ActiveMQ listeners, and filesystem watchers...");
+            try {
+                ingestionService.stopAll();
+            } catch (Exception e) {
+                log.warn("  ⚠ Ingestion shutdown issue: {}", e.getMessage());
+            }
+            phaseDelay();
+            logShutdownPhaseComplete(2, "All ingesters stopped");
+
+            // Phase 3: Drain channel queues
+            logShutdownPhase(3, "Drain Channel Internal Queues",
                     "Waiting for in-flight messages to complete fan-out distribution...");
             phaseDelay();
-            logShutdownPhaseComplete(2, "Channel queues drained, fan-out threads stopped");
+            logShutdownPhaseComplete(3, "Channel queues drained, fan-out threads stopped");
 
-            // Phase 3: Leave cluster and close channel accessors
-            logShutdownPhase(3, "Cluster Leave & Channel Cleanup",
+            // Phase 4: Leave cluster and close channel accessors
+            logShutdownPhase(4, "Cluster Leave & Channel Cleanup",
                     "Notifying cluster peers and closing cached publisher/subscriber connections...");
             try {
                 clusterService.stop();
@@ -107,36 +124,36 @@ public class ShutdownOrchestrator {
                 log.warn("  ⚠ Cluster/channel shutdown issue: {}", e.getMessage());
             }
             phaseDelay();
-            logShutdownPhaseComplete(3, "Cluster notified, channel connections closed");
+            logShutdownPhaseComplete(4, "Cluster notified, channel connections closed");
 
-            // Phase 4: Disconnect brokers
-            logShutdownPhase(4, "Disconnect Broker Connections",
+            // Phase 5: Disconnect brokers
+            logShutdownPhase(5, "Disconnect Broker Connections",
                     "Closing Kafka consumers, JMS sessions, and broker connections...");
             phaseDelay();
-            logShutdownPhaseComplete(4, "All broker connections closed");
+            logShutdownPhaseComplete(5, "All broker connections closed");
 
-            // Phase 5: Shutdown Execution Engine
-            logShutdownPhase(5, "Shutdown Execution Engine",
+            // Phase 6: Shutdown Execution Engine
+            logShutdownPhase(6, "Shutdown Execution Engine",
                     "Terminating Pekko actor system and completing pending handler executions...");
             try {
                 executionEngine.shutdown();
-                logShutdownPhaseComplete(5, "Pekko actor system terminated");
+                logShutdownPhaseComplete(6, "Pekko actor system terminated");
             } catch (Exception e) {
                 log.warn("  ⚠ Execution engine shutdown encountered issue: {}", e.getMessage());
             }
             phaseDelay();
 
-            // Phase 6: Close WebSocket sessions
-            logShutdownPhase(6, "Close WebSocket Sessions",
+            // Phase 7: Close WebSocket sessions
+            logShutdownPhase(7, "Close WebSocket Sessions",
                     "Sending close frames to connected WebSocket clients...");
             phaseDelay();
-            logShutdownPhaseComplete(6, "All WebSocket sessions closed");
+            logShutdownPhaseComplete(7, "All WebSocket sessions closed");
 
-            // Phase 7: Flush logs and release resources
-            logShutdownPhase(7, "Flush Logs & Release Resources",
+            // Phase 8: Flush logs and release resources
+            logShutdownPhase(8, "Flush Logs & Release Resources",
                     "Flushing log buffers and releasing file handles...");
             phaseDelay();
-            logShutdownPhaseComplete(7, "Resources released");
+            logShutdownPhaseComplete(8, "Resources released");
 
         } catch (Exception e) {
             log.error("Error during shutdown sequence: {}", e.getMessage(), e);
@@ -162,18 +179,20 @@ public class ShutdownOrchestrator {
         log.info("║   Shutdown Summary:                                                ║");
         log.info("║   ✓ Phase 1: New connections blocked{}║",
                 pad("✓ Phase 1: New connections blocked", 52));
-        log.info("║   ✓ Phase 2: Channel queues drained{}║",
-                pad("✓ Phase 2: Channel queues drained", 52));
-        log.info("║   ✓ Phase 3: Cluster left, channels closed{}║",
-                pad("✓ Phase 3: Cluster left, channels closed", 52));
-        log.info("║   ✓ Phase 4: Broker connections closed{}║",
-                pad("✓ Phase 4: Broker connections closed", 52));
-        log.info("║   ✓ Phase 5: Execution engine terminated{}║",
-                pad("✓ Phase 5: Execution engine terminated", 52));
-        log.info("║   ✓ Phase 6: WebSocket sessions closed{}║",
-                pad("✓ Phase 6: WebSocket sessions closed", 52));
-        log.info("║   ✓ Phase 7: Resources released{}║",
-                pad("✓ Phase 7: Resources released", 52));
+        log.info("║   ✓ Phase 2: Request ingesters stopped{}║",
+                pad("✓ Phase 2: Request ingesters stopped", 52));
+        log.info("║   ✓ Phase 3: Channel queues drained{}║",
+                pad("✓ Phase 3: Channel queues drained", 52));
+        log.info("║   ✓ Phase 4: Cluster left, channels closed{}║",
+                pad("✓ Phase 4: Cluster left, channels closed", 52));
+        log.info("║   ✓ Phase 5: Broker connections closed{}║",
+                pad("✓ Phase 5: Broker connections closed", 52));
+        log.info("║   ✓ Phase 6: Execution engine terminated{}║",
+                pad("✓ Phase 6: Execution engine terminated", 52));
+        log.info("║   ✓ Phase 7: WebSocket sessions closed{}║",
+                pad("✓ Phase 7: WebSocket sessions closed", 52));
+        log.info("║   ✓ Phase 8: Resources released{}║",
+                pad("✓ Phase 8: Resources released", 52));
         log.info("║                                                                    ║");
         log.info("║   Shutdown Time : {} ms{}║", elapsed.toMillis(),
                 pad("Shutdown Time : " + elapsed.toMillis() + " ms", 52));

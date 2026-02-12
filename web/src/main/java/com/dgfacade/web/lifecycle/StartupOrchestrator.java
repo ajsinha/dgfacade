@@ -9,6 +9,7 @@ import com.dgfacade.server.channel.ChannelAccessor;
 import com.dgfacade.server.cluster.ClusterService;
 import com.dgfacade.server.config.HandlerConfigRegistry;
 import com.dgfacade.server.engine.ExecutionEngine;
+import com.dgfacade.server.ingestion.IngestionService;
 import com.dgfacade.server.metrics.MetricsService;
 import com.dgfacade.server.service.UserService;
 import org.slf4j.Logger;
@@ -44,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Phase 6: Input Channel configuration scanning
  * Phase 7: WebSocket server verification
  * Phase 8: Cluster initialization
+ * Phase 9: Request ingestion startup
  * FINAL:   System Ready announcement with all URLs
  * </pre>
  */
@@ -59,11 +61,12 @@ public class StartupOrchestrator {
     private final MetricsService metricsService;
     private final ClusterService clusterService;
     private final ChannelAccessor channelAccessor;
+    private final IngestionService ingestionService;
 
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.4.0}")
+    @Value("${dgfacade.version:1.6.0}")
     private String version;
 
     @Value("${server.port:8090}")
@@ -112,13 +115,15 @@ public class StartupOrchestrator {
                                UserService userService,
                                MetricsService metricsService,
                                ClusterService clusterService,
-                               ChannelAccessor channelAccessor) {
+                               ChannelAccessor channelAccessor,
+                               IngestionService ingestionService) {
         this.executionEngine = executionEngine;
         this.handlerConfigRegistry = handlerConfigRegistry;
         this.userService = userService;
         this.metricsService = metricsService;
         this.clusterService = clusterService;
         this.channelAccessor = channelAccessor;
+        this.ingestionService = ingestionService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -211,6 +216,15 @@ public class StartupOrchestrator {
                     "Node ID: " + clusterService.getSelf().getNodeId(),
                     "Role: " + clusterRole,
                     "Cluster size: " + clusterService.getClusterSize() + " node(s)");
+
+            // Phase 9: Request Ingestion Startup
+            phaseDelay();
+            logPhase(9, "Request Ingestion Startup",
+                    "Starting configured request ingesters...");
+            int ingestersStarted = ingestionService.startAll();
+            logPhaseComplete(9, "Request Ingestion Startup",
+                    ingestersStarted + " ingester(s) started",
+                    "Config dir: config/ingesters");
 
             // Final delay before system ready
             phaseDelay();

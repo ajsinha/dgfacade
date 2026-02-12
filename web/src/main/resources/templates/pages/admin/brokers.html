@@ -26,116 +26,99 @@
             </div>
         </div>
 
-        <!-- Broker Cards -->
-        <div th:if="${brokers != null and !brokers.isEmpty()}" class="row g-4">
-            <div th:each="b : ${brokers}" class="col-xl-4 col-lg-6">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0">
-                                <i class="fas me-2"
-                                   th:classappend="${b['type'] == 'kafka'} ? 'fa-stream text-primary' :
-                                       (${b['type'] == 'activemq'} ? 'fa-exchange-alt text-warning' :
-                                       (${b['type'] == 'rabbitmq'} ? 'fa-rabbit text-orange' :
-                                       (${b['type'] == 'ibmmq'} ? 'fa-industry text-info' :
-                                       (${b['type'] == 'filesystem'} ? 'fa-folder text-success' :
-                                       'fa-database text-secondary'))))"></i>
-                                <span th:text="${b['_broker_id']}">broker-id</span>
-                            </h5>
-                        </div>
-                        <div class="d-flex gap-1 align-items-center">
-                            <span class="badge"
-                                  th:classappend="${b['_state'] == 'RUNNING'} ? 'bg-success' : (${b['_state'] == 'ERROR'} ? 'bg-danger' : 'bg-secondary')"
-                                  th:text="${b['_state']}">STOPPED</span>
-                            <span class="badge rounded-pill"
-                                  th:classappend="${b['enabled'] == true} ? 'bg-primary' : 'bg-dark'"
-                                  th:text="${b['enabled'] == true} ? 'Enabled' : 'Disabled'">Enabled</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <p th:if="${b['description'] != null and !b['description'].toString().isBlank()}"
-                           class="text-muted small mb-3" th:text="${b['description']}">Description</p>
-
-                        <dl class="row mb-0 small">
-                            <dt class="col-sm-4 text-muted">Type</dt>
-                            <dd class="col-sm-8"><span class="badge bg-light text-dark border" th:text="${b['type']}">kafka</span></dd>
-
-                            <!-- Connection summary -->
-                            <th:block th:if="${b['connection'] != null}">
-                                <th:block th:if="${b['connection']['bootstrap_servers'] != null}">
-                                    <dt class="col-sm-4 text-muted">Servers</dt>
-                                    <dd class="col-sm-8"><code class="small" th:text="${b['connection']['bootstrap_servers']}">-</code></dd>
-                                </th:block>
-                                <th:block th:if="${b['connection']['broker_url'] != null}">
-                                    <dt class="col-sm-4 text-muted">URL</dt>
-                                    <dd class="col-sm-8"><code class="small text-break" th:text="${b['connection']['broker_url']}">-</code></dd>
-                                </th:block>
-                                <th:block th:if="${b['connection']['host'] != null}">
-                                    <dt class="col-sm-4 text-muted">Host</dt>
-                                    <dd class="col-sm-8"><code class="small" th:text="${b['connection']['host'] + ':' + (b['connection']['port'] ?: '')}">-</code></dd>
-                                </th:block>
-                                <th:block th:if="${b['connection']['directory'] != null}">
-                                    <dt class="col-sm-4 text-muted">Directory</dt>
-                                    <dd class="col-sm-8"><code class="small" th:text="${b['connection']['directory']}">-</code></dd>
-                                </th:block>
-                                <th:block th:if="${b['connection']['jdbc_url'] != null}">
-                                    <dt class="col-sm-4 text-muted">JDBC</dt>
-                                    <dd class="col-sm-8"><code class="small text-break" th:text="${b['connection']['jdbc_url']}">-</code></dd>
-                                </th:block>
-                            </th:block>
-
-                            <!-- SSL indicator -->
-                            <th:block th:if="${b['ssl'] != null and b['ssl']['enabled'] == true}">
-                                <dt class="col-sm-4 text-muted">SSL/TLS</dt>
-                                <dd class="col-sm-8">
-                                    <span class="badge bg-success"><i class="fas fa-lock me-1"></i>
-                                        <span th:text="${b['ssl']['protocol'] ?: 'TLS'} + ' / ' + (${b['ssl']['format'] ?: 'PEM'})">TLSv1.3 / PEM</span>
-                                    </span>
-                                </dd>
-                            </th:block>
-                        </dl>
-                    </div>
-                    <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between">
-                        <div class="d-flex gap-1">
-                            <th:block th:if="${b['_state'] != 'RUNNING'}">
-                                <form th:action="@{/admin/brokers/start}" method="post" class="d-inline">
-                                    <input type="hidden" name="brokerId" th:value="${b['_broker_id']}">
-                                    <button class="btn btn-sm btn-outline-success"><i class="fas fa-play me-1"></i>Start</button>
-                                </form>
-                            </th:block>
-                            <th:block th:if="${b['_state'] == 'RUNNING'}">
-                                <form th:action="@{/admin/brokers/stop}" method="post" class="d-inline">
-                                    <input type="hidden" name="brokerId" th:value="${b['_broker_id']}">
-                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-stop me-1"></i>Stop</button>
-                                </form>
-                            </th:block>
-                        </div>
-                        <div class="d-flex gap-1">
-                            <a th:href="@{/admin/brokers/edit/{id}(id=${b['_broker_id']})}"
-                               class="btn btn-sm btn-outline-primary"><i class="fas fa-edit me-1"></i>Edit</a>
-                            <form th:action="@{/admin/brokers/delete}" method="post" class="d-inline"
-                                  onsubmit="return confirm('Delete this broker configuration permanently?')">
-                                <input type="hidden" name="brokerId" th:value="${b['_broker_id']}">
-                                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash me-1"></i>Delete</button>
-                            </form>
-                        </div>
-                    </div>
+        <!-- Broker Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table dg-table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Broker ID</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Connection</th>
+                                <th class="text-center">SSL</th>
+                                <th class="text-center">State</th>
+                                <th class="text-center">Enabled</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="b : ${brokers}">
+                                <td class="ps-4">
+                                    <i class="fas me-2"
+                                       th:classappend="${b['type'] == 'kafka'} ? 'fa-stream text-primary' :
+                                           (${b['type'] == 'activemq'} ? 'fa-exchange-alt text-warning' :
+                                           (${b['type'] == 'rabbitmq'} ? 'fa-envelope text-orange' :
+                                           (${b['type'] == 'ibmmq'} ? 'fa-industry text-info' :
+                                           (${b['type'] == 'filesystem'} ? 'fa-folder text-success' :
+                                           'fa-database text-secondary'))))"></i>
+                                    <strong th:text="${b['_broker_id']}">broker-id</strong>
+                                </td>
+                                <td><span class="badge bg-secondary" th:text="${b['type']}">kafka</span></td>
+                                <td class="text-muted small" th:text="${b['description']}">-</td>
+                                <td>
+                                    <th:block th:if="${b['connection'] != null}">
+                                        <code class="small" th:if="${b['connection']['bootstrap_servers'] != null}" th:text="${b['connection']['bootstrap_servers']}">-</code>
+                                        <code class="small text-break" th:if="${b['connection']['broker_url'] != null}" th:text="${b['connection']['broker_url']}">-</code>
+                                        <code class="small" th:if="${b['connection']['host'] != null}" th:text="${b['connection']['host'] + ':' + (b['connection']['port'] ?: '')}">-</code>
+                                        <code class="small" th:if="${b['connection']['base_dir'] != null}" th:text="${b['connection']['base_dir']}">-</code>
+                                        <code class="small text-break" th:if="${b['connection']['jdbc_url'] != null}" th:text="${b['connection']['jdbc_url']}">-</code>
+                                    </th:block>
+                                </td>
+                                <td class="text-center">
+                                    <span th:if="${b['ssl'] != null and b['ssl']['enabled'] == true}" class="badge bg-success"><i class="fas fa-lock me-1"></i><span th:text="${b['ssl']['protocol'] ?: 'TLS'}">TLS</span></span>
+                                    <span th:unless="${b['ssl'] != null and b['ssl']['enabled'] == true}" class="text-muted">—</span>
+                                </td>
+                                <td class="text-center">
+                                    <span th:if="${b['_state'] == 'RUNNING'}" class="badge bg-success">RUNNING</span>
+                                    <span th:if="${b['_state'] == 'STOPPED'}" class="badge bg-secondary">STOPPED</span>
+                                    <span th:if="${b['_state'] == 'ERROR'}" class="badge bg-danger">ERROR</span>
+                                </td>
+                                <td class="text-center">
+                                    <span th:if="${b['enabled'] == true}" class="badge bg-success">Yes</span>
+                                    <span th:unless="${b['enabled'] == true}" class="badge bg-secondary">No</span>
+                                </td>
+                                <td class="text-end pe-4 text-nowrap">
+                                    <button class="btn btn-sm btn-outline-info" title="View Config"
+                                            th:data-url="@{'/admin/api/brokers/' + ${b['_broker_id']} + '/config'}"
+                                            th:data-title="${'Broker: ' + b['_broker_id']}"
+                                            onclick="viewConfig(this.dataset.url, this.dataset.title)">
+                                        <i class="fas fa-eye"></i></button>
+                                    <form th:if="${b['_state'] != 'RUNNING'}" th:action="@{/admin/brokers/start}" method="post" class="d-inline">
+                                        <input type="hidden" name="brokerId" th:value="${b['_broker_id']}">
+                                        <button class="btn btn-sm btn-outline-success" title="Start"><i class="fas fa-play"></i></button>
+                                    </form>
+                                    <form th:if="${b['_state'] == 'RUNNING'}" th:action="@{/admin/brokers/stop}" method="post" class="d-inline">
+                                        <input type="hidden" name="brokerId" th:value="${b['_broker_id']}">
+                                        <button class="btn btn-sm btn-outline-warning" title="Stop"><i class="fas fa-stop"></i></button>
+                                    </form>
+                                    <a th:href="@{/admin/brokers/edit/{id}(id=${b['_broker_id']})}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
+                                    <form th:action="@{/admin/brokers/delete}" method="post" class="d-inline" onsubmit="return confirm('Delete this broker configuration permanently?');">
+                                        <input type="hidden" name="brokerId" th:value="${b['_broker_id']}">
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${brokers == null or brokers.isEmpty()}">
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="fas fa-server fa-3x mb-3 d-block"></i>No broker configurations found
+                                    <br><a th:href="@{/admin/brokers/create}" class="btn btn-primary mt-3">Create Your First Broker</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Empty state -->
-        <div th:if="${brokers == null or brokers.isEmpty()}" class="text-center py-5">
-            <i class="fas fa-server fa-4x text-muted mb-3 d-block"></i>
-            <h5 class="text-muted">No broker configurations found</h5>
-            <p class="text-muted">Broker JSON files are stored in <code>config/brokers/</code></p>
-            <a th:href="@{/admin/brokers/create}" class="btn btn-success mt-2">
-                <i class="fas fa-plus me-1"></i>Create Your First Broker
-            </a>
-        </div>
+        <div class="card border-0 shadow-sm bg-light mt-4"><div class="card-body">
+            <h6 class="text-muted mb-2"><i class="fas fa-info-circle me-2"></i>About Brokers</h6>
+            <p class="small text-muted mb-0">A <strong>Broker</strong> defines connection details (host, port, credentials, SSL) for a messaging system. Brokers are referenced by <strong>Input Channels</strong> and <strong>Output Channels</strong> to avoid duplicating connection information. One broker can serve many channels. Broker configs are stored in <code>config/brokers/</code>.</p>
+        </div></div>
 
         <!-- Reference -->
-        <div class="row mt-5">
+        <div class="row mt-4">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-light py-3">
@@ -163,5 +146,6 @@
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<th:block th:replace="~{fragments/layout :: configViewerModal}"></th:block>
 </body>
 </html>

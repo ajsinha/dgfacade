@@ -1,6 +1,6 @@
 # DGFacade — Data Gateway Facade
 
-**Version:** 1.4.0
+**Version:** 1.6.0
 **Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.**
 **Patent Pending:** Certain architectural patterns and implementations may be subject to patent applications.
 
@@ -8,19 +8,27 @@
 
 ## Overview
 
-DGFacade is a high-performance, configuration-driven data gateway facade system designed to handle millions of concurrent requests across multiple communication channels through a unified handler model.
+DGFacade is a high-performance, configuration-driven data gateway facade system designed to handle millions of concurrent requests across multiple communication channels through a unified handler model. Built on Apache Pekko actors and Spring Boot, it provides pluggable handler dispatch, multi-channel ingestion, distributed clustering, and enterprise-grade messaging across 6 broker types.
 
-## Features
+## Key Features
 
-- **Multi-Channel Support** — REST API, WebSocket, Apache Kafka, ActiveMQ, FileSystem, SQL
-- **Actor-Based Execution** — Apache Pekko manages handler lifecycle with TTL enforcement
+- **Multi-Channel Ingestion** — REST API, WebSocket, Kafka, ActiveMQ, and FileSystem ingesters with dedicated listeners
+- **Actor-Based Execution** — Apache Pekko manages handler lifecycle with TTL enforcement and massive concurrency
 - **Dynamic Configuration** — JSON-based handler configs with per-user overrides and hot reload
+- **Handler Chaining** — Declarative pipeline composition with linear, conditional, and parallel execution phases
+- **Distributed Clustering** — HTTP-based peer discovery, heartbeat tracking, and request forwarding across nodes
+- **6 Broker Types** — Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, SQL with SSL/TLS and PEM certificates
 - **External Handler Loading** — Drop JAR files in `libs/` to add custom handlers at runtime
-- **Streaming Handlers** — Long-running handlers send incremental updates
-- **Backpressure** — Queue depth monitoring; messages stay on broker when limits exceeded
-- **Auto-Recovery** — Automatic broker reconnection with configurable intervals
-- **Web Dashboard** — Real-time monitoring, admin UI for users/keys/channels
-- **Security** — BCrypt passwords, role-based access (ADMIN/USER), per-key rate limiting
+- **Dynamic Proxy** — DGHandlerProxy wraps any POJO into the DGHandler lifecycle automatically
+- **Streaming Handlers** — Long-running handlers send incremental updates over WebSocket
+- **Prometheus Metrics** — 13+ custom Micrometer metrics with pre-built Grafana dashboard
+- **Health Check & Monitoring** — /ping, /health, live log viewer, all public (no auth required)
+- **Metrics Time Series** — Real-time sparkline charts on the dashboard showing request rate, errors, heap, and latency
+- **Dark Mode** — Full dark theme toggle with Ctrl+D keyboard shortcut
+- **Config Validation** — Schema validation for brokers, channels, and ingesters via REST API
+- **Bulk Config Export** — Download all configs as ZIP for environment migration
+- **Keyboard Shortcuts** — Ctrl+K command palette, Ctrl+Shift+L logs, Ctrl+Shift+H health
+- **Web Dashboard** — Real-time monitoring, admin UI for users/keys/channels, table pagination/sorting/search
 
 ## Technology Stack
 
@@ -32,22 +40,31 @@ DGFacade is a high-performance, configuration-driven data gateway facade system 
 | Messaging     | Kafka 3.7, ActiveMQ 6.1 |
 | Serialization | Jackson 2.17            |
 | UI            | Thymeleaf, Bootstrap 5  |
+| Monitoring    | Prometheus, Grafana     |
 | Build         | Maven 3.8+              |
 
 ## Project Structure
 
 ```
 dgfacade/
-├── common/              Shared models, exceptions, utilities
-├── messaging/           Pub/sub: Kafka, ActiveMQ, FileSystem, SQL
-├── server/              Pekko actors, execution engine, handler lifecycle
-├── web/                 Spring Boot app, REST API, WebSocket, admin UI
+├── common/              Shared models (DGRequest, DGResponse, HandlerState), exceptions, utilities
+├── messaging/           Pub/sub: Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, SQL
+├── server/              Pekko actors, execution engine, handler lifecycle, ingestion, clustering
+├── web/                 Spring Boot app, REST API, WebSocket, admin UI, monitoring
 ├── docs/                Architecture, quickstart, tutorials
 ├── config/
 │   ├── handlers/        Handler type mappings (JSON)
+│   ├── brokers/         Broker connection configs (7 configs)
+│   ├── input-channels/  Input channel configs (5 configs)
+│   ├── output-channels/ Output channel configs (2 configs)
+│   ├── ingesters/       Ingester configs (3 configs)
+│   ├── chains/          Handler chain definitions
+│   ├── prometheus/      Prometheus scrape config
+│   ├── grafana/         Pre-built Grafana dashboard JSON
 │   ├── users.json       User accounts
 │   └── apikeys.json     API key definitions
 ├── libs/                External handler JARs (drop-in)
+├── logs/                Application and handler execution logs
 ├── build.sh             Build script
 ├── run.sh               Run script
 └── pom.xml              Parent Maven POM
@@ -71,8 +88,14 @@ chmod +x build.sh run.sh
 ### Test
 
 ```bash
-# Health check
-curl http://localhost:8090/api/v1/health
+# Simple ping (text response — no auth)
+curl http://localhost:8090/ping
+
+# JSON ping with metadata (no auth)
+curl http://localhost:8090/api/ping
+
+# Full health check (no auth)
+curl http://localhost:8090/api/health
 
 # Echo request
 curl -X POST http://localhost:8090/api/v1/request \
@@ -91,14 +114,49 @@ Open `http://localhost:8090` — Login: `admin` / `password`
 
 ## API Endpoints
 
-| Method | Path                | Description                    |
-|--------|---------------------|--------------------------------|
-| POST   | /api/v1/request     | Submit a DGRequest             |
-| GET    | /api/v1/handlers    | List registered handler types  |
-| GET    | /api/v1/status      | Recent execution states        |
-| POST   | /api/v1/reload      | Reload handler configs         |
-| GET    | /api/v1/health      | Health check                   |
-| WS     | /ws/gateway         | WebSocket gateway              |
+| Method | Path                       | Auth     | Description                      |
+|--------|----------------------------|----------|----------------------------------|
+| GET    | /ping                      | Public   | Simple text ping ("pong")        |
+| GET    | /api/ping                  | Public   | JSON ping with version/uptime    |
+| GET    | /api/health                | Public   | Full JSON health check           |
+| GET    | /health                    | Public   | Health check dashboard (UI)      |
+| POST   | /api/v1/request            | API Key  | Submit a DGRequest               |
+| GET    | /api/v1/handlers           | Public   | List registered handler types    |
+| GET    | /api/v1/status             | Public   | Recent execution states          |
+| POST   | /api/v1/reload             | Public   | Reload handler configs           |
+| GET    | /api/v1/health             | Public   | Legacy health check              |
+| GET    | /api/v1/ingesters          | Public   | List ingesters and stats         |
+| GET    | /api/v1/logs/tail          | Public   | Tail log file (last N lines)     |
+| GET    | /api/v1/logs/stream        | Public   | SSE stream of new log lines      |
+| GET    | /api/v1/cluster/nodes      | Public   | Cluster node list                |
+| GET    | /api/v1/cluster/status     | Public   | Cluster status summary           |
+| GET    | /api/v1/metrics/snapshot   | Public   | Current metrics for sparklines   |
+| GET    | /admin/api/config/export   | Admin    | Download all configs as ZIP      |
+| POST   | /admin/api/validate/broker | Admin    | Validate broker config JSON      |
+| WS     | /ws/gateway                | Public   | WebSocket gateway                |
+
+## Monitoring (No Auth Required)
+
+All monitoring endpoints are accessible without authentication:
+
+- **`/ping`** — Load balancer health check (returns "pong")
+- **`/api/ping`** — JSON metadata (version, uptime)
+- **`/health`** — System health dashboard with JVM metrics, component status
+- **`/api/health`** — JSON health for automated monitoring
+- **`/monitoring/logs`** — Live log viewer with SSE streaming, severity filtering, search
+- **`/monitoring/handlers`** — Handler execution states
+- **`/monitoring/cluster`** — Cluster node status
+- **`/monitoring/ingestion`** — Ingestion statistics
+
+## Keyboard Shortcuts
+
+| Shortcut              | Action                    |
+|-----------------------|---------------------------|
+| `Ctrl+K`              | Command Palette           |
+| `Ctrl+D`              | Toggle Dark Mode          |
+| `Ctrl+Shift+L`        | Jump to Live Logs         |
+| `Ctrl+Shift+H`        | Jump to Health Check      |
+| `?`                   | Show shortcuts dialog     |
 
 ## Documentation
 

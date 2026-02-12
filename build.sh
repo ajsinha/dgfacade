@@ -8,7 +8,7 @@ set -e
 
 echo "========================================="
 echo "  DGFacade Build"
-echo "  Version: 1.4.0"
+echo "  Version: 1.6.0"
 echo "========================================="
 
 # Clean and build
@@ -22,7 +22,7 @@ rm -rf "$DEPLOY_DIR"
 mkdir -p "$DEPLOY_DIR"/{config/handlers,libs,logs}
 
 # Copy artifacts
-cp web/target/dgfacade-web-1.4.0.jar "$DEPLOY_DIR/dgfacade.jar"
+cp web/target/dgfacade-web-1.6.0.jar "$DEPLOY_DIR/dgfacade.jar"
 cp config/handlers/*.json "$DEPLOY_DIR/config/handlers/"
 cp config/users.json "$DEPLOY_DIR/config/"
 cp config/apikeys.json "$DEPLOY_DIR/config/"

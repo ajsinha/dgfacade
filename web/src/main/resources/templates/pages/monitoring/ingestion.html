@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential. Patent Pending.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Request Ingestion')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-1"><i class="fas fa-download me-2"></i>Request Ingestion</h2>
+                <p class="text-muted mb-0">Monitor active ingesters and submit manual requests through the ingestion pipeline</p>
+            </div>
+            <div class="col-auto d-flex align-items-center gap-2">
+                <span class="badge bg-success fs-6" th:if="${activeCount gt 0}">
+                    <i class="fas fa-circle me-1"></i><span th:text="${activeCount}">0</span> Active
+                </span>
+                <span class="badge bg-secondary fs-6" th:if="${activeCount == 0}">
+                    <i class="fas fa-circle me-1"></i>No Active Ingesters
+                </span>
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshStats()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+                <button class="btn btn-outline-success btn-sm" onclick="startAllIngesters()" th:if="${activeCount lt #lists.size(configs)}">
+                    <i class="fas fa-play me-1"></i>Start All
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="stopAllIngesters()" th:if="${activeCount gt 0}">
+                    <i class="fas fa-stop me-1"></i>Stop All
+                </button>
+            </div>
+        </div>
+
+        <!-- Ingester Runtime Stats Table -->
+        <div class="card border-0 shadow-sm mb-4" th:if="${not #lists.isEmpty(stats)}">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2 text-primary"></i>Runtime Statistics</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table dg-table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Ingester</th>
+                                <th>Source</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Received</th>
+                                <th class="text-center">Submitted</th>
+                                <th class="text-center">Failed</th>
+                                <th class="text-center">Rejected</th>
+                                <th>Last Activity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="s : ${stats}">
+                                <td class="ps-4">
+                                    <i class="fas me-2"
+                                       th:classappend="${s.type.name() == 'KAFKA' ? 'fa-stream text-dark' : (s.type.name() == 'ACTIVEMQ' ? 'fa-envelope text-warning' : 'fa-folder text-success')}"></i>
+                                    <strong th:text="${s.id}">ingester-id</strong>
+                                    <small class="text-muted d-block" th:text="${s.type}">KAFKA</small>
+                                </td>
+                                <td><code class="small" th:text="${s.source}">source</code></td>
+                                <td class="text-center">
+                                    <span th:if="${s.running}" class="badge bg-success"><i class="fas fa-circle me-1"></i>Running</span>
+                                    <span th:unless="${s.running}" class="badge bg-secondary"><i class="fas fa-circle me-1"></i>Stopped</span>
+                                </td>
+                                <td class="text-center fw-bold text-primary" th:text="${s.requestsReceived}">0</td>
+                                <td class="text-center fw-bold text-success" th:text="${s.requestsSubmitted}">0</td>
+                                <td class="text-center fw-bold text-danger" th:text="${s.requestsFailed}">0</td>
+                                <td class="text-center fw-bold text-warning" th:text="${s.requestsRejected}">0</td>
+                                <td class="text-muted small" th:text="${s.lastActivityAt != null ? s.lastActivityAt : '—'}">—</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- No ingesters running -->
+        <div class="card border-0 shadow-sm mb-4" th:if="${#lists.isEmpty(stats)}">
+            <div class="card-body text-center py-5 text-muted">
+                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                <h5>No Active Ingesters</h5>
+                <p class="mb-2">Configure ingesters in <code>config/ingesters/</code> and set <code>"enabled": true</code></p>
+                <a th:href="@{/help/ingestion}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-book me-1"></i>Ingestion Guide
+                </a>
+            </div>
+        </div>
+
+        <!-- Ingester Configuration Table -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0"><i class="fas fa-cog me-2 text-secondary"></i>Ingester Configurations</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table dg-table table-hover align-middle mb-0" data-page-size="10">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">ID</th>
+                                <th>Input Channel</th>
+                                <th>Broker</th>
+                                <th>Description</th>
+                                <th class="text-center">Auto-Start</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="cfg : ${configs}">
+                                <td class="ps-4">
+                                    <i class="fas me-2"
+                                       th:classappend="${cfg['_channel_type'] == 'kafka' ? 'fa-stream text-dark' : (cfg['_channel_type'] == 'jms' or cfg['_channel_type'] == 'activemq' ? 'fa-envelope text-warning' : 'fa-folder text-success')}"></i>
+                                    <strong th:text="${cfg['_id']}">id</strong>
+                                </td>
+                                <td>
+                                    <code th:text="${cfg['input_channel']}">channel</code>
+                                    <small class="text-muted d-block" th:if="${cfg['_channel_type'] != null}" th:text="'(' + ${cfg['_channel_type']} + ')'">type</small>
+                                </td>
+                                <td>
+                                    <code th:text="${cfg['_broker_id'] ?: '-'}">broker</code>
+                                </td>
+                                <td><small th:text="${cfg['description']}">-</small></td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-inline-block mb-0">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                               th:id="'toggle-' + ${cfg['_id']}"
+                                               th:checked="${cfg['enabled'] == true}"
+                                               th:data-ingester="${cfg['_id']}"
+                                               onchange="toggleEnabled(this.dataset.ingester, this.checked)"
+                                               title="Toggle auto-start on application restart">
+                                    </div>
+                                </td>
+                                <td class="text-center" th:id="'status-' + ${cfg['_id']}">
+                                    <span th:if="${cfg['_running']}" class="badge bg-success"><i class="fas fa-circle me-1"></i>Running</span>
+                                    <span th:unless="${cfg['_running']}" class="badge bg-secondary"><i class="fas fa-circle me-1"></i>Stopped</span>
+                                </td>
+                                <td class="text-center text-nowrap" th:id="'actions-' + ${cfg['_id']}">
+                                    <button th:unless="${cfg['_running']}"
+                                            class="btn btn-success btn-sm"
+                                            th:data-ingester="${cfg['_id']}"
+                                            onclick="startIngester(this.dataset.ingester)"
+                                            title="Start ingester now">
+                                        <i class="fas fa-play me-1"></i>Start
+                                    </button>
+                                    <button th:if="${cfg['_running']}"
+                                            class="btn btn-danger btn-sm"
+                                            th:data-ingester="${cfg['_id']}"
+                                            onclick="stopIngester(this.dataset.ingester)"
+                                            title="Stop ingester now">
+                                        <i class="fas fa-stop me-1"></i>Stop
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm"
+                                            th:data-url="@{'/api/v1/ingesters/' + ${cfg['_id']} + '/config'}"
+                                            th:data-title="${'Ingester: ' + cfg['_id']}"
+                                            onclick="viewConfig(this.dataset.url, this.dataset.title)"
+                                            title="View configuration JSON">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(configs)}">
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No ingester configurations found in <code>config/ingesters/</code>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Request Submission -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0"><i class="fas fa-paper-plane me-2 text-primary"></i>Manual Request Submission</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Submit a request through an active ingester. The JSON is processed
+                            through the same pipeline as messages arriving from the external source.</p>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Target Ingester</label>
+                            <select id="targetIngester" class="form-select">
+                                <option value="" disabled selected>Select an ingester...</option>
+                                <th:block th:each="s : ${stats}">
+                                    <option th:if="${s.running}" th:value="${s.id}"
+                                            th:text="${s.id + ' (' + s.type.name() + ')'}">ingester</option>
+                                </th:block>
+                            </select>
+                            <div id="noIngestersHint" class="form-text text-warning" th:if="${activeCount == 0}">
+                                <i class="fas fa-exclamation-triangle me-1"></i>No active ingesters available. Enable and start an ingester first.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Request JSON</label>
+                            <textarea id="requestJson" class="form-control font-monospace" rows="14" style="font-size: 0.82rem;"
+                                      placeholder="Enter DGRequest JSON...">{
+  "api_key": "dgf-admin-key-0001",
+  "request_type": "ECHO",
+  "payload": {
+    "message": "Hello from ingestion pipeline",
+    "source": "manual-test"
+  },
+  "ttl_minutes": 5
+}</textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button id="submitBtn" class="btn btn-primary" onclick="submitRequest()">
+                                <i class="fas fa-paper-plane me-1"></i>Submit Request
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="formatJson()">
+                                <i class="fas fa-indent me-1"></i>Format JSON
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="loadTemplate('ECHO')">ECHO</button>
+                            <button class="btn btn-outline-secondary" onclick="loadTemplate('HASH')">HASH</button>
+                            <button class="btn btn-outline-secondary" onclick="loadTemplate('SYSTEM_INFO')">SYS_INFO</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response / Activity Log -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-terminal me-2 text-info"></i>Activity Log</h5>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="clearLog()">
+                            <i class="fas fa-eraser me-1"></i>Clear
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="activityLog" class="bg-dark text-light p-3" style="height: 480px; overflow-y: auto; font-family: monospace; font-size: 0.78rem;">
+                            <span class="text-muted">Ready — select an ingester and submit a request.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<!-- Config Viewer Modal (shared) - must be after Bootstrap JS -->
+<th:block th:replace="~{fragments/layout :: configViewerModal}"></th:block>
+<script th:inline="javascript">
+    const allIngesterIds = /*[[${allIngesterIds}]]*/ [];
+    const runningIngesterIds = /*[[${runningIngesterIds}]]*/ [];
+
+    const templates = {
+        ECHO: { api_key: 'dgf-admin-key-0001', request_type: 'ECHO', payload: { message: 'Hello from ingestion pipeline', source: 'manual-test' }, ttl_minutes: 5 },
+        HASH: { api_key: 'dgf-admin-key-0001', request_type: 'HASH', payload: { algorithm: 'SHA-256', input: 'DGFacade ingestion test' }, ttl_minutes: 5 },
+        SYSTEM_INFO: { api_key: 'dgf-admin-key-0001', request_type: 'SYSTEM_INFO', payload: {}, ttl_minutes: 5 }
+    };
+
+    function loadTemplate(type) {
+        document.getElementById('requestJson').value = JSON.stringify(templates[type] || templates.ECHO, null, 2);
+    }
+
+    function formatJson() {
+        const ta = document.getElementById('requestJson');
+        try { ta.value = JSON.stringify(JSON.parse(ta.value), null, 2); }
+        catch (e) { appendLog('error', 'Invalid JSON: ' + e.message); }
+    }
+
+    function submitRequest() {
+        const ingesterId = document.getElementById('targetIngester').value;
+        if (!ingesterId) { appendLog('warn', 'Select a target ingester first.'); return; }
+        const json = document.getElementById('requestJson').value.trim();
+        if (!json) { appendLog('warn', 'Enter request JSON.'); return; }
+        try { JSON.parse(json); } catch (e) { appendLog('error', 'Invalid JSON: ' + e.message); return; }
+
+        appendLog('info', 'Submitting to ' + ingesterId + ' ...');
+        document.getElementById('submitBtn').disabled = true;
+
+        fetch('/api/v1/ingesters/' + encodeURIComponent(ingesterId) + '/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: json
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('submitBtn').disabled = false;
+            if (data.success) {
+                appendLog('success', data.message);
+                appendLog('info', 'Check Handlers page for execution result.');
+            } else {
+                appendLog('error', 'Submission failed: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            document.getElementById('submitBtn').disabled = false;
+            appendLog('error', 'Network error: ' + err.message);
+        });
+    }
+
+    function appendLog(type, text) {
+        const log = document.getElementById('activityLog');
+        if (log.querySelector('.text-muted:only-child')) log.innerHTML = '';
+
+        const colors = { info: '#60a5fa', success: '#34d399', error: '#f87171', warn: '#fbbf24' };
+        const icons = { info: '\u2139', success: '\u2713', error: '\u2717', warn: '\u26A0' };
+        const ts = new Date().toLocaleTimeString();
+
+        const el = document.createElement('div');
+        el.style.marginBottom = '4px';
+        el.innerHTML = '<span style="color:#6b7280">[' + ts + ']</span> ' +
+            '<span style="color:' + (colors[type] || '#aaa') + '">' + (icons[type] || '\u2022') + ' ' + escapeHtml(text) + '</span>';
+        log.appendChild(el);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function clearLog() {
+        document.getElementById('activityLog').innerHTML = '<span class="text-muted">Log cleared.</span>';
+    }
+
+    function refreshStats() { window.location.reload(); }
+
+    function toggleEnabled(id, enabled) {
+        const action = enabled ? 'enable' : 'disable';
+        appendLog('info', (enabled ? 'Enabling' : 'Disabling') + ' ingester: ' + id + ' ...');
+
+        fetch('/api/v1/ingesters/' + encodeURIComponent(id) + '/' + action, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    appendLog('success', data.message);
+                } else {
+                    appendLog('error', action + ' failed: ' + data.error);
+                    document.getElementById('toggle-' + id).checked = !enabled;
+                }
+            })
+            .catch(err => {
+                appendLog('error', 'Network error: ' + err.message);
+                document.getElementById('toggle-' + id).checked = !enabled;
+            });
+    }
+
+    function startIngester(id) {
+        const btn = event.target.closest('button');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Starting...';
+        appendLog('info', 'Starting ingester: ' + id + ' ...');
+
+        fetch('/api/v1/ingesters/' + encodeURIComponent(id) + '/start', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    appendLog('success', data.message);
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    appendLog('error', 'Start failed: ' + data.error);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-play me-1"></i>Start';
+                }
+            })
+            .catch(err => {
+                appendLog('error', 'Network error: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play me-1"></i>Start';
+            });
+    }
+
+    function stopIngester(id) {
+        const btn = event.target.closest('button');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Stopping...';
+        appendLog('info', 'Stopping ingester: ' + id + ' ...');
+
+        fetch('/api/v1/ingesters/' + encodeURIComponent(id) + '/stop', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    appendLog('success', data.message);
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    appendLog('error', 'Stop failed: ' + data.error);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-stop me-1"></i>Stop';
+                }
+            })
+            .catch(err => {
+                appendLog('error', 'Network error: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-stop me-1"></i>Stop';
+            });
+    }
+
+    async function startAllIngesters() {
+        const stopped = allIngesterIds.filter(id => !runningIngesterIds.includes(id));
+        if (stopped.length === 0) { appendLog('info', 'All ingesters are already running.'); return; }
+        if (!confirm('Start ' + stopped.length + ' stopped ingester(s)?\n\n' + stopped.join(', '))) return;
+
+        appendLog('info', 'Starting ' + stopped.length + ' ingester(s)...');
+        let ok = 0, fail = 0;
+        for (const id of stopped) {
+            try {
+                const r = await fetch('/api/v1/ingesters/' + encodeURIComponent(id) + '/start', { method: 'POST' });
+                const data = await r.json();
+                if (data.success) { appendLog('success', data.message); ok++; }
+                else { appendLog('error', id + ': ' + data.error); fail++; }
+            } catch (e) { appendLog('error', id + ': ' + e.message); fail++; }
+        }
+        appendLog('info', 'Done \u2014 ' + ok + ' started, ' + fail + ' failed');
+        if (ok > 0) setTimeout(() => window.location.reload(), 1000);
+    }
+
+    async function stopAllIngesters() {
+        if (runningIngesterIds.length === 0) { appendLog('info', 'No ingesters are running.'); return; }
+        if (!confirm('Stop ' + runningIngesterIds.length + ' running ingester(s)?\n\n' + runningIngesterIds.join(', '))) return;
+
+        appendLog('info', 'Stopping ' + runningIngesterIds.length + ' ingester(s)...');
+        let ok = 0, fail = 0;
+        for (const id of runningIngesterIds) {
+            try {
+                const r = await fetch('/api/v1/ingesters/' + encodeURIComponent(id) + '/stop', { method: 'POST' });
+                const data = await r.json();
+                if (data.success) { appendLog('success', data.message); ok++; }
+                else { appendLog('error', id + ': ' + data.error); fail++; }
+            } catch (e) { appendLog('error', id + ': ' + e.message); fail++; }
+        }
+        appendLog('info', 'Done \u2014 ' + ok + ' stopped, ' + fail + ' failed');
+        if (ok > 0) setTimeout(() => window.location.reload(), 1000);
+    }
+
+    function escapeHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <!--
   ~ Copyright © 2025-2030, All Rights Reserved
   ~ Ashutosh Sinha | Email: ajsinha@gmail.com
-  ~ Proprietary and confidential. Patent Pending.
+  ~ Proprietary and confidential.
   -->
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Broker Configuration')}"></head>
@@ -59,6 +59,7 @@
                                 <label class="form-label fw-semibold">Broker Type <span class="text-danger">*</span></label>
                                 <select name="type" id="brokerType" class="form-select" onchange="toggleTypeFields()">
                                     <option value="kafka" th:selected="${broker['type'] == 'kafka'}">Kafka</option>
+                                    <option value="confluent-kafka" th:selected="${broker['type'] == 'confluent-kafka'}">Confluent Kafka</option>
                                     <option value="activemq" th:selected="${broker['type'] == 'activemq'}">ActiveMQ</option>
                                     <option value="rabbitmq" th:selected="${broker['type'] == 'rabbitmq'}">RabbitMQ</option>
                                     <option value="ibmmq" th:selected="${broker['type'] == 'ibmmq'}">IBM MQ</option>
@@ -123,6 +124,90 @@
                                        placeholder="500" min="1" max="10000"
                                        th:value="${broker['connection'] != null and broker['connection']['max_poll_records'] != null} ? ${broker['connection']['max_poll_records']} : '500'">
                                 <div class="form-text">Max records per poll() call. Typical: 100–1000</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ Confluent Kafka Connection ═══ -->
+                <div id="conn-confluent-kafka" class="card border-0 shadow-sm mb-4 conn-section" style="display:none">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-cloud me-2" style="color:#1d4371"></i>Confluent Kafka Connection</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Bootstrap Servers <span class="text-danger">*</span></label>
+                                <input type="text" name="conn_bootstrap_servers" class="form-control"
+                                       placeholder="pkc-xxxxx.region.confluent.cloud:9092"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['bootstrap_servers']} : ''">
+                                <div class="form-text">Confluent Cloud: <code>pkc-xxxxx.region.confluent.cloud:9092</code> &nbsp;|&nbsp; Self-managed: <code>host1:9092,host2:9092</code></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Client ID</label>
+                                <input type="text" name="conn_client_id" class="form-control"
+                                       placeholder="dgfacade-confluent"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['client_id']} : 'dgfacade-confluent'">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Consumer Group ID</label>
+                                <input type="text" name="conn_group_id" class="form-control"
+                                       placeholder="dgfacade-consumer-group"
+                                       th:value="${broker['connection'] != null} ? ${broker['connection']['group_id']} : 'dgfacade-consumer-group'">
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+                        <h6 class="fw-bold"><i class="fas fa-key me-2 text-warning"></i>SASL Authentication</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Security Protocol</label>
+                                <select name="auth_mechanism" class="form-select">
+                                    <option value="SASL_SSL" th:selected="${broker['authentication'] != null and broker['authentication']['mechanism'] == 'SASL_SSL'}">SASL_SSL (Recommended)</option>
+                                    <option value="SASL_PLAINTEXT" th:selected="${broker['authentication'] != null and broker['authentication']['mechanism'] == 'SASL_PLAINTEXT'}">SASL_PLAINTEXT</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">SASL Mechanism</label>
+                                <select name="auth_sasl_mechanism" class="form-select">
+                                    <option value="PLAIN" th:selected="${broker['authentication'] == null or broker['authentication']['sasl_mechanism'] == 'PLAIN'}">PLAIN (Confluent Cloud)</option>
+                                    <option value="OAUTHBEARER" th:selected="${broker['authentication'] != null and broker['authentication']['sasl_mechanism'] == 'OAUTHBEARER'}">OAUTHBEARER</option>
+                                    <option value="SCRAM-SHA-256" th:selected="${broker['authentication'] != null and broker['authentication']['sasl_mechanism'] == 'SCRAM-SHA-256'}">SCRAM-SHA-256</option>
+                                    <option value="SCRAM-SHA-512" th:selected="${broker['authentication'] != null and broker['authentication']['sasl_mechanism'] == 'SCRAM-SHA-512'}">SCRAM-SHA-512</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4"></div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">API Key / Username <span class="text-danger">*</span></label>
+                                <input type="text" name="auth_api_key" class="form-control"
+                                       placeholder="Confluent Cloud API Key"
+                                       th:value="${broker['authentication'] != null} ? ${broker['authentication']['api_key']} : ''">
+                                <div class="form-text">Use <code>${ENV_VAR}</code> for secrets</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">API Secret / Password <span class="text-danger">*</span></label>
+                                <input type="password" name="auth_api_secret" class="form-control"
+                                       placeholder="Confluent Cloud API Secret"
+                                       th:value="${broker['authentication'] != null} ? ${broker['authentication']['api_secret']} : ''">
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+                        <h6 class="fw-bold"><i class="fas fa-database me-2 text-info"></i>Schema Registry (Optional)</h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Schema Registry URL</label>
+                                <input type="text" name="sr_url" class="form-control"
+                                       placeholder="https://psrc-xxxxx.region.confluent.cloud"
+                                       th:value="${broker['schema_registry'] != null} ? ${broker['schema_registry']['url']} : ''">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Schema Registry API Key</label>
+                                <input type="text" name="sr_api_key" class="form-control"
+                                       th:value="${broker['schema_registry'] != null} ? ${broker['schema_registry']['api_key']} : ''">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Schema Registry API Secret</label>
+                                <input type="password" name="sr_api_secret" class="form-control"
+                                       th:value="${broker['schema_registry'] != null} ? ${broker['schema_registry']['api_secret']} : ''">
                             </div>
                         </div>
                     </div>
@@ -452,6 +537,9 @@
 
                         <h6 class="fw-bold text-primary">SSL Certificates</h6>
                         <p class="text-muted">Place certificate files in <code>config/certs/&lt;broker&gt;/</code>. PEM format is recommended for modern deployments. JKS is available for legacy Java-based systems.</p>
+
+                        <h6 class="fw-bold text-primary">Confluent Kafka</h6>
+                        <p class="text-muted">For Confluent Cloud, use <code>confluent-kafka</code> type. Enter your API key/secret in the SASL section. Bootstrap server is <code>pkc-xxxxx.region.confluent.cloud:9092</code>. Schema Registry is optional.</p>
 
                         <h6 class="fw-bold text-primary">Kafka SSL</h6>
                         <p class="text-muted">For Kafka mTLS, enable SSL and set all three PEM paths. Add <code>security.protocol=SSL</code> in Additional Properties.</p>

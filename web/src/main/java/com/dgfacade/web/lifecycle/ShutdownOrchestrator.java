@@ -1,13 +1,14 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.web.lifecycle;
 
 import com.dgfacade.server.channel.ChannelAccessor;
 import com.dgfacade.server.cluster.ClusterService;
 import com.dgfacade.server.engine.ExecutionEngine;
+import com.dgfacade.server.python.PythonWorkerManager;
 import com.dgfacade.server.ingestion.IngestionService;
 import com.dgfacade.web.websocket.DGFacadeWebSocketHandler;
 import org.slf4j.Logger;
@@ -52,23 +53,26 @@ public class ShutdownOrchestrator {
     private final ClusterService clusterService;
     private final ChannelAccessor channelAccessor;
     private final IngestionService ingestionService;
+    private final PythonWorkerManager pythonWorkerManager;
 
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.6.0}")
+    @Value("${dgfacade.version:1.6.1}")
     private String version;
 
     public ShutdownOrchestrator(ExecutionEngine executionEngine,
                                 DGFacadeWebSocketHandler webSocketHandler,
                                 ClusterService clusterService,
                                 ChannelAccessor channelAccessor,
-                                IngestionService ingestionService) {
+                                IngestionService ingestionService,
+                                PythonWorkerManager pythonWorkerManager) {
         this.executionEngine = executionEngine;
         this.webSocketHandler = webSocketHandler;
         this.clusterService = clusterService;
         this.channelAccessor = channelAccessor;
         this.ingestionService = ingestionService;
+        this.pythonWorkerManager = pythonWorkerManager;
     }
 
     @EventListener(ContextClosedEvent.class)
@@ -107,6 +111,19 @@ public class ShutdownOrchestrator {
             }
             phaseDelay();
             logShutdownPhaseComplete(2, "All ingesters stopped");
+
+            // Phase 2.5: Stop Python worker pool
+            if (pythonWorkerManager.isRunning()) {
+                logShutdownPhase(3, "Stop Python Worker Pool",
+                        "Shutting down Python worker processes...");
+                try {
+                    pythonWorkerManager.stop();
+                } catch (Exception e) {
+                    log.warn("  ⚠ Python worker pool shutdown issue: {}", e.getMessage());
+                }
+                phaseDelay();
+                logShutdownPhaseComplete(3, "Python worker pool stopped");
+            }
 
             // Phase 3: Drain channel queues
             logShutdownPhase(3, "Drain Channel Internal Queues",
@@ -199,7 +216,7 @@ public class ShutdownOrchestrator {
         log.info("║   Completed At  : {}{}║", endTimestamp,
                 pad("Completed At  : " + endTimestamp, 52));
         log.info("║                                                                    ║");
-        log.info("║   Copyright © 2025-2030 Ashutosh Sinha. Patent Pending.            ║");
+        log.info("║   Copyright © 2025-2030 Ashutosh Sinha.            ║");
         log.info("║   Goodbye.                                                         ║");
         log.info("║                                                                    ║");
         log.info("╚════════════════════════════════════════════════════════════════════╝");

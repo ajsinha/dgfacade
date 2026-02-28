@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.web.controller;
 
@@ -40,7 +40,7 @@ public class GlobalExceptionHandler implements ErrorController {
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.6.0}")
+    @Value("${dgfacade.version:1.6.1}")
     private String version;
 
     /**

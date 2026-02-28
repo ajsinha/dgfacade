@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Handler Configuration')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a th:href="@{/admin/handlers}">Handlers</a></li>
+                        <li class="breadcrumb-item active" th:text="${editMode} ? 'Edit: ' + ${fileId} + '.json' : 'New Handler File'">New Handler File</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0">
+                    <i class="fas me-2" th:classappend="${editMode} ? 'fa-edit' : 'fa-plus-circle'"></i>
+                    <span th:text="${editMode} ? 'Edit Handler File' : 'Create New Handler File'">Create New Handler File</span>
+                </h2>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/handlers}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back to Handlers</a>
+            </div>
+        </div>
+
+        <form th:action="${editMode} ? @{/admin/handlers/edit/{id}(id=${fileId})} : @{/admin/handlers/create}" method="post">
+
+        <div class="row g-4">
+            <!-- ════════════ LEFT COLUMN: Form Fields ════════════ -->
+            <div class="col-lg-8">
+
+                <!-- File Info -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-file-code me-2 text-primary"></i>File Identity</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6" th:if="${!editMode}">
+                                <label class="form-label fw-semibold">File ID <span class="text-danger">*</span></label>
+                                <input type="text" name="fileId" class="form-control" required
+                                       placeholder="e.g. default, admin, pdc"
+                                       pattern="[a-zA-Z0-9\-_]+" title="Letters, numbers, hyphens, underscores only"
+                                       th:value="${fileId}">
+                                <div class="form-text">Becomes <code>&lt;id&gt;.json</code> in <code>config/handlers/</code>. Use <code>default</code> for fallback handlers, or a username for user-specific overrides.</div>
+                            </div>
+                            <div class="col-md-6" th:if="${editMode}">
+                                <label class="form-label fw-semibold">File ID</label>
+                                <input type="text" class="form-control" disabled th:value="${fileId}">
+                                <div class="form-text">Cannot be changed after creation.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Handler Entries -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-bolt me-2 text-warning"></i>Handler Entries</h5>
+                        <button type="button" class="btn btn-sm btn-success" onclick="addHandlerRow()">
+                            <i class="fas fa-plus me-1"></i>Add Handler
+                        </button>
+                    </div>
+                    <div class="card-body" id="handlerEntries">
+
+                        <!-- Existing handlers (edit mode) -->
+                        <div th:each="entry : ${handlers.entrySet()}" class="handler-row card border mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h6 class="mb-0 text-primary"><i class="fas fa-bolt me-1"></i> Handler Entry</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.handler-row').remove()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Request Type <span class="text-danger">*</span></label>
+                                        <input type="text" name="handler_request_type" class="form-control font-monospace"
+                                               required placeholder="e.g. ECHO"
+                                               th:value="${entry.key}">
+                                        <div class="form-text">Uppercase. e.g. ECHO, HASH, ARITHMETIC</div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label fw-semibold">Handler Class <span class="text-danger">*</span></label>
+                                        <select name="handler_class" class="form-select">
+                                            <option value="com.dgfacade.server.handler.EchoHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.EchoHandler'}">EchoHandler</option>
+                                            <option value="com.dgfacade.server.handler.ArithmeticHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.ArithmeticHandler'}">ArithmeticHandler</option>
+                                            <option value="com.dgfacade.server.handler.StringTransformHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.StringTransformHandler'}">StringTransformHandler</option>
+                                            <option value="com.dgfacade.server.handler.HashHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.HashHandler'}">HashHandler</option>
+                                            <option value="com.dgfacade.server.handler.JsonTransformHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.JsonTransformHandler'}">JsonTransformHandler</option>
+                                            <option value="com.dgfacade.server.handler.DelayedHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.DelayedHandler'}">DelayedHandler</option>
+                                            <option value="com.dgfacade.server.handler.SystemInfoHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.SystemInfoHandler'}">SystemInfoHandler</option>
+                                            <option value="com.dgfacade.server.handler.HttpProbeHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.HttpProbeHandler'}">HttpProbeHandler</option>
+                                            <option value="com.dgfacade.server.handler.BatchArithmeticHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.BatchArithmeticHandler'}">BatchArithmeticHandler</option>
+                                            <option value="com.dgfacade.server.handler.ChainHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.ChainHandler'}">ChainHandler</option>
+                                            <option value="com.dgfacade.server.handler.WebSocketDemoHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.WebSocketDemoHandler'}">WebSocketDemoHandler</option>
+                                            <option value="com.dgfacade.server.handler.PDCHandler" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.handler.PDCHandler'}">PDCHandler</option>
+                                            <option value="com.dgfacade.server.python.DGHandlerPython" th:selected="${entry.value.handlerClass == 'com.dgfacade.server.python.DGHandlerPython'}">DGHandlerPython (Python)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold">Description</label>
+                                        <input type="text" name="handler_description" class="form-control"
+                                               placeholder="Brief description of this handler mapping"
+                                               th:value="${entry.value.description}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">TTL (minutes)</label>
+                                        <input type="number" name="handler_ttl" class="form-control"
+                                               min="1" max="1440" placeholder="5"
+                                               th:value="${entry.value.ttlMinutes}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Enabled</label>
+                                        <select name="handler_enabled" class="form-select">
+                                            <option value="true" th:selected="${entry.value.enabled}">Yes</option>
+                                            <option value="false" th:selected="${!entry.value.enabled}">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Config (JSON)</label>
+                                        <textarea name="handler_config" class="form-control font-monospace" rows="2"
+                                                  placeholder='{"key": "value"}'
+                                                  th:text="${entry.value.config != null} ? ${@jsonHelper.toJson(entry.value.config)} : '{}'"></textarea>
+                                        <div class="form-text">JSON object passed to the handler at runtime</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty state for create mode -->
+                        <div th:if="${handlers == null or handlers.isEmpty()}" id="emptyState" class="text-center py-4 text-muted">
+                            <i class="fas fa-bolt fa-2x mb-2 d-block"></i>
+                            No handler entries yet. Click <strong>Add Handler</strong> to start.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="d-flex gap-2 mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas me-1" th:classappend="${editMode} ? 'fa-save' : 'fa-plus'"></i>
+                        <span th:text="${editMode} ? 'Save Changes' : 'Create Handler File'">Create Handler File</span>
+                    </button>
+                    <a th:href="@{/admin/handlers}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                </div>
+            </div>
+
+            <!-- ════════════ RIGHT COLUMN: Help Sidebar ════════════ -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-4 sticky-top" style="top: 80px">
+                    <div class="card-header bg-primary text-white py-3"><h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Configuration Tips</h6></div>
+                    <div class="card-body small">
+                        <h6 class="fw-bold text-primary">File ID Meaning</h6>
+                        <p class="text-muted">The file ID maps to a config scope. <code>default</code> provides fallback handlers for all users. Other IDs (e.g. <code>admin</code>) provide user-specific handler overrides that take priority over the default.</p>
+
+                        <h6 class="fw-bold text-primary">Request Type</h6>
+                        <p class="text-muted">A unique identifier (uppercase) that clients send in their request payload to route to the correct handler. Examples: <code>ECHO</code>, <code>ARITHMETIC</code>, <code>HASH</code>.</p>
+
+                        <h6 class="fw-bold text-primary">Handler Class</h6>
+                        <p class="text-muted">The fully-qualified Java class that processes requests of this type. All handlers must implement <code>DGHandler</code> or extend <code>DGHandlerProxy</code>.</p>
+
+                        <h6 class="fw-bold text-primary">TTL (Time To Live)</h6>
+                        <p class="text-muted">Maximum time in minutes a handler instance will wait for a response before timing out. Set higher for long-running operations (e.g. PDC pipelines).</p>
+
+                        <h6 class="fw-bold text-primary">Config Object</h6>
+                        <p class="text-muted">A JSON object passed to the handler at startup. Use for handler-specific settings like <code>{"precision": 10}</code> or <code>{"max_timeout_seconds": 30}</code>.</p>
+
+                        <hr>
+                        <p class="text-muted mb-0"><i class="fas fa-file-alt me-1"></i>
+                            Config files are saved to <code>config/handlers/&lt;id&gt;.json</code> and auto-reloaded on save.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </form>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+function addHandlerRow() {
+    var empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+    var html = '<div class="handler-row card border mb-3">' +
+        '<div class="card-body">' +
+        '<div class="d-flex justify-content-between align-items-start mb-3">' +
+        '<h6 class="mb-0 text-primary"><i class="fas fa-bolt me-1"></i> Handler Entry</h6>' +
+        '<button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.handler-row\').remove()"><i class="fas fa-times"></i></button>' +
+        '</div>' +
+        '<div class="row g-3">' +
+        '<div class="col-md-4">' +
+        '<label class="form-label fw-semibold">Request Type <span class="text-danger">*</span></label>' +
+        '<input type="text" name="handler_request_type" class="form-control font-monospace" required placeholder="e.g. ECHO">' +
+        '<div class="form-text">Uppercase. e.g. ECHO, HASH</div>' +
+        '</div>' +
+        '<div class="col-md-8">' +
+        '<label class="form-label fw-semibold">Handler Class <span class="text-danger">*</span></label>' +
+        '<select name="handler_class" class="form-select">' +
+        '<option value="com.dgfacade.server.handler.EchoHandler">EchoHandler</option>' +
+        '<option value="com.dgfacade.server.handler.ArithmeticHandler">ArithmeticHandler</option>' +
+        '<option value="com.dgfacade.server.handler.StringTransformHandler">StringTransformHandler</option>' +
+        '<option value="com.dgfacade.server.handler.HashHandler">HashHandler</option>' +
+        '<option value="com.dgfacade.server.handler.JsonTransformHandler">JsonTransformHandler</option>' +
+        '<option value="com.dgfacade.server.handler.DelayedHandler">DelayedHandler</option>' +
+        '<option value="com.dgfacade.server.handler.SystemInfoHandler">SystemInfoHandler</option>' +
+        '<option value="com.dgfacade.server.handler.HttpProbeHandler">HttpProbeHandler</option>' +
+        '<option value="com.dgfacade.server.handler.BatchArithmeticHandler">BatchArithmeticHandler</option>' +
+        '<option value="com.dgfacade.server.handler.ChainHandler">ChainHandler</option>' +
+        '<option value="com.dgfacade.server.handler.WebSocketDemoHandler">WebSocketDemoHandler</option>' +
+        '<option value="com.dgfacade.server.handler.PDCHandler">PDCHandler</option>' +
+        '<option value="com.dgfacade.server.python.DGHandlerPython">DGHandlerPython (Python)</option>' +
+        '</select>' +
+        '</div>' +
+        '<div class="col-12">' +
+        '<label class="form-label fw-semibold">Description</label>' +
+        '<input type="text" name="handler_description" class="form-control" placeholder="Brief description">' +
+        '</div>' +
+        '<div class="col-md-3">' +
+        '<label class="form-label fw-semibold">TTL (minutes)</label>' +
+        '<input type="number" name="handler_ttl" class="form-control" min="1" max="1440" value="5">' +
+        '</div>' +
+        '<div class="col-md-3">' +
+        '<label class="form-label fw-semibold">Enabled</label>' +
+        '<select name="handler_enabled" class="form-select"><option value="true">Yes</option><option value="false">No</option></select>' +
+        '</div>' +
+        '<div class="col-md-6">' +
+        '<label class="form-label fw-semibold">Config (JSON)</label>' +
+        '<textarea name="handler_config" class="form-control font-monospace" rows="2" placeholder=\'{"key": "value"}\'>{}</textarea>' +
+        '<div class="form-text">JSON object passed to handler</div>' +
+        '</div>' +
+        '</div></div></div>';
+    document.getElementById('handlerEntries').insertAdjacentHTML('beforeend', html);
+}
+</script>
+</body>
+</html>

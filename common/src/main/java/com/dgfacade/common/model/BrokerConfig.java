@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.common.model;
 
@@ -40,7 +40,7 @@ public class BrokerConfig {
     private Map<String, String> properties;
 
     public enum BrokerType {
-        KAFKA, ACTIVEMQ, RABBITMQ, IBMMQ, FILESYSTEM, SQL
+        KAFKA, CONFLUENT_KAFKA, ACTIVEMQ, RABBITMQ, IBMMQ, FILESYSTEM, SQL
     }
 
     public BrokerConfig() {}

@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.messaging.kafka;
 
@@ -29,6 +29,17 @@ public class KafkaDataPublisher extends AbstractPublisher {
         props.put(ProducerConfig.ACKS_CONFIG, config.getOrDefault("acks", "1"));
         props.put(ProducerConfig.RETRIES_CONFIG, config.getOrDefault("retries", "3"));
         props.put(ProducerConfig.LINGER_MS_CONFIG, config.getOrDefault("linger_ms", "5"));
+        // Connection recovery: exponential backoff for reconnection attempts
+        props.put(ProducerConfig.RECONNECT_BACKOFF_MS_CONFIG,
+                config.getOrDefault("reconnect_backoff_ms", "1000"));
+        props.put(ProducerConfig.RECONNECT_BACKOFF_MAX_MS_CONFIG,
+                config.getOrDefault("reconnect_backoff_max_ms", "30000"));
+        props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG,
+                config.getOrDefault("retry_backoff_ms", "500"));
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG,
+                config.getOrDefault("request_timeout_ms", "30000"));
+        props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG,
+                config.getOrDefault("delivery_timeout_ms", "120000"));
         // Add any custom properties
         if (config.containsKey("properties")) {
             @SuppressWarnings("unchecked")

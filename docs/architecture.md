@@ -1,7 +1,7 @@
 # DGFacade Architecture
 
-**Version:** 1.6.0
-**Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved. Patent Pending.**
+**Version:** 1.6.1
+**Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.**
 
 ## Overview
 
@@ -127,5 +127,36 @@ The system initializes in 9 phases:
 
 - Java 17, Spring Boot 3.2.5, Apache Pekko 1.0.2
 - Kafka 3.7, ActiveMQ 6.1, Jackson 2.17
+- Python 3 with Py4J for cross-language handler execution
 - Thymeleaf, Bootstrap 5, Font Awesome 6
 - Prometheus/Micrometer for metrics, Grafana for dashboards
+
+## Python Handler Support (v1.6.1)
+
+DGFacade supports writing handlers in Python using the same start/execute/stop contract as Java handlers.
+
+### Architecture
+
+```
+ Java (Spring Boot)              Python (Worker Pool)
+┌─────────────────┐            ┌────────────────────┐
+│  DGHandlerPython │───JSON───►│  dgfacade_worker.py │
+│  (Bridge)        │◄──JSON────│  ├─ dg_handler.py   │
+└─────────────────┘     TCP    │  └─ handlers/       │
+                               │     ├─ echo_handler  │
+                               │     └─ transform_hdl │
+                               └────────────────────┘
+```
+
+### How It Works
+
+1. `DGHandlerPython` is a Java bridge handler that implements `DGHandler`
+2. Python handlers are registered in standard handler configs (`config/handlers/default.json`, `admin.json`) with `"is_python": true` — they are conceptually identical to Java handlers
+3. On `execute()`, the bridge reads `python_module` and `python_class` from the handler config, serializes the `DGRequest` to JSON, and dispatches to a Python worker via TCP (Py4J)
+4. The Python worker imports the specified handler class, calls its `compute()` method, and returns the result as JSON
+5. `PythonWorkerManager` manages N worker processes with round-robin dispatch, health checks, and auto-restart
+6. Worker pool configuration (worker count, ports, health intervals) is in `config/python/py4j.json` — handler definitions are NOT in this file
+
+### Admin UI
+
+The Python Workers page (`/admin/python-workers`) provides real-time monitoring of the worker pool, with status cards for each worker, restart controls, log viewer, and configuration reload.

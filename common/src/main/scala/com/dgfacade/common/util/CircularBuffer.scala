@@ -1,14 +1,13 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.common.util
 
 import java.time.Instant
 import java.time.Duration
 import scala.collection.mutable
-import scala.jdk.CollectionConverters._
 
 /**
  * A thread-safe circular buffer that evicts entries older than maxAge
@@ -32,7 +31,9 @@ class CircularBuffer[T](maxSize: Int = 1000, maxAgeDuration: Duration = Duration
 
   def getAll: java.util.List[T] = lock.synchronized {
     evictOld()
-    buffer.map(_.value).toList.asJava
+    val result = new java.util.ArrayList[T]()
+    buffer.foreach(e => result.add(e.value))
+    result
   }
 
   def size: Int = lock.synchronized {

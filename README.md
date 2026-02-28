@@ -1,8 +1,7 @@
 # DGFacade — Data Gateway Facade
 
-**Version:** 1.6.0
+**Version:** 1.6.1
 **Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.**
-**Patent Pending:** Certain architectural patterns and implementations may be subject to patent applications.
 
 ---
 
@@ -20,6 +19,7 @@ DGFacade is a high-performance, configuration-driven data gateway facade system 
 - **6 Broker Types** — Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, SQL with SSL/TLS and PEM certificates
 - **External Handler Loading** — Drop JAR files in `libs/` to add custom handlers at runtime
 - **Dynamic Proxy** — DGHandlerProxy wraps any POJO into the DGHandler lifecycle automatically
+- **Python Handlers** — Write handlers in Python using the same contract; registered in standard handler configs with `is_python: true`; Py4J worker pool with health monitoring, auto-restart, and Admin UI
 - **Streaming Handlers** — Long-running handlers send incremental updates over WebSocket
 - **Prometheus Metrics** — 13+ custom Micrometer metrics with pre-built Grafana dashboard
 - **Health Check & Monitoring** — /ping, /health, live log viewer, all public (no auth required)
@@ -34,7 +34,7 @@ DGFacade is a high-performance, configuration-driven data gateway facade system 
 
 | Component     | Technology              |
 |---------------|-------------------------|
-| Language      | Java 17, Scala 2.13     |
+| Language      | Java 17, Scala 2.13, Python 3 |
 | Framework     | Spring Boot 3.2.5       |
 | Actors        | Apache Pekko 1.0.2      |
 | Messaging     | Kafka 3.7, ActiveMQ 6.1 |
@@ -59,10 +59,16 @@ dgfacade/
 │   ├── output-channels/ Output channel configs (2 configs)
 │   ├── ingesters/       Ingester configs (3 configs)
 │   ├── chains/          Handler chain definitions
+│   ├── python/          Python worker pool config (py4j.json)
 │   ├── prometheus/      Prometheus scrape config
 │   ├── grafana/         Pre-built Grafana dashboard JSON
 │   ├── users.json       User accounts
 │   └── apikeys.json     API key definitions
+├── python/              Python handler code
+│   ├── dgfacade_worker.py   Worker process entry point
+│   ├── dg_handler.py        Base handler class
+│   ├── dg_gateway.py        Py4J gateway bridge
+│   └── handlers/            Python handler implementations
 ├── libs/                External handler JARs (drop-in)
 ├── logs/                Application and handler execution logs
 ├── build.sh             Build script
@@ -106,6 +112,11 @@ curl -X POST http://localhost:8090/api/v1/request \
 curl -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{"api_key":"dgf-test-key-0001","request_type":"ARITHMETIC","payload":{"operation":"MUL","operands":[7,6]}}'
+
+# Python handler (requires enabled worker pool in config/python/py4j.json)
+curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"dgf-test-key-0001","request_type":"PYTHON_ECHO","payload":{"message":"Hello from Python!"}}'
 ```
 
 ### Web Dashboard
@@ -134,6 +145,10 @@ Open `http://localhost:8090` — Login: `admin` / `password`
 | GET    | /admin/api/config/export   | Admin    | Download all configs as ZIP      |
 | POST   | /admin/api/validate/broker | Admin    | Validate broker config JSON      |
 | WS     | /ws/gateway                | Public   | WebSocket gateway                |
+| GET    | /api/v1/python/status      | Public   | Python worker pool status        |
+| GET    | /api/v1/python/workers     | Public   | List Python worker statuses      |
+| POST   | /api/v1/python/restart-all | Admin    | Restart all Python workers       |
+| POST   | /api/v1/python/reload-config | Admin  | Reload Python config from disk   |
 
 ## Monitoring (No Auth Required)
 
@@ -168,4 +183,4 @@ All monitoring endpoints are accessible without authentication:
 
 Copyright © 2025-2030, All Rights Reserved.
 Ashutosh Sinha | Email: ajsinha@gmail.com
-Proprietary and confidential. Patent Pending.
+Proprietary and confidential.

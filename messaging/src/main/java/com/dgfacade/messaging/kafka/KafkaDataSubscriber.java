@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.messaging.kafka;
 
@@ -37,6 +37,17 @@ public class KafkaDataSubscriber extends AbstractSubscriber {
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG,
                 config.getOrDefault("max_poll_records", "500"));
+        // Connection recovery: exponential backoff for reconnection attempts
+        props.put(ConsumerConfig.RECONNECT_BACKOFF_MS_CONFIG,
+                config.getOrDefault("reconnect_backoff_ms", "1000"));
+        props.put(ConsumerConfig.RECONNECT_BACKOFF_MAX_MS_CONFIG,
+                config.getOrDefault("reconnect_backoff_max_ms", "30000"));
+        props.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG,
+                config.getOrDefault("request_timeout_ms", "30000"));
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG,
+                config.getOrDefault("session_timeout_ms", "45000"));
+        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG,
+                config.getOrDefault("heartbeat_interval_ms", "10000"));
         if (config.containsKey("properties")) {
             @SuppressWarnings("unchecked")
             Map<String, String> custom = (Map<String, String>) config.get("properties");
@@ -75,9 +86,24 @@ public class KafkaDataSubscriber extends AbstractSubscriber {
                 }
             } catch (Exception e) {
                 if (running) {
-                    log.error("Kafka poll error", e);
-                    scheduleReconnect();
-                    return;
+                    log.error("Kafka poll error — will attempt reconnection", e);
+                    try {
+                        // Close stale consumer before reconnect
+                        if (consumer != null) { try { consumer.close(Duration.ofSeconds(5)); } catch (Exception ignored) {} }
+                        state = ConnectionState.RECONNECTING;
+                        // Exponential backoff: 5s, 10s, 20s, capped at 60s
+                        int backoffSeconds = Math.min(60, reconnectIntervalSeconds);
+                        Thread.sleep(backoffSeconds * 1000L);
+                        log.info("Attempting Kafka consumer reconnection...");
+                        doConnect();
+                        for (String topic : listeners.keySet()) doSubscribe(topic);
+                        log.info("Kafka consumer reconnected — resuming poll loop");
+                        // Continue the loop (don't return)
+                    } catch (Exception reconnectEx) {
+                        log.warn("Kafka reconnection failed, scheduling deferred reconnect: {}", reconnectEx.getMessage());
+                        scheduleReconnect();
+                        return;
+                    }
                 }
             }
         }

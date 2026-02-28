@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Handlers')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-1"><i class="fas fa-cogs me-2"></i>Request Handlers</h2>
+                <p class="text-muted mb-0">Manage handler configuration files &mdash;
+                    each file maps request types to handler classes with TTL and config settings</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Main Column -->
+            <div class="col-lg-8">
+
+                <!-- File Selector & Actions Bar -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold"><i class="fas fa-file-code me-1 text-primary"></i>Handler File</label>
+                                <select id="fileSelect" class="form-select" onchange="loadFile()">
+                                    <option value="">— Select a handler file —</option>
+                                    <th:block th:each="hf : ${handlerFiles}">
+                                        <option th:value="${hf['_file_id']}"
+                                                th:text="${hf['_file_id'] + '.json (' + hf['_handler_count'] + ' handlers)'}"
+                                                th:data-count="${hf['_handler_count']}">file.json</option>
+                                    </th:block>
+                                </select>
+                            </div>
+                            <div class="col-auto d-flex gap-2 flex-wrap">
+                                <button class="btn btn-success" onclick="showCreateFileModal()">
+                                    <i class="fas fa-plus me-1"></i>New File
+                                </button>
+                                <button class="btn btn-outline-primary" id="btnAddHandler" onclick="showHandlerModal()" disabled>
+                                    <i class="fas fa-bolt me-1"></i>Add Handler
+                                </button>
+                                <button class="btn btn-outline-info" id="btnViewJson" onclick="viewFileJson()" disabled>
+                                    <i class="fas fa-eye me-1"></i>View JSON
+                                </button>
+                                <form th:action="@{/admin/handlers/reload}" method="post" class="d-inline">
+                                    <button class="btn btn-outline-secondary" title="Reload all handler configs from disk">
+                                        <i class="fas fa-sync-alt me-1"></i>Reload All
+                                    </button>
+                                </form>
+                                <button class="btn btn-outline-danger" id="btnDeleteFile" onclick="deleteFile()" disabled>
+                                    <i class="fas fa-trash me-1"></i>Delete File
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Handler Table -->
+                <div class="card border-0 shadow-sm mb-4" id="handlerTableCard" style="display:none;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-bolt me-2 text-warning"></i>Handlers in <code id="fileLabel">—</code></h5>
+                        <span class="badge bg-primary" id="handlerCountBadge">0</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table dg-table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">Request Type</th>
+                                        <th>Handler Class</th>
+                                        <th>Description</th>
+                                        <th class="text-center">TTL</th>
+                                        <th class="text-center">Python</th>
+                                        <th class="text-center">Enabled</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="handlerTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty state -->
+                <div id="emptyState" class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5 text-muted">
+                        <i class="fas fa-cogs fa-3x mb-3 d-block"></i>
+                        Select a handler file above, or create a new one
+                    </div>
+                </div>
+
+                <!-- Handler Resolution Flow -->
+                <div class="card border-0 shadow-sm mt-4" id="resolutionCard">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-route me-2 text-info"></i>How Handler Resolution Works</h5></div>
+                    <div class="card-body">
+                        <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1.2rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>  Incoming DGRequest
+  ├─ api_key: "dgf-admin-key-0001"
+  └─ request_type: "PYTHON_ECHO"
+         │
+         ▼
+  ┌──────────────────────────────────────┐
+  │ Step 1: Resolve User from API Key    │
+  │  UserService.resolveUserFromApiKey() │
+  │  "dgf-admin-key-0001" → user "admin" │
+  └──────────┬───────────────────────────┘
+             │
+             ▼
+  ┌──────────────────────────────────────┐
+  │ Step 2: Find Handler Config          │
+  │  HandlerConfigRegistry.findHandler() │
+  │                                      │
+  │  1st: Check config/handlers/admin.json│  ← user-specific file
+  │       Has PYTHON_ECHO? → YES, use it │
+  │                                      │
+  │  2nd: (fallback) config/handlers/    │
+  │       default.json                   │
+  └──────────┬───────────────────────────┘
+             │
+             ▼
+  ┌──────────────────────────────────────┐
+  │ Step 3: Check is_python flag         │
+  │                                      │
+  │  is_python == false?                 │
+  │    → Instantiate Java handler_class  │
+  │    → Call construct(config)          │
+  │    → Call execute(request)           │
+  │                                      │
+  │  is_python == true?                  │
+  │    → Instantiate DGHandlerPython     │
+  │    → Read python_module/python_class │
+  │    → Dispatch to Python worker pool  │
+  │    → Worker calls compute(request)   │
+  └──────────┬───────────────────────────┘
+             │
+             ▼
+  ┌──────────────────────────────────────┐
+  │ Step 4: Return DGResponse            │
+  │  → Track in HandlerState             │
+  │  → Record Prometheus metrics         │
+  │  → Return to caller (REST/WS/Kafka)  │
+  └──────────────────────────────────────┘</code></pre>
+
+                        <div class="mt-3 small" style="color:var(--dg-text-secondary);">
+                            <p class="mb-2"><strong>Resolution Priority:</strong> User-specific file (e.g. <code>admin.json</code>) takes precedence over <code>default.json</code>.
+                            If a user has a matching request type in their file, that config is used. Otherwise, the default file provides the fallback.</p>
+                            <p class="mb-2"><strong>Python vs Java:</strong> The <code>is_python</code> flag is the only difference. Both handler types are registered in the same JSON files,
+                            use the same TTL/enabled/config fields, and are dispatched by the same ExecutionEngine.</p>
+                            <p class="mb-0"><strong>Hot Reload:</strong> Configuration changes are detected automatically within 5 minutes via periodic scan, or immediately via
+                            <code>POST /api/v1/reload</code> or the <strong>Reload All</strong> button above. No restart required.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Available Handler Classes -->
+                <div class="card border-0 shadow-sm mb-4 sticky-top" style="top:80px;">
+                    <div class="card-header"><h6 class="mb-0"><i class="fas fa-puzzle-piece me-2 text-info"></i>Available Handler Classes</h6></div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height:300px;overflow-y:auto;">
+                            <table class="table dg-table table-sm mb-0">
+                                <tbody>
+                                    <tr><td class="ps-3"><code class="small">EchoHandler</code></td><td class="small text-muted">Echoes payload</td></tr>
+                                    <tr><td class="ps-3"><code class="small">ArithmeticHandler</code></td><td class="small text-muted">ADD, SUB, MUL, DIV, POW</td></tr>
+                                    <tr><td class="ps-3"><code class="small">StringTransformHandler</code></td><td class="small text-muted">UPPER, LOWER, REVERSE</td></tr>
+                                    <tr><td class="ps-3"><code class="small">HashHandler</code></td><td class="small text-muted">MD5, SHA256, BASE64, UUID</td></tr>
+                                    <tr><td class="ps-3"><code class="small">JsonTransformHandler</code></td><td class="small text-muted">FLATTEN, MERGE, PICK, OMIT</td></tr>
+                                    <tr><td class="ps-3"><code class="small">DelayedHandler</code></td><td class="small text-muted">Configurable delay</td></tr>
+                                    <tr><td class="ps-3"><code class="small">SystemInfoHandler</code></td><td class="small text-muted">JVM, OS, memory info</td></tr>
+                                    <tr><td class="ps-3"><code class="small">HttpProbeHandler</code></td><td class="small text-muted">URL health probing</td></tr>
+                                    <tr><td class="ps-3"><code class="small">BatchArithmeticHandler</code></td><td class="small text-muted">Bulk operations</td></tr>
+                                    <tr><td class="ps-3"><code class="small">ChainHandler</code></td><td class="small text-muted">Declarative pipelines</td></tr>
+                                    <tr><td class="ps-3"><code class="small">WebSocketDemoHandler</code></td><td class="small text-muted">WS demo operations</td></tr>
+                                    <tr><td class="ps-3"><code class="small">PDCHandler</code></td><td class="small text-muted">Pub-Deliver-Consume</td></tr>
+                                    <tr style="border-left:3px solid #FFD43B;">
+                                        <td class="ps-3"><code class="small" style="color:#FFD43B;">DGHandlerPython</code></td>
+                                        <td class="small text-muted">Python bridge handler</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-body border-top small" style="color:var(--dg-text-secondary);">
+                        <p class="mb-2"><strong>File ID Convention:</strong></p>
+                        <p class="mb-1"><code>default</code> — Fallback handlers for all users</p>
+                        <p class="mb-1"><code>admin</code> — Admin user overrides</p>
+                        <p class="mb-1"><code>&lt;username&gt;</code> — User-specific overrides</p>
+                        <hr class="my-2">
+                        <p class="mb-0"><i class="fas fa-clock me-1"></i>Configs auto-reload every 5 min, or use <strong>Reload All</strong>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Create File Modal ═══ -->
+    <div class="modal fade" id="createFileModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Create New Handler File</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <label class="form-label fw-semibold">File ID <span class="text-danger">*</span></label>
+            <input id="newFileId" type="text" class="form-control font-monospace" placeholder="e.g. default, admin, testuser" pattern="[a-zA-Z0-9\-_]+">
+            <div class="form-text">Becomes <code>&lt;id&gt;.json</code> in <code>config/handlers/</code></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-success" onclick="createFile()"><i class="fas fa-plus me-1"></i>Create</button>
+        </div>
+    </div></div></div>
+
+    <!-- ═══ Handler Editor Modal ═══ -->
+    <div class="modal fade" id="handlerModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="handlerModalTitle"><i class="fas fa-bolt me-2 text-warning"></i>Add Handler</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="hm_origType" value="">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Request Type <span class="text-danger">*</span></label>
+                    <input id="hm_type" type="text" class="form-control font-monospace" placeholder="e.g. MY_HANDLER" style="text-transform:uppercase;">
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label fw-semibold">Handler Class</label>
+                    <select id="hm_class" class="form-select" onchange="onClassChange()">
+                        <option value="com.dgfacade.server.handler.EchoHandler">EchoHandler</option>
+                        <option value="com.dgfacade.server.handler.ArithmeticHandler">ArithmeticHandler</option>
+                        <option value="com.dgfacade.server.handler.StringTransformHandler">StringTransformHandler</option>
+                        <option value="com.dgfacade.server.handler.HashHandler">HashHandler</option>
+                        <option value="com.dgfacade.server.handler.JsonTransformHandler">JsonTransformHandler</option>
+                        <option value="com.dgfacade.server.handler.DelayedHandler">DelayedHandler</option>
+                        <option value="com.dgfacade.server.handler.SystemInfoHandler">SystemInfoHandler</option>
+                        <option value="com.dgfacade.server.handler.HttpProbeHandler">HttpProbeHandler</option>
+                        <option value="com.dgfacade.server.handler.BatchArithmeticHandler">BatchArithmeticHandler</option>
+                        <option value="com.dgfacade.server.handler.ChainHandler">ChainHandler</option>
+                        <option value="com.dgfacade.server.handler.WebSocketDemoHandler">WebSocketDemoHandler</option>
+                        <option value="com.dgfacade.server.handler.PDCHandler">PDCHandler</option>
+                        <option value="com.dgfacade.server.python.DGHandlerPython">DGHandlerPython (Python)</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Description</label>
+                    <input id="hm_desc" type="text" class="form-control" placeholder="Brief description">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">TTL (min)</label>
+                    <input id="hm_ttl" type="number" class="form-control" min="1" max="1440" value="5">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Enabled</label>
+                    <select id="hm_enabled" class="form-select">
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+                <div class="col-md-6" id="pythonFields" style="display:none;">
+                    <label class="form-label fw-semibold" style="color:#FFD43B;"><i class="fab fa-python me-1"></i>Python Module</label>
+                    <input id="hm_pymodule" type="text" class="form-control font-monospace" placeholder="handlers.my_handler">
+                    <label class="form-label fw-semibold mt-2" style="color:#FFD43B;">Python Class</label>
+                    <input id="hm_pyclass" type="text" class="form-control font-monospace" placeholder="MyHandler">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Config (JSON)</label>
+                    <textarea id="hm_config" class="form-control font-monospace" rows="3" placeholder='{"key": "value"}'>{}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary" onclick="saveHandler()"><i class="fas fa-save me-1"></i>Save</button>
+        </div>
+    </div></div></div>
+
+    <!-- ═══ JSON Viewer Modal ═══ -->
+    <div class="modal fade" id="jsonModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="jsonModalTitle">JSON</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><pre id="jsonContent" style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.8rem;max-height:500px;overflow:auto;"></pre></div>
+    </div></div></div>
+
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+var currentFileId = null;
+var currentHandlers = {};
+
+function loadFile() {
+    var sel = document.getElementById('fileSelect');
+    currentFileId = sel.value;
+    var btns = ['btnAddHandler','btnViewJson','btnDeleteFile'];
+    btns.forEach(function(id){document.getElementById(id).disabled = !currentFileId;});
+    if (!currentFileId) { document.getElementById('handlerTableCard').style.display='none'; document.getElementById('emptyState').style.display=''; return; }
+    fetch('/admin/api/handlers/' + currentFileId + '/config')
+        .then(function(r){return r.json();})
+        .then(function(data){ currentHandlers = data; renderTable(); })
+        .catch(function(e){ showToast('Failed to load: ' + e.message, 'danger'); });
+}
+
+function renderTable() {
+    var card = document.getElementById('handlerTableCard');
+    var empty = document.getElementById('emptyState');
+    var entries = Object.entries(currentHandlers);
+    card.style.display = '';
+    empty.style.display = 'none';
+    document.getElementById('fileLabel').textContent = currentFileId + '.json';
+    document.getElementById('handlerCountBadge').textContent = entries.length + ' handler(s)';
+    var tbody = document.getElementById('handlerTableBody');
+    if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No handlers in this file. Click <strong>Add Handler</strong> to start.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = entries.map(function(e) {
+        var type = e[0], h = e[1];
+        var shortClass = h.handlerClass ? h.handlerClass.split('.').pop() : '?';
+        var isPy = h.isPython || h.is_python || (h.handlerClass && h.handlerClass.indexOf('DGHandlerPython') >= 0);
+        return '<tr>' +
+            '<td class="ps-4"><i class="fas fa-bolt me-2 text-warning"></i><strong>' + type + '</strong>' +
+            (isPy ? ' <span class="badge bg-warning" style="font-size:0.6rem;">Python</span>' : '') + '</td>' +
+            '<td><code class="small">' + shortClass + '</code></td>' +
+            '<td class="text-muted small">' + (h.description || '—') + '</td>' +
+            '<td class="text-center"><span class="badge bg-secondary">' + (h.ttlMinutes || 5) + '</span></td>' +
+            '<td class="text-center">' + (isPy ? '<i class="fab fa-python" style="color:#FFD43B;"></i>' : '<i class="fab fa-java" style="color:#f89820;"></i>') + '</td>' +
+            '<td class="text-center">' + (h.enabled !== false ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>') + '</td>' +
+            '<td class="text-center">' +
+            '<button class="btn btn-sm btn-outline-primary me-1" onclick="editHandler(\'' + type + '\')" title="Edit"><i class="fas fa-edit"></i></button>' +
+            '<button class="btn btn-sm btn-outline-danger" onclick="deleteHandler(\'' + type + '\')" title="Delete"><i class="fas fa-trash"></i></button>' +
+            '</td></tr>';
+    }).join('');
+}
+
+function showCreateFileModal() {
+    document.getElementById('newFileId').value = '';
+    new bootstrap.Modal(document.getElementById('createFileModal')).show();
+}
+
+function createFile() {
+    var fileId = document.getElementById('newFileId').value.trim().toLowerCase().replace(/[^a-z0-9\-_]/g, '-');
+    if (!fileId) { showToast('File ID is required', 'warning'); return; }
+    fetch('/admin/api/handlers/' + fileId, { method:'PUT', headers:{'Content-Type':'application/json'}, body:'{}' })
+        .then(function(r){return r.json();})
+        .then(function(d){
+            if(d.error){ showToast(d.error,'danger'); return; }
+            bootstrap.Modal.getInstance(document.getElementById('createFileModal')).hide();
+            showToast('Created: ' + fileId + '.json', 'success');
+            // Add to dropdown & select
+            var sel = document.getElementById('fileSelect');
+            var opt = document.createElement('option'); opt.value = fileId; opt.textContent = fileId + '.json (0 handlers)';
+            sel.appendChild(opt); sel.value = fileId;
+            loadFile();
+        }).catch(function(e){ showToast('Error: '+e.message,'danger'); });
+}
+
+function deleteFile() {
+    if (!currentFileId) return;
+    if (!confirm('Delete "' + currentFileId + '.json" permanently? This cannot be undone.')) return;
+    fetch('/admin/api/handlers/' + currentFileId, { method:'DELETE' })
+        .then(function(r){
+            if(r.ok) {
+                showToast('Deleted: ' + currentFileId + '.json', 'success');
+                var sel = document.getElementById('fileSelect');
+                var opt = sel.querySelector('option[value="'+currentFileId+'"]');
+                if(opt) opt.remove();
+                sel.value = ''; currentFileId = null; currentHandlers = {};
+                document.getElementById('handlerTableCard').style.display='none';
+                document.getElementById('emptyState').style.display='';
+                ['btnAddHandler','btnViewJson','btnDeleteFile'].forEach(function(id){document.getElementById(id).disabled=true;});
+            } else { showToast('Delete failed','danger'); }
+        });
+}
+
+function viewFileJson() {
+    if(!currentFileId) return;
+    document.getElementById('jsonModalTitle').textContent = currentFileId + '.json';
+    document.getElementById('jsonContent').textContent = JSON.stringify(currentHandlers, null, 2);
+    new bootstrap.Modal(document.getElementById('jsonModal')).show();
+}
+
+// ─── Handler CRUD ───────────────────────────────────────────────
+function onClassChange() {
+    var cls = document.getElementById('hm_class').value;
+    var isPython = cls.indexOf('DGHandlerPython') >= 0;
+    document.getElementById('pythonFields').style.display = isPython ? '' : 'none';
+}
+
+function showHandlerModal(editType) {
+    var isEdit = !!editType;
+    document.getElementById('handlerModalTitle').innerHTML = '<i class="fas fa-bolt me-2 text-warning"></i>' + (isEdit ? 'Edit Handler' : 'Add Handler');
+    document.getElementById('hm_origType').value = editType || '';
+    if (isEdit && currentHandlers[editType]) {
+        var h = currentHandlers[editType];
+        document.getElementById('hm_type').value = editType;
+        document.getElementById('hm_class').value = h.handler_class || h.handlerClass || '';
+        document.getElementById('hm_desc').value = h.description || '';
+        document.getElementById('hm_ttl').value = h.ttl_minutes || h.ttlMinutes || 5;
+        document.getElementById('hm_enabled').value = (h.enabled !== false) ? 'true' : 'false';
+        var cfg = h.config || {};
+        var isPy = h.is_python || h.isPython || (h.handler_class||h.handlerClass||'').indexOf('DGHandlerPython') >= 0;
+        if (isPy) {
+            document.getElementById('hm_pymodule').value = cfg.python_module || '';
+            document.getElementById('hm_pyclass').value = cfg.python_class || '';
+            // Remove python fields from shown config
+            var cfgCopy = Object.assign({}, cfg);
+            delete cfgCopy.python_module; delete cfgCopy.python_class;
+            document.getElementById('hm_config').value = Object.keys(cfgCopy).length ? JSON.stringify(cfgCopy, null, 2) : '{}';
+        } else {
+            document.getElementById('hm_config').value = Object.keys(cfg).length ? JSON.stringify(cfg, null, 2) : '{}';
+        }
+        onClassChange();
+    } else {
+        document.getElementById('hm_type').value = '';
+        document.getElementById('hm_class').value = 'com.dgfacade.server.handler.EchoHandler';
+        document.getElementById('hm_desc').value = '';
+        document.getElementById('hm_ttl').value = 5;
+        document.getElementById('hm_enabled').value = 'true';
+        document.getElementById('hm_config').value = '{}';
+        document.getElementById('hm_pymodule').value = '';
+        document.getElementById('hm_pyclass').value = '';
+        document.getElementById('pythonFields').style.display = 'none';
+    }
+    new bootstrap.Modal(document.getElementById('handlerModal')).show();
+}
+
+function editHandler(type) { showHandlerModal(type); }
+
+function saveHandler() {
+    var type = document.getElementById('hm_type').value.trim().toUpperCase();
+    if (!type) { showToast('Request Type is required','warning'); return; }
+    var cls = document.getElementById('hm_class').value;
+    var isPython = cls.indexOf('DGHandlerPython') >= 0;
+    var config;
+    try { config = JSON.parse(document.getElementById('hm_config').value || '{}'); } catch(e) { showToast('Invalid config JSON','danger'); return; }
+    if (isPython) {
+        config.python_module = document.getElementById('hm_pymodule').value.trim();
+        config.python_class = document.getElementById('hm_pyclass').value.trim();
+        if (!config.python_module || !config.python_class) { showToast('Python module and class are required','warning'); return; }
+    }
+    var handler = {
+        handler_class: cls,
+        description: document.getElementById('hm_desc').value,
+        ttl_minutes: parseInt(document.getElementById('hm_ttl').value) || 5,
+        enabled: document.getElementById('hm_enabled').value === 'true',
+        config: config
+    };
+    if (isPython) handler.is_python = true;
+
+    // Remove old key if type changed
+    var origType = document.getElementById('hm_origType').value;
+    if (origType && origType !== type) delete currentHandlers[origType];
+    currentHandlers[type] = handler;
+
+    // Save entire file
+    fetch('/admin/api/handlers/' + currentFileId, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(currentHandlers) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if(d.error){ showToast(d.error,'danger'); return; }
+            bootstrap.Modal.getInstance(document.getElementById('handlerModal')).hide();
+            showToast('Handler ' + type + ' saved','success');
+            renderTable();
+        }).catch(function(e){ showToast('Error: '+e.message,'danger'); });
+}
+
+function deleteHandler(type) {
+    if (!confirm('Delete handler "' + type + '" from ' + currentFileId + '.json?')) return;
+    delete currentHandlers[type];
+    fetch('/admin/api/handlers/' + currentFileId, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(currentHandlers) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if(d.error){ showToast(d.error,'danger'); return; }
+            showToast('Handler ' + type + ' deleted','success');
+            renderTable();
+        }).catch(function(e){ showToast('Error: '+e.message,'danger'); });
+}
+
+function showToast(msg, type) {
+    if (typeof DGFacade !== 'undefined' && DGFacade.toast) { DGFacade.toast(msg, type); return; }
+    alert(msg);
+}
+</script>
+</body>
+</html>

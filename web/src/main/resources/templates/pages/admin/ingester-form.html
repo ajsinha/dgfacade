@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ingester Configuration')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a th:href="@{/admin/ingesters}">Ingesters</a></li>
+                        <li class="breadcrumb-item active" th:text="${editMode} ? 'Edit: ' + ${ingesterId} : 'New Ingester'">New Ingester</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0">
+                    <i class="fas me-2" th:classappend="${editMode} ? 'fa-edit' : 'fa-plus-circle'"></i>
+                    <span th:text="${editMode} ? 'Edit Ingester' : 'Create New Ingester'">Create New Ingester</span>
+                </h2>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/ingesters}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back to Ingesters</a>
+            </div>
+        </div>
+
+        <form th:action="${editMode} ? @{/admin/ingesters/edit/{id}(id=${ingesterId})} : @{/admin/ingesters/create}" method="post">
+
+        <div class="row g-4">
+            <!-- ════════════ LEFT COLUMN: Form Fields ════════════ -->
+            <div class="col-lg-8">
+
+                <!-- Basic Info -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-tag me-2 text-info"></i>Basic Information</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6" th:if="${!editMode}">
+                                <label class="form-label fw-semibold">Ingester ID <span class="text-danger">*</span></label>
+                                <input type="text" name="ingesterId" class="form-control" required
+                                       placeholder="e.g. kafka-requests, activemq-orders"
+                                       pattern="[a-zA-Z0-9\-_]+" title="Letters, numbers, hyphens, underscores only"
+                                       th:value="${ingesterId}">
+                                <div class="form-text">Unique identifier. Becomes the config filename.</div>
+                            </div>
+                            <div class="col-md-6" th:if="${editMode}">
+                                <label class="form-label fw-semibold">Ingester ID</label>
+                                <input type="text" class="form-control" disabled th:value="${ingesterId}">
+                                <div class="form-text">Cannot be changed after creation.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Enabled</label>
+                                <select name="enabled" class="form-select">
+                                    <option value="true" th:selected="${ingester['enabled'] == true}">Yes — Enabled</option>
+                                    <option value="false" th:selected="${ingester['enabled'] == false}">No — Disabled</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Description</label>
+                                <input type="text" name="description" class="form-control"
+                                       placeholder="e.g. Kafka request ingestion for order events"
+                                       th:value="${ingester['description']}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Channel Binding -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-link me-2 text-primary"></i>Input Channel Binding</h5></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Input Channel <span class="text-danger">*</span></label>
+                                <select name="input_channel" class="form-select" required>
+                                    <option value="">— Select an Input Channel —</option>
+                                    <option th:each="chId : ${inputChannelIds}"
+                                            th:value="${chId}"
+                                            th:text="${chId}"
+                                            th:selected="${chId == ingester['input_channel']}">channel-id</option>
+                                </select>
+                                <div class="form-text">The input channel this ingester will consume messages from. The channel's broker provides connection details.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overrides -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="fas fa-sliders-h me-2 text-secondary"></i>Configuration Overrides</h5></div>
+                    <div class="card-body">
+                        <label class="form-label fw-semibold">Key=Value Pairs (one per line)</label>
+                        <textarea name="overrides" class="form-control font-monospace" rows="5"
+                                  placeholder="group_id=dgfacade-ingester-custom&#10;max_poll_records=200&#10;auto_offset_reset=earliest"
+                                  th:text="${ingester['overrides'] != null} ? ${#strings.listJoin(ingester['overrides'].entrySet().![key + '=' + value], '&#10;')} : ''"></textarea>
+                        <div class="form-text">These override values from the input channel and broker configuration. For example, you can set a custom <code>group_id</code> per ingester.</div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="d-flex gap-2 mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas me-1" th:classappend="${editMode} ? 'fa-save' : 'fa-plus'"></i>
+                        <span th:text="${editMode} ? 'Save Changes' : 'Create Ingester'">Create Ingester</span>
+                    </button>
+                    <a th:href="@{/admin/ingesters}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                </div>
+            </div>
+
+            <!-- ════════════ RIGHT COLUMN: Help Sidebar ════════════ -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-4 sticky-top" style="top: 80px">
+                    <div class="card-header bg-info text-white py-3"><h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Configuration Tips</h6></div>
+                    <div class="card-body small">
+                        <h6 class="fw-bold text-info">Three-Layer Resolution</h6>
+                        <p class="text-muted">Ingesters use a 3-layer config chain: <strong>Broker</strong> (connection) → <strong>Input Channel</strong> (destinations) → <strong>Ingester</strong> (overrides). Each layer can override values from the previous one.</p>
+
+                        <h6 class="fw-bold text-info">Input Channel</h6>
+                        <p class="text-muted">The input channel must be created first under <a href="/admin/input-channels">Admin → Input Channels</a>. It defines the channel type (Kafka, ActiveMQ, etc.) and references a broker for connection details.</p>
+
+                        <h6 class="fw-bold text-info">Overrides</h6>
+                        <p class="text-muted">Use overrides to customize per-ingester settings without modifying the shared channel/broker configs. Common overrides include <code>group_id</code>, <code>max_poll_records</code>, and <code>auto_offset_reset</code>.</p>
+
+                        <h6 class="fw-bold text-info">Naming Convention</h6>
+                        <p class="text-muted">Use descriptive names like <code>kafka-requests</code>, <code>activemq-orders</code>, or <code>filesystem-batch</code>. The ID becomes the JSON config filename.</p>
+
+                        <hr>
+                        <p class="text-muted mb-0"><i class="fas fa-file-alt me-1"></i>
+                            Config files are saved to <code>config/ingesters/&lt;id&gt;.json</code> and can also be edited directly on disk.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </form>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

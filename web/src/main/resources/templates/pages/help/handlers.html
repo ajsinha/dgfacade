@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential.
+  -->
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Handlers Tutorial')}"></head>
 <body class="d-flex flex-column min-vh-100">
@@ -7,17 +12,17 @@
     <div class="container-fluid py-4">
         <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2"><li class="breadcrumb-item"><a th:href="@{/help}">Help</a></li><li class="breadcrumb-item active">Handlers Tutorial</li></ol></nav>
         <h2 class="mb-1"><i class="fas fa-cogs me-2"></i>Handler Tutorial &amp; Reference</h2>
-        <p class="text-muted mb-4">Learn how to execute handlers via REST and WebSocket, and write your own. <a th:href="@{/playground}" class="btn btn-sm btn-success ms-2"><i class="fas fa-flask me-1"></i>Open Playground</a></p>
+        <p class="text-muted mb-4">Learn how to execute handlers via REST and WebSocket, compose chains, and write your own. <a th:href="@{/playground}" class="btn btn-sm btn-success ms-2"><i class="fas fa-flask me-1"></i>Open Playground</a></p>
 
         <div class="row g-4">
-            <div class="col-lg-8">
+            <div class="col-lg-9">
 
-                <!-- REST Handler Tutorial -->
+                <!-- ═══ REST HANDLER TUTORIAL ═══ -->
                 <div class="card border-0 shadow-sm mb-4" id="rest-tutorial"><div class="card-body">
                     <h4 class="text-success"><i class="fas fa-globe me-2"></i>Tutorial: REST Handler (Synchronous)</h4>
-                    <p>The simplest way to invoke a handler. Send a JSON request, receive a JSON response — all in one HTTP call.</p>
+                    <p>The simplest way to invoke a handler. Send a JSON request, receive a JSON response &mdash; all in one HTTP call.</p>
                     <h5>Step 1: Build the Request</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">POST /api/v1/request
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>POST /api/v1/request
 Content-Type: application/json
 
 {
@@ -27,9 +32,9 @@ Content-Type: application/json
     "message": "Hello DGFacade!",
     "number": 42
   }
-}</pre>
+}</code></pre>
                     <h5>Step 2: Receive the Response</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">{
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
   "requestId": "a1b2c3d4",
   "status": "SUCCESS",
   "data": {
@@ -41,13 +46,13 @@ Content-Type: application/json
   },
   "executionTimeMs": 3,
   "timestamp": "2025-06-15T10:30:00Z"
-}</pre>
-                    <div class="alert alert-success small"><i class="fas fa-lightbulb me-1"></i><strong>Key point:</strong> REST is <strong>synchronous</strong> — the HTTP response is the handler result. The client blocks until the handler completes (or TTL expires). Ideal for quick operations under 30 seconds.</div>
+}</code></pre>
+                    <div class="alert alert-success small"><i class="fas fa-lightbulb me-1"></i><strong>Key point:</strong> REST is <strong>synchronous</strong> &mdash; the HTTP response is the handler result. The client blocks until the handler completes (or TTL expires). Ideal for quick operations under 30 seconds.</div>
                     <h5>curl Example</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">curl -s -X POST http://localhost:8090/api/v1/request \
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>curl -s -X POST http://localhost:8090/api/v1/request \
   -H "Content-Type: application/json" \
   -d '{"api_key":"dgf-admin-key-0001","request_type":"ARITHMETIC","payload":{"operation":"ADD","operands":[10,20,30]}}' \
-  | python3 -m json.tool</pre>
+  | python3 -m json.tool</code></pre>
                     <h5>Available REST Handlers</h5>
                     <table class="table dg-table table-sm table-bordered small"><thead class="table-light"><tr><th>Request Type</th><th>Description</th><th>Example Payload</th></tr></thead>
                     <tbody>
@@ -57,21 +62,24 @@ Content-Type: application/json
                         <tr><td><code>HASH</code></td><td>MD5, SHA256, SHA512, BASE64, UUID</td><td><code>{"operation":"SHA256","input":"data"}</code></td></tr>
                         <tr><td><code>JSON_TRANSFORM</code></td><td>FLATTEN, MERGE, PICK, OMIT</td><td><code>{"operation":"FLATTEN","input":{"a":{"b":1}}}</code></td></tr>
                         <tr><td><code>SYSTEM_INFO</code></td><td>JVM metrics and diagnostics</td><td><code>{}</code></td></tr>
-                        <tr><td><code>HTTP_PROBE</code></td><td>Probe a URL's health</td><td><code>{"url":"https://httpbin.org/get"}</code></td></tr>
+                        <tr><td><code>HTTP_PROBE</code></td><td>Probe a URL&rsquo;s health</td><td><code>{"url":"https://httpbin.org/get"}</code></td></tr>
+                        <tr><td><code>CHAIN</code></td><td>Declarative pipeline &mdash; chains multiple handlers</td><td><code>{"chain_id":"ORDER_PROCESS",...}</code></td></tr>
+                        <tr><td><code>PYTHON_ECHO</code> <span class="badge bg-warning" style="font-size:0.6rem;">Python</span></td><td>Echo handler in Python</td><td><code>{"message": "Hello from Python!"}</code></td></tr>
+                        <tr><td><code>PYTHON_TRANSFORM</code> <span class="badge bg-warning" style="font-size:0.6rem;">Python</span></td><td>Python data transform</td><td><code>{"operation":"UPPER","data":"hello"}</code></td></tr>
                     </tbody></table>
                 </div></div>
 
-                <!-- WebSocket Handler Tutorial -->
+                <!-- ═══ WEBSOCKET HANDLER TUTORIAL ═══ -->
                 <div class="card border-0 shadow-sm mb-4" id="websocket-tutorial"><div class="card-body">
                     <h4 class="text-primary"><i class="fas fa-plug me-2"></i>Tutorial: WebSocket Handler (Real-Time)</h4>
                     <p>WebSocket provides a persistent connection for real-time, bidirectional communication. Send requests and receive responses without creating new HTTP connections.</p>
                     <h5>Step 1: Connect</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">// JavaScript
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>// JavaScript
 const ws = new WebSocket('ws://localhost:8090/ws/gateway');
 ws.onopen = () => console.log('Connected!');
-ws.onmessage = (e) => console.log('Response:', JSON.parse(e.data));</pre>
+ws.onmessage = (e) => console.log('Response:', JSON.parse(e.data));</code></pre>
                     <h5>Step 2: Send a Request</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">ws.send(JSON.stringify({
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>ws.send(JSON.stringify({
   "api_key": "dgf-admin-key-0001",
   "request_type": "WS_DEMO",
   "payload": {
@@ -79,9 +87,9 @@ ws.onmessage = (e) => console.log('Response:', JSON.parse(e.data));</pre>
     "symbols": ["AAPL", "GOOG", "TSLA"],
     "ticks_per_symbol": 5
   }
-}));</pre>
+}));</code></pre>
                     <h5>Step 3: Receive Response</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">// ws.onmessage handler receives:
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>// ws.onmessage handler receives:
 {
   "requestId": "...",
   "status": "SUCCESS",
@@ -94,8 +102,8 @@ ws.onmessage = (e) => console.log('Response:', JSON.parse(e.data));</pre>
     "_source": "WebSocket",
     "_execution_ms": 12
   }
-}</pre>
-                    <div class="alert alert-info small"><i class="fas fa-lightbulb me-1"></i><strong>When to use WebSocket:</strong> Real-time dashboards, streaming data, interactive probes, multiple rapid requests without connection overhead. The connection stays open — send as many requests as you want.</div>
+}</code></pre>
+                    <div class="alert alert-info small"><i class="fas fa-lightbulb me-1"></i><strong>When to use WebSocket:</strong> Real-time dashboards, streaming data, interactive probes, multiple rapid requests without connection overhead. The connection stays open &mdash; send as many requests as you want.</div>
                     <h5>WS_DEMO Operations</h5>
                     <table class="table dg-table table-sm table-bordered small"><thead class="table-light"><tr><th>Operation</th><th>Description</th><th>Payload</th></tr></thead>
                     <tbody>
@@ -106,28 +114,26 @@ ws.onmessage = (e) => console.log('Response:', JSON.parse(e.data));</pre>
                     </tbody></table>
                 </div></div>
 
-                <!-- PDCHandler Tutorial -->
+                <!-- ═══ PDC HANDLER TUTORIAL ═══ -->
                 <div class="card border-0 shadow-sm mb-4" id="pdc-tutorial"><div class="card-body">
                     <h4 class="text-danger"><i class="fas fa-exchange-alt me-2"></i>Tutorial: PDCHandler (Publish-Deliver-Consume)</h4>
                     <p>The <code>PDCHandler</code> is a specialized long-running handler that bridges a REST endpoint with Kafka messaging via Input and Output Channels.</p>
                     <h5>How It Works</h5>
-                    <div class="bg-light p-3 rounded mb-3 small font-monospace">
-DGRequest.payload<br>
-&nbsp;&nbsp;&nbsp;&nbsp;│<br>
-&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-POST → REST Endpoint → returns { "topic": "dynamic-topic-xyz" }<br>
-&nbsp;&nbsp;&nbsp;&nbsp;│<br>
-&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-Subscribe to "dynamic-topic-xyz" via Input Channel broker<br>
-&nbsp;&nbsp;&nbsp;&nbsp;│<br>
-&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-For each message consumed → publish to Output Channel destination<br>
-&nbsp;&nbsp;&nbsp;&nbsp;│<br>
-&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-Continue until TTL expires → stop &amp; return summary
-                    </div>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>DGRequest.payload
+    │
+    ▼
+POST → REST Endpoint → returns { "topic": "dynamic-topic-xyz" }
+    │
+    ▼
+Subscribe to "dynamic-topic-xyz" via Input Channel broker
+    │
+    ▼
+For each message consumed → publish to Output Channel destination
+    │
+    ▼
+Continue until TTL expires → stop &amp; return summary</code></pre>
                     <h5>Handler Configuration</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">{
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
   "PDC_PROCESS": {
     "handler_class": "com.dgfacade.server.handler.PDCHandler",
     "ttl_minutes": 60,
@@ -141,7 +147,7 @@ Continue until TTL expires → stop &amp; return summary
       "kafka_group_id": "dgfacade-pdc-consumer"
     }
   }
-}</pre>
+}</code></pre>
                     <h5>Configuration Fields</h5>
                     <table class="table dg-table table-sm table-bordered small"><thead class="table-light"><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
                     <tbody>
@@ -153,9 +159,9 @@ Continue until TTL expires → stop &amp; return summary
                         <tr><td><code>kafka_poll_ms</code></td><td>No</td><td>Kafka consumer poll interval in milliseconds (default: 100)</td></tr>
                         <tr><td><code>kafka_group_id</code></td><td>No</td><td>Consumer group ID for Kafka subscription</td></tr>
                     </tbody></table>
-                    <div class="alert alert-warning small"><i class="fas fa-info-circle me-1"></i><strong>Note:</strong> The PDCHandler uses <code>${key:default}</code> property placeholders. The <code>rest_endpoint</code> can be overridden with <code>-Dpdc.rest.endpoint=https://prod-api/stream</code> at JVM startup. See <a th:href="@{/help/channels#property-resolution}">Property Resolution</a>.</div>
+                    <div class="alert alert-warning small"><i class="fas fa-info-circle me-1"></i><strong>Note:</strong> The PDCHandler uses <code>${key:default}</code> property placeholders. The <code>rest_endpoint</code> can be overridden with <code>-Dpdc.rest.endpoint=https://prod-api/stream</code> at JVM startup.</div>
                     <h5>Response Format</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">{
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
   "status": "SUCCESS",
   "data": {
     "dynamic_topic": "stream-response-abc123",
@@ -167,14 +173,14 @@ Continue until TTL expires → stop &amp; return summary
     "duration_seconds": 3600,
     "stopped_reason": "TTL_EXPIRED"
   }
-}</pre>
+}</code></pre>
                 </div></div>
 
-                <!-- Writing Custom Handlers -->
+                <!-- ═══ WRITING CUSTOM HANDLERS ═══ -->
                 <div class="card border-0 shadow-sm mb-4" id="custom-handlers"><div class="card-body">
                     <h4 class="text-info"><i class="fas fa-code me-2"></i>Writing Custom Handlers</h4>
                     <p>All handlers implement the <code>DGHandler</code> interface with 4 lifecycle methods:</p>
-                    <pre class="bg-dark text-light p-3 rounded small">public class MyHandler implements DGHandler {
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>public class MyHandler implements DGHandler {
 
     private Map&lt;String, Object&gt; config;
     private volatile boolean stopped = false;
@@ -198,9 +204,9 @@ Continue until TTL expires → stop &amp; return summary
 
     @Override
     public void cleanup() { config = null; }  // Release resources
-}</pre>
+}</code></pre>
                     <h5>Register in Handler Config</h5>
-                    <pre class="bg-dark text-light p-3 rounded small">// config/handlers/default.json — add entry:
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>// config/handlers/default.json — add entry:
 {
   "MY_HANDLER": {
     "handler_class": "com.example.MyHandler",
@@ -208,26 +214,831 @@ Continue until TTL expires → stop &amp; return summary
     "enabled": true,
     "config": { "greeting_prefix": "Hello" }
   }
-}</pre>
+}</code></pre>
                     <div class="alert alert-success small"><i class="fas fa-check me-1"></i>After adding, restart DGFacade or call <code>POST /api/v1/reload</code> to pick up the new handler. Then test it in the <a th:href="@{/playground}">Playground</a>!</div>
                 </div></div>
 
-            </div>
+                <!-- ═══ PYTHON HANDLERS ═══ -->
+                <div class="card border-0 shadow-sm mb-4" id="python-handlers"><div class="card-body">
+                    <h4 style="color:#FFD43B;"><i class="fab fa-python me-2"></i>Python Handlers &amp; the <code>is_python</code> Attribute</h4>
+                    <p>
+                        Python handlers are <strong>registered in the same handler configuration files</strong> as Java handlers
+                        (<code>config/handlers/default.json</code>, <code>config/handlers/admin.json</code>).
+                        The only difference is three fields:
+                    </p>
+                    <table class="table dg-table table-sm table-bordered small">
+                        <thead class="table-light"><tr><th>Field</th><th>Value</th><th>Purpose</th></tr></thead>
+                        <tbody>
+                            <tr><td><code style="color:#FFD43B;font-weight:bold;">is_python</code></td><td><code>true</code></td><td>Routes execution through the Py4J Python worker pool instead of the Java handler class loader</td></tr>
+                            <tr><td><code>handler_class</code></td><td><code>com.dgfacade.server.python.DGHandlerPython</code></td><td>Always the Java bridge class &mdash; serializes DGRequest to JSON, dispatches to a Python worker, deserializes the response</td></tr>
+                            <tr><td><code>config.python_module</code> / <code>config.python_class</code></td><td>e.g. <code>handlers.my_handler</code> / <code>MyHandler</code></td><td>Python module path and class name. The worker imports the module and instantiates the class.</td></tr>
+                        </tbody>
+                    </table>
+                    <h5>Example: Java Handler vs Python Handler</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code><span style="color:var(--dg-info);">// Java handler</span>
+"ECHO": {
+  "handler_class": "...handler.EchoHandler",
+  "ttl_minutes": 5,
+  "enabled": true,
+  "config": {}
+}</code></pre>
+                        </div>
+                        <div class="col-md-6">
+                            <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code><span style="color:#FFD43B;">// Python handler</span>
+"PYTHON_ECHO": {
+  "handler_class": "...python.DGHandlerPython",
+  "ttl_minutes": 5,
+  "enabled": true,
+  <span style="color:#FFD43B;font-weight:bold;">"is_python": true,</span>
+  "config": {
+    "python_module": "handlers.echo_handler",
+    "python_class": "EchoPythonHandler"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                    <div class="alert alert-info small mt-3">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Note:</strong> Handler definitions are <strong>not</strong> placed in <code>py4j.json</code>.
+                        That file controls only the Python worker pool (worker count, health checks, ports).
+                        See the <a th:href="@{/help/python}">Python Integration Guide</a> for full details on the Py4J architecture,
+                        handler contract, and worker pool management.
+                    </div>
+                </div></div>
 
-            <!-- Sidebar -->
-            <div class="col-lg-4"><div class="card border-0 shadow-sm sticky-top" style="top:80px">
-                <div class="card-header bg-dark text-white py-3"><h6 class="mb-0"><i class="fas fa-list me-2"></i>On This Page</h6></div>
-                <div class="list-group list-group-flush">
-                    <a href="#rest-tutorial" class="list-group-item list-group-item-action"><i class="fas fa-globe text-success me-2"></i>REST Handler Tutorial</a>
-                    <a href="#websocket-tutorial" class="list-group-item list-group-item-action"><i class="fas fa-plug text-primary me-2"></i>WebSocket Handler Tutorial</a>
-                    <a href="#pdc-tutorial" class="list-group-item list-group-item-action"><i class="fas fa-exchange-alt text-danger me-2"></i>PDCHandler Tutorial</a>
-                    <a href="#custom-handlers" class="list-group-item list-group-item-action"><i class="fas fa-code text-info me-2"></i>Writing Custom Handlers</a>
+                <!-- ═══════════════════════════════════════════════════════════════════ -->
+                <!-- ═══ HANDLER CHAINING (merged from /help/handler-chaining)  ═══════ -->
+                <!-- ═══════════════════════════════════════════════════════════════════ -->
+                <div id="chaining" class="pt-3"></div>
+                <h3 class="mb-4 mt-3" style="color:var(--dg-primary);"><i class="fas fa-link me-2"></i>Handler Chaining</h3>
+                <p class="text-muted mb-4">Declarative pipeline composition. Chain multiple handlers into sequential, conditional, or parallel
+                    workflows using pure JSON configuration &mdash; no code required.</p>
+
+                <!-- Chaining: Overview -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-overview"><div class="card-body">
+                    <h4 class="text-primary"><i class="fas fa-eye me-2"></i>Overview &amp; Concepts</h4>
+                    <p>Handler chaining lets you compose complex workflows by piping multiple handlers together declaratively.
+                    Each step&rsquo;s output becomes the next step&rsquo;s input, creating a data transformation pipeline.</p>
+
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>   DGRequest arrives (request_type: "CHAIN")
+        │
+        ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │                    ChainHandler                              │
+   │  Step 1: ECHO           (alias: "capture")    → REPLACE     │
+   │  Step 2: STRING_TRANSFORM (alias: "format")   → APPEND      │
+   │  Step 3: HASH           (alias: "sign")       → APPEND      │
+   │    [when: ${prev.sign}]  ← conditional                      │
+   │  Step 4: parallel                              → KEYED join  │
+   │    ├─ branch A: HTTP_PROBE   (alias: "api_check")            │
+   │    └─ branch B: SYSTEM_INFO  (alias: "sys_snap")             │
+   └──────────────────────────────┴──────────────────────────────┘
+                          │
+                          ▼
+                  DGResponse with merged data + chain_trace[]</code></pre>
+
+                    <div class="row g-3 mt-3">
+                        <div class="col-md-4">
+                            <div class="card border-primary h-100"><div class="card-body text-center">
+                                <i class="fas fa-arrows-alt-h fa-2x text-primary mb-2"></i>
+                                <h6>Linear</h6>
+                                <p class="small text-muted mb-0">Sequential steps with payload mapping and merge strategies</p>
+                            </div></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-warning h-100"><div class="card-body text-center">
+                                <i class="fas fa-code-branch fa-2x text-warning mb-2"></i>
+                                <h6>Conditional</h6>
+                                <p class="small text-muted mb-0"><code>when</code> expressions skip steps dynamically based on data</p>
+                            </div></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success h-100"><div class="card-body text-center">
+                                <i class="fas fa-project-diagram fa-2x text-success mb-2"></i>
+                                <h6>Parallel</h6>
+                                <p class="small text-muted mb-0">Concurrent branches with configurable join strategies</p>
+                            </div></div>
+                        </div>
+                    </div>
+                </div></div>
+
+                <!-- Chaining: Config Schema -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-config"><div class="card-body">
+                    <h4 class="text-success"><i class="fas fa-file-code me-2"></i>Chain Configuration Schema</h4>
+                    <p>Chain definitions live in <code>config/chains/*.json</code>. Each file defines one chain.</p>
+
+                    <h5 class="mt-3">Top-Level Fields</h5>
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>chain_id</code></td><td>string</td><td>Yes</td><td>Unique identifier. Used in request payloads to select which chain to execute.</td></tr>
+                            <tr><td><code>description</code></td><td>string</td><td>No</td><td>Human-readable description</td></tr>
+                            <tr><td><code>ttl_minutes</code></td><td>int</td><td>No</td><td>Overall chain timeout (default: 30). Individual step TTLs are inherited from handler configs.</td></tr>
+                            <tr><td><code>error_strategy</code></td><td>string</td><td>No</td><td>How to handle step failures: <code>ABORT</code> (default), <code>SKIP</code>, or <code>FALLBACK</code></td></tr>
+                            <tr><td><code>enabled</code></td><td>boolean</td><td>No</td><td>Whether the chain is active (default: true)</td></tr>
+                            <tr><td><code>steps</code></td><td>array</td><td>Yes</td><td>Ordered list of step definitions</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h5 class="mt-4">Step Fields</h5>
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>step</code></td><td>int</td><td>Yes</td><td>Step number (for ordering and tracing)</td></tr>
+                            <tr><td><code>handler</code></td><td>string</td><td>Yes*</td><td>Request type of the handler to invoke (e.g., <code>ECHO</code>, <code>HASH</code>)</td></tr>
+                            <tr><td><code>alias</code></td><td>string</td><td>Yes</td><td>Unique name for this step. Used in <code>${steps.alias.field}</code> references.</td></tr>
+                            <tr><td><code>description</code></td><td>string</td><td>No</td><td>What this step does</td></tr>
+                            <tr><td><code>payload_mapping</code></td><td>object</td><td>No</td><td>Map of key→value with <code>${var}</code> placeholders. If omitted, previous output is passed through.</td></tr>
+                            <tr><td><code>merge_strategy</code></td><td>string</td><td>No</td><td><code>REPLACE</code> (default), <code>MERGE_PREV</code>, <code>APPEND</code>, or <code>PASSTHROUGH</code></td></tr>
+                            <tr><td><code>when</code></td><td>string</td><td>No</td><td>Condition expression. Step is skipped when condition evaluates to false.</td></tr>
+                            <tr><td><code>handler_config</code></td><td>object</td><td>No</td><td>Extra config passed to the handler&rsquo;s <code>construct()</code> method</td></tr>
+                            <tr><td><code>fallback</code></td><td>object</td><td>No</td><td>Value to use when step fails and error_strategy is <code>FALLBACK</code></td></tr>
+                            <tr><td><code>parallel</code></td><td>array</td><td>*</td><td>List of branch definitions for parallel execution (replaces <code>handler</code>)</td></tr>
+                            <tr><td><code>join_strategy</code></td><td>string</td><td>No</td><td>For parallel steps: <code>KEYED</code> (default), <code>MERGE_ALL</code>, or <code>FIRST_SUCCESS</code></td></tr>
+                        </tbody>
+                    </table>
+                    <div class="alert alert-warning small mt-2">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        A step must have either <code>handler</code> (linear/conditional) or <code>parallel</code> (fan-out), never both.
+                    </div>
+                </div></div>
+
+                <!-- Chaining: Variable Resolution -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-variables"><div class="card-body">
+                    <h4 class="text-warning"><i class="fas fa-dollar-sign me-2"></i>Variable Resolution</h4>
+                    <p>Variables in <code>payload_mapping</code> and <code>when</code> expressions use <code>${reference}</code> syntax.
+                    The chain engine resolves them against three scopes:</p>
+
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Variable</th><th>Resolves To</th><th>Example</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>${payload}</code></td><td>Original request payload (entire map)</td><td><code>"input": "${payload}"</code></td></tr>
+                            <tr><td><code>${payload.field}</code></td><td>Specific field from original payload</td><td><code>"name": "${payload.customer.name}"</code></td></tr>
+                            <tr><td><code>${prev}</code></td><td>Previous step&rsquo;s full output map</td><td><code>"data": "${prev}"</code></td></tr>
+                            <tr><td><code>${prev.field}</code></td><td>Specific field from previous step</td><td><code>"hash_input": "${prev.result}"</code></td></tr>
+                            <tr><td><code>${steps.alias}</code></td><td>Named step&rsquo;s full output by alias</td><td><code>"sig": "${steps.sign}"</code></td></tr>
+                            <tr><td><code>${steps.alias.field}</code></td><td>Specific field from named step</td><td><code>"hash": "${steps.sign.hash}"</code></td></tr>
+                        </tbody>
+                    </table>
+
+                    <h6 class="mt-3">Resolution Rules</h6>
+                    <ul class="small">
+                        <li><strong>Full match:</strong> If the entire value is a single <code>${ref}</code>, the resolved object is passed as-is (map, list, number &mdash; not stringified)</li>
+                        <li><strong>Partial match:</strong> If the value contains <code>${ref}</code> mixed with text (e.g., <code>"prefix_${prev.id}_suffix"</code>), all references are stringified and interpolated</li>
+                        <li><strong>Nested:</strong> Variable maps and lists are resolved recursively</li>
+                        <li><strong>Unresolved:</strong> If a reference cannot be resolved, the literal <code>${ref}</code> string is preserved</li>
+                        <li><strong>Dot paths:</strong> Support arbitrary nesting: <code>${payload.order.items.0.name}</code></li>
+                    </ul>
+                </div></div>
+
+                <!-- Chaining: Merge Strategies -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-merge"><div class="card-body">
+                    <h4 class="text-info"><i class="fas fa-object-group me-2"></i>Merge Strategies</h4>
+                    <p>After each step executes, its output is merged into the accumulated pipeline state using the step&rsquo;s <code>merge_strategy</code>.</p>
+
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Strategy</th><th>Behavior</th><th>Use Case</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>REPLACE</code></td><td>Step output <strong>becomes</strong> the entire pipeline state. Previous data is discarded.</td><td>Transformation steps (normalize, reshape)</td></tr>
+                            <tr><td><code>MERGE_PREV</code></td><td>Shallow merge: step output keys are added to (or overwrite) previous state.</td><td>Enrichment: <code>{prev...} + {step...}</code></td></tr>
+                            <tr><td><code>APPEND</code></td><td>Step output is nested under its alias key.</td><td>Collecting: <code>{prev..., "alias": {step}}</code></td></tr>
+                            <tr><td><code>PASSTHROUGH</code></td><td>Step output is <strong>ignored</strong>. Previous state passes through unchanged.</td><td>Side-effects: audit logging, notifications</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h6 class="mt-3">Visual Example</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>Step 1 output: { "order_id": "ABC", "total": 99.50 }       merge: REPLACE
+Pipeline state: { "order_id": "ABC", "total": 99.50 }
+
+Step 2 output: { "result": "abc" }                          merge: APPEND (alias: "lower_id")
+Pipeline state: { "order_id": "ABC", "total": 99.50, "lower_id": { "result": "abc" } }
+
+Step 3 output: { "hash": "a1b2c3", "algo": "SHA256" }      merge: MERGE_PREV
+Pipeline state: { ..., "hash": "a1b2c3", "algo": "SHA256" }
+
+Step 4 output: { "logged": true }                           merge: PASSTHROUGH
+Pipeline state: unchanged — Step 4 output is discarded</code></pre>
+                </div></div>
+
+                <!-- Chaining: Linear -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-linear"><div class="card-body">
+                    <h4 class="text-primary"><i class="fas fa-arrows-alt-h me-2"></i>Linear Chains</h4>
+                    <p>The simplest mode: steps execute sequentially, each receiving the accumulated pipeline state.</p>
+                    <p class="text-muted small mb-2"><code>config/chains/order-processing.json</code></p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "chain_id": "ORDER_PROCESS",
+  "error_strategy": "ABORT",
+  "steps": [
+    {
+      "step": 1, "handler": "JSON_TRANSFORM", "alias": "normalize",
+      "payload_mapping": { "operation": "FLATTEN", "input": "${payload}" },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2, "handler": "STRING_TRANSFORM", "alias": "format_id",
+      "payload_mapping": { "operation": "UPPER", "input": "${prev.order_id}" },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 3, "handler": "HASH", "alias": "sign",
+      "payload_mapping": { "operation": "SHA256", "input": "${prev}" },
+      "merge_strategy": "APPEND"
+    },
+    {
+      "step": 4, "handler": "ECHO", "alias": "audit_log",
+      "payload_mapping": {
+        "chain_id": "ORDER_PROCESS",
+        "order_data": "${prev}",
+        "signature": "${steps.sign}",
+        "formatted_id": "${steps.format_id}"
+      },
+      "merge_strategy": "PASSTHROUGH"
+    }
+  ]
+}</code></pre>
+
+                    <h5 class="mt-3">Invoke via REST</h5>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "ORDER_PROCESS",
+      "order_id": "ord-7891",
+      "customer": "Acme Corp",
+      "items": [
+        { "sku": "WIDGET-A", "qty": 10, "price": 12.50 },
+        { "sku": "GADGET-B", "qty": 3, "price": 45.00 }
+      ]
+    }
+  }'</code></pre>
+                    <div class="alert alert-info small mt-2">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        The <code>chain_id</code> inside the payload tells ChainHandler which chain config to load from <code>config/chains/</code>.
+                        The outer <code>request_type</code> is always <code>"CHAIN"</code>.
+                    </div>
+                </div></div>
+
+                <!-- Chaining: Conditional -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-conditional"><div class="card-body">
+                    <h4 class="text-warning"><i class="fas fa-code-branch me-2"></i>Conditional Steps</h4>
+                    <p>Add a <code>when</code> expression to any step. The step executes only when the condition is true; otherwise it is skipped with <code>SKIPPED</code> status in the trace.</p>
+
+                    <h5 class="mt-3">Supported Operators</h5>
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Operator</th><th>Syntax</th><th>Example</th></tr></thead>
+                        <tbody>
+                            <tr><td>Equals</td><td><code>==</code></td><td><code>${payload.tier} == "PREMIUM"</code></td></tr>
+                            <tr><td>Not equals</td><td><code>!=</code></td><td><code>${prev.status} != "error"</code></td></tr>
+                            <tr><td>Greater than</td><td><code>&gt;</code></td><td><code>${prev.risk_score} &gt; 75</code></td></tr>
+                            <tr><td>Less than</td><td><code>&lt;</code></td><td><code>${payload.amount} &lt; 1000</code></td></tr>
+                            <tr><td>Greater/equal</td><td><code>&gt;=</code></td><td><code>${steps.score.value} &gt;= 50</code></td></tr>
+                            <tr><td>Less/equal</td><td><code>&lt;=</code></td><td><code>${prev.retries} &lt;= 3</code></td></tr>
+                            <tr><td>Contains</td><td><code>contains</code></td><td><code>${payload.tags} contains "urgent"</code></td></tr>
+                            <tr><td>Exists</td><td><code>exists</code></td><td><code>${payload.email} exists</code></td></tr>
+                            <tr><td>Null check</td><td><code>== null</code></td><td><code>${prev.error} == null</code></td></tr>
+                            <tr><td>Truthy</td><td><code>${ref}</code> (bare)</td><td><code>${payload.enable_hash}</code> &mdash; true if non-null, non-false, non-zero</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h5 class="mt-4">Example: Data Enrichment with Conditions</h5>
+                    <p class="text-muted small mb-2"><code>config/chains/data-enrichment.json</code></p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "chain_id": "DATA_ENRICH",
+  "error_strategy": "SKIP",
+  "steps": [
+    {
+      "step": 1, "handler": "ECHO", "alias": "capture",
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2, "handler": "STRING_TRANSFORM", "alias": "title_case",
+      "payload_mapping": { "operation": "TITLE_CASE", "input": "${payload.name}" },
+      "merge_strategy": "APPEND",
+      <span style="color:var(--dg-warning);">"when": "${payload.name} != ''"</span>
+    },
+    {
+      "step": 3, "handler": "HASH", "alias": "secure_hash",
+      "payload_mapping": { "operation": "SHA512", "input": "${payload.sensitive_data}" },
+      "merge_strategy": "APPEND",
+      <span style="color:var(--dg-warning);">"when": "${payload.security_level} == \"HIGH\""</span>
+    },
+    {
+      "step": 4, "handler": "ARITHMETIC", "alias": "discount",
+      "payload_mapping": { "operation": "MUL", "operands": ["${payload.price}", 0.85] },
+      "merge_strategy": "APPEND",
+      <span style="color:var(--dg-warning);">"when": "${payload.customer_tier} == \"PREMIUM\""</span>,
+      "fallback": { "result": 0, "note": "Discount unavailable" }
+    }
+  ]
+}</code></pre>
+                    <p class="text-muted small mt-2">With <code>security_level: "LOW"</code> and <code>customer_tier: "STANDARD"</code>:
+                    Step 2 executes (name exists), Step 3 <strong>SKIPPED</strong> (not HIGH), Step 4 <strong>SKIPPED</strong> (not PREMIUM).</p>
+                </div></div>
+
+                <!-- Chaining: Parallel -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-parallel"><div class="card-body">
+                    <h4 class="text-success"><i class="fas fa-project-diagram me-2"></i>Parallel Fan-Out</h4>
+                    <p>For steps where branches are independent, run them concurrently using the <code>parallel</code> array.
+                    A <code>join_strategy</code> merges the results.</p>
+
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>                  Step 1 (linear: prepare)
+                           │
+              ┌─────────────┼─────────────┐
+              │              │              │
+        ┌─────┴────┐  ┌────┴─────┐  ┌────┴─────┐
+        │ branch A  │  │ branch B   │  │ branch C   │  ← concurrent
+        │ MD5 hash  │  │ SHA256     │  │ word count │
+        └─────┬────┘  └────┬─────┘  └────┬─────┘
+              │              │              │
+              └─────────────┼─────────────┘
+                           │
+                      join_strategy
+                           │
+                  Step 3 (linear: summary)</code></pre>
+
+                    <h5 class="mt-3">Join Strategies</h5>
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Strategy</th><th>Result Structure</th><th>Use Case</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>KEYED</code></td><td>Each branch nested under its alias: <code>{"parallel_results": {"md5": {...}, "sha256": {...}}}</code></td><td>Individual results identifiable by name</td></tr>
+                            <tr><td><code>MERGE_ALL</code></td><td>All branch outputs merged flat: <code>{"hash": "...", "count": 5}</code></td><td>Branches produce non-overlapping keys</td></tr>
+                            <tr><td><code>FIRST_SUCCESS</code></td><td>First completed branch&rsquo;s output; others discarded</td><td>Redundancy / fastest-response patterns</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h5 class="mt-4">Example: Parallel Analysis</h5>
+                    <p class="text-muted small mb-2"><code>config/chains/parallel-analysis.json</code></p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "chain_id": "PARALLEL_ANALYSIS",
+  "error_strategy": "SKIP",
+  "steps": [
+    {
+      "step": 1, "handler": "STRING_TRANSFORM", "alias": "prepare",
+      "payload_mapping": { "operation": "UPPER", "input": "${payload.message}" },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2, "alias": "multi_analysis",
+      <span style="color:var(--dg-success);">"parallel"</span>: [
+        {
+          "handler": "HASH", "alias": "md5_hash",
+          "payload_mapping": { "operation": "MD5", "input": "${prev.result}" }
+        },
+        {
+          "handler": "HASH", "alias": "sha256_hash",
+          "payload_mapping": { "operation": "SHA256", "input": "${prev.result}" }
+        },
+        {
+          "handler": "STRING_TRANSFORM", "alias": "word_count",
+          "payload_mapping": { "operation": "WORD_COUNT", "input": "${prev.result}" }
+        },
+        {
+          "handler": "SYSTEM_INFO", "alias": "system_snapshot",
+          "payload_mapping": {}
+        }
+      ],
+      <span style="color:var(--dg-success);">"join_strategy": "KEYED"</span>
+    },
+    {
+      "step": 3, "handler": "ECHO", "alias": "summary",
+      "payload_mapping": {
+        "original_message": "${payload.message}",
+        "analysis": "${prev}"
+      },
+      "merge_strategy": "REPLACE"
+    }
+  ]
+}</code></pre>
+                </div></div>
+
+                <!-- Chaining: Error Strategies -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-errors"><div class="card-body">
+                    <h4 class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error Strategies</h4>
+                    <p>The <code>error_strategy</code> at the chain level controls what happens when a step fails.</p>
+
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Strategy</th><th>Behavior on Failure</th><th>Chain Continues?</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>ABORT</code></td><td>Chain stops immediately. Error response returned with partial trace.</td><td><span class="badge bg-danger">No</span></td></tr>
+                            <tr><td><code>SKIP</code></td><td>Failed step recorded as <code>FAILED</code> in trace. Pipeline state unchanged. Next step runs.</td><td><span class="badge bg-success">Yes</span></td></tr>
+                            <tr><td><code>FALLBACK</code></td><td>Failed step&rsquo;s output replaced by its <code>fallback</code> value. Pipeline continues with fallback data.</td><td><span class="badge bg-success">Yes</span></td></tr>
+                        </tbody>
+                    </table>
+
+                    <h6 class="mt-3">Fallback Example</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "step": 4,
+  "handler": "HTTP_PROBE",
+  "alias": "external_api",
+  "payload_mapping": { "url": "https://api.example.com/data" },
+  "merge_strategy": "APPEND",
+  "fallback": {
+    "source": "cache",
+    "data": { "status": "unavailable" },
+    "note": "External API unreachable, using cached fallback"
+  }
+}</code></pre>
+                    <p class="small text-muted mt-2">If HTTP_PROBE fails (timeout, connection error), the <code>fallback</code> object is used as this step&rsquo;s output instead. The chain continues normally.</p>
+                </div></div>
+
+                <!-- Chaining: Execution Trace -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-trace"><div class="card-body">
+                    <h4 class="text-primary"><i class="fas fa-clipboard-list me-2"></i>Execution Trace</h4>
+                    <p>Every chain response includes a <code>chain_trace</code> array with per-step execution details:</p>
+
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "status": "SUCCESS",
+  "data": {
+    "chain_id": "DATA_ENRICH",
+    "data": { ... },
+    "chain_trace": [
+      { "step": 1, "alias": "capture",     "handler": "ECHO",             "status": "SUCCESS", "duration_ms": 2 },
+      { "step": 2, "alias": "title_case",  "handler": "STRING_TRANSFORM", "status": "SUCCESS", "duration_ms": 1 },
+      { "step": 3, "alias": "secure_hash", "handler": "HASH",             "status": "SKIPPED",
+         "reason": "Condition not met: ${payload.security_level} == \"HIGH\"" },
+      { "step": 4, "alias": "discount",    "handler": "ARITHMETIC",       "status": "SKIPPED",
+         "reason": "Condition not met: ${payload.customer_tier} == \"PREMIUM\"" }
+    ],
+    "total_steps": 4,
+    "executed_steps": 2,
+    "skipped_steps": 2,
+    "failed_steps": 0,
+    "chain_duration_ms": 8
+  }
+}</code></pre>
+                    <p class="small text-muted mt-2">Parallel branches include <code>"parallel": true</code> in their trace entries. The trace is invaluable for debugging complex chains &mdash; every step&rsquo;s status, timing, and skip reason is recorded.</p>
+                </div></div>
+
+                <!-- Chaining: Inline Example -->
+                <div class="card border-0 shadow-sm mb-4" id="chain-examples"><div class="card-body">
+                    <h4 style="color:var(--dg-text-heading);"><i class="fas fa-terminal me-2"></i>Quick Examples</h4>
+
+                    <h5>Simple Two-Step Pipeline</h5>
+                    <p class="text-muted small">Uppercase a message, then hash it.</p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "SIMPLE_PIPELINE",
+      "steps": [
+        { "step": 1, "handler": "STRING_TRANSFORM", "alias": "upper",
+          "payload_mapping": { "operation": "UPPER", "input": "hello world" },
+          "merge_strategy": "REPLACE" },
+        { "step": 2, "handler": "HASH", "alias": "hash",
+          "payload_mapping": { "operation": "SHA256", "input": "${prev.result}" },
+          "merge_strategy": "MERGE_PREV" }
+      ]
+    }
+  }'</code></pre>
+
+                    <h5 class="mt-4">Inline Chain (No Config File)</h5>
+                    <p class="text-muted small">You can pass the entire chain definition inline in the payload for ad-hoc workflows:</p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "INLINE_DEMO",
+      "error_strategy": "ABORT",
+      "steps": [
+        { "step": 1, "handler": "ECHO", "alias": "start",
+          "payload_mapping": { "message": "chain started", "ts": "2025-01-01" },
+          "merge_strategy": "REPLACE" },
+        { "step": 2, "handler": "HASH", "alias": "hash_it",
+          "payload_mapping": { "operation": "MD5", "input": "${prev.message}" },
+          "merge_strategy": "MERGE_PREV" }
+      ]
+    }
+  }'</code></pre>
+
+                    <h5 class="mt-4">Parallel Multi-Hash</h5>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "CHAIN",
+    "api_key": "dgf-admin-key-0001",
+    "payload": {
+      "chain_id": "PARALLEL_ANALYSIS",
+      "message": "DGFacade handler chaining is powerful"
+    }
+  }'</code></pre>
+                    <p class="text-muted small">Step 1 uppercases the message. Step 2 runs MD5, SHA256, word count, and system info in parallel. Step 3 echoes the aggregated analysis.</p>
+                </div></div>
+
+
+                <!-- ═══════════════════════════════════════════════════════════════════ -->
+                <!-- ═══ ARCHITECTURE & INTERNALS (from /help/request-processing) ═════ -->
+                <!-- ═══════════════════════════════════════════════════════════════════ -->
+                <div id="internals" class="pt-3"></div>
+                <h3 class="mb-4 mt-3" style="color:var(--dg-primary);"><i class="fas fa-microchip me-2"></i>Architecture &amp; Internals</h3>
+                <p class="text-muted mb-4">How a request flows through DGFacade internally: from ingestion, through handler resolution, Pekko actor execution, TTL enforcement, and result delivery.</p>
+
+                <!-- Pipeline Overview -->
+                <div class="card border-0 shadow-sm mb-4" id="pipeline"><div class="card-body">
+                    <h4 class="text-primary"><i class="fas fa-route me-2"></i>Processing Pipeline</h4>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐
+  │ REST API  │  │ WebSocket │  │   Kafka   │  │ ActiveMQ  │  │ FileSystem│
+  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘
+        └────────┴────────┴────────┼────────┴────────┘
+                                         │
+                                ┌────────┴────────┐
+                                │ Normalize to    │
+                                │   DGRequest     │
+                                └────────┬────────┘
+                                         │
+                                ┌────────┴────────┐
+                                │ API Key Valid.  │
+                                │ + User Resolve  │
+                                └────────┬────────┘
+                                         │
+                                ┌────────┴────────┐
+                                │ Handler Config  │
+                                │   Lookup        │
+                                └────────┬────────┘
+                                         │
+                                ┌────────┴────────┐
+                                │ Class Loading   │
+                                │ + Dynamic Proxy │
+                                └────────┬────────┘
+                                         │
+                                ┌────────┴────────┐
+                                │ Pekko Actor     │
+                                │ Execution + TTL │
+                                └────────┬────────┘
+                                         │
+                                ┌────────┴────────┐
+                                │ Result Delivery │
+                                │ (per channel)   │
+                                └─────────────────┘</code></pre>
+                </div></div>
+
+                <!-- DGRequest Schema -->
+                <div class="card border-0 shadow-sm mb-4" id="dgrequest"><div class="card-body">
+                    <h4 class="text-info"><i class="fas fa-file-code me-2"></i>DGRequest JSON Schema</h4>
+                    <p>Regardless of source channel, every request is normalized into a <code>DGRequest</code>:</p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "request_id":           "auto-generated UUID (or client-supplied)",
+  "request_type":         "ECHO",                         // maps to handler
+  "api_key":              "dgf-admin-key-0001",           // authentication
+  "payload":              { "key": "value", ... },       // handler input
+  "delivery_destination": "kafka://responses",            // where to send result
+  "ttl_minutes":          5                               // max execution time
+}</code></pre>
+                    <table class="table dg-table table-bordered small mt-3">
+                        <thead class="table-light"><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>request_type</code></td><td><span class="badge bg-danger">Yes</span></td><td>Matches the handler config key in <code>config/handlers/*.json</code></td></tr>
+                            <tr><td><code>api_key</code></td><td><span class="badge bg-danger">Yes</span></td><td>Resolves to a user via <code>config/apikeys.json</code>. Invalid key → 403 error.</td></tr>
+                            <tr><td><code>payload</code></td><td><span class="badge bg-danger">Yes</span></td><td>Free-form map of key-value pairs passed to the handler</td></tr>
+                            <tr><td><code>request_id</code></td><td>No</td><td>Auto-generated UUID if not provided. Used for correlation.</td></tr>
+                            <tr><td><code>delivery_destination</code></td><td>No</td><td>Override where the response is published (Kafka topic, MQ queue, etc.)</td></tr>
+                            <tr><td><code>ttl_minutes</code></td><td>No</td><td>Overrides handler’s default TTL. Handler is stopped if exceeded.</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="small text-muted">Internal fields set by the server: <code>resolvedUserId</code>, <code>sourceChannel</code> (REST|WebSocket|KAFKA|ACTIVEMQ|FILESYSTEM), <code>receivedAt</code>, <code>executionStartedAt</code>.</p>
+                </div></div>
+
+                <!-- Dynamic Proxy -->
+                <div class="card border-0 shadow-sm mb-4" id="proxy"><div class="card-body">
+                    <h4 style="color:#8b5cf6;"><i class="fas fa-magic me-2"></i>Dynamic Proxy for Non-DGHandler Classes</h4>
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Handler classes do <em>not</em> need to implement <code>DGHandler</code>.
+                        If a class lacks the interface, DGFacade wraps it automatically using <code>DGHandlerProxy</code>
+                        with Java reflection. This enables external JARs and legacy classes to work without any DGFacade dependency.
+                    </div>
+
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>Class.forName("com.example.LegacyProcessor")
+    │
+    ├─ implements DGHandler?
+    │       YES → use directly
+    │
+    └─ NO → wrap in DGHandlerProxy
+             ├─ construct: construct(Map), init(Map), initialize(Map), setup(Map)
+             ├─ execute:   execute(DGRequest)→DGResponse, execute(Map)→Object,
+             │            process(Map)→Object, handle(Map)→Object, run(Map), call()
+             ├─ stop:     stop(), cancel(), abort(), shutdown()
+             └─ cleanup:  cleanup(), close(), destroy(), dispose()</code></pre>
+
+                    <h5 class="mt-4">Example: External JAR via Dynamic Proxy</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <h6>External class (no DGFacade dependency)</h6>
+                            <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>public class WeatherLookup {
+    private String defaultCity;
+
+    // Proxy → construct()
+    public void initialize(Map&lt;String, Object&gt; config) {
+        this.defaultCity = (String)
+            config.getOrDefault("default_city", "NYC");
+    }
+
+    // Proxy → execute()
+    public Map&lt;String, Object&gt; handle(
+            Map&lt;String, Object&gt; payload) {
+        String city = (String)
+            payload.getOrDefault("city", defaultCity);
+        return Map.of("city", city,
+            "temp_f", 72, "condition", "Sunny");
+    }
+
+    // Proxy → cleanup()
+    public void dispose() { }
+}</code></pre>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Handler config + invocation</h6>
+                            <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>// config/handlers/default.json
+{
+  "WEATHER": {
+    "handler_class":
+      "com.example.external.WeatherLookup",
+    "ttl_minutes": 2,
+    "config": { "default_city": "San Francisco" }
+  }
+}</code></pre>
+                            <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>curl -s -X POST localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_type": "WEATHER",
+    "api_key": "dgf-admin-key-0001",
+    "payload": { "city": "Tokyo" }
+  }'</code></pre>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-3">Return Value Mapping</h6>
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Execute Method Returns</th><th>DGResponse Mapping</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>DGResponse</code></td><td>Used directly</td></tr>
+                            <tr><td><code>Map&lt;String, Object&gt;</code></td><td><code>DGResponse.success(requestId, map)</code></td></tr>
+                            <tr><td><code>String</code></td><td><code>DGResponse.success(requestId, Map.of("result", string))</code></td></tr>
+                            <tr><td><code>Number / Boolean</code></td><td><code>DGResponse.success(requestId, Map.of("result", value))</code></td></tr>
+                            <tr><td><code>void / null</code></td><td><code>DGResponse.success(requestId, Map.of("result", "completed"))</code></td></tr>
+                        </tbody>
+                    </table>
+                </div></div>
+
+                <!-- Pekko Execution & TTL -->
+                <div class="card border-0 shadow-sm mb-4" id="execution"><div class="card-body">
+                    <h4 class="text-danger"><i class="fas fa-cogs me-2"></i>Pekko Actor Execution &amp; TTL</h4>
+                    <p>Each request gets its own lightweight Pekko actor (<code>HandlerActor</code>) that manages the full handler lifecycle:</p>
+
+                    <div class="row text-center mb-3">
+                        <div class="col"><span class="badge bg-secondary p-2">QUEUED</span></div>
+                        <div class="col-auto align-self-center"><i class="fas fa-arrow-right text-muted"></i></div>
+                        <div class="col"><span class="badge bg-info p-2">CONSTRUCTING</span></div>
+                        <div class="col-auto align-self-center"><i class="fas fa-arrow-right text-muted"></i></div>
+                        <div class="col"><span class="badge bg-primary p-2">EXECUTING</span></div>
+                        <div class="col-auto align-self-center"><i class="fas fa-arrow-right text-muted"></i></div>
+                        <div class="col"><span class="badge bg-success p-2">COMPLETED</span></div>
+                    </div>
+                    <div class="row text-center mb-3">
+                        <div class="col"></div><div class="col"></div>
+                        <div class="col"><i class="fas fa-arrow-down text-danger"></i><br><span class="badge bg-danger p-2">TIMED_OUT</span> / <span class="badge bg-warning text-dark p-2">FAILED</span></div>
+                        <div class="col"></div>
+                    </div>
+
+                    <h5><i class="fas fa-stopwatch me-2 text-danger"></i>TTL Enforcement</h5>
+                    <p>When a handler exceeds its TTL, DGFacade forcibly suspends it &mdash; calling <code>stop()</code> (giving it a chance to save partial work), then <code>cleanup()</code> to release resources. The Pekko actor terminates and a <code>TIMEOUT</code> response is returned.</p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>// HandlerActor — TTL timer is armed when execution starts:
+int ttl = handlerConfig.getTtlMinutes();      // from handler JSON config
+if (request.getTtlMinutes() > 0)
+    ttl = request.getTtlMinutes();            // request can override
+
+getContext().scheduleOnce(Duration.ofMinutes(ttl), self, new Timeout());
+
+// When timeout fires:
+handler.stop();       // signal handler to stop gracefully
+handler.cleanup();    // release resources
+state.markTimedOut(); // phase = TIMED_OUT
+responseFuture.complete(DGResponse.timeout(requestId));</code></pre>
+
+                    <h6 class="mt-3">Handler that respects TTL</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>public class LongRunningHandler implements DGHandler {
+    private volatile boolean stopped = false;
+
+    @Override
+    public DGResponse execute(DGRequest request) {
+        for (int i = 0; i &lt; 10000; i++) {
+            if (stopped) {   // CHECK THIS in every iteration
+                return DGResponse.error(request.getRequestId(),
+                    "Stopped at iteration " + i + " due to TTL");
+            }
+            // ... do work ...
+            Thread.sleep(100);
+        }
+        return DGResponse.success(request.getRequestId(), Map.of("iterations", 10000));
+    }
+
+    @Override public void stop() { stopped = true; }
+    @Override public void cleanup() { }
+}</code></pre>
+                </div></div>
+
+                <!-- Result Delivery -->
+                <div class="card border-0 shadow-sm mb-4" id="delivery"><div class="card-body">
+                    <h4 style="color:#06b6d4;"><i class="fas fa-paper-plane me-2"></i>Result Delivery</h4>
+                    <p>After handler execution completes, the <code>DGResponse</code> is delivered through the originating channel or to a specified <code>delivery_destination</code>.</p>
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Source Channel</th><th>Default Delivery</th><th>With delivery_destination</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>REST</strong></td><td>HTTP 200 JSON response body</td><td>Also publishes to specified Kafka/MQ topic</td></tr>
+                            <tr><td><strong>WebSocket</strong></td><td>JSON text frame on same session</td><td>Also publishes to specified Kafka/MQ topic</td></tr>
+                            <tr><td><strong>Kafka</strong></td><td>Published to configured response topic</td><td>Overrides response topic</td></tr>
+                            <tr><td><strong>ActiveMQ/RabbitMQ</strong></td><td>Published to configured response queue</td><td>Overrides response queue</td></tr>
+                            <tr><td><strong>FileSystem</strong></td><td>Fire-and-forget (file moved to <code>processed/</code>)</td><td>Publishes to destination if configured</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h6 class="mt-3">DGResponse JSON Structure</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "SUCCESS",              // SUCCESS | ERROR | TIMEOUT
+  "data": {                         // handler output (null on error/timeout)
+    "result": 42,
+    "operation": "MULTIPLY"
+  },
+  "error_message": null,            // null on success
+  "handler_id": "hdl-a3b9c2d1e4f5",
+  "execution_time_ms": 12,
+  "timestamp": "2025-01-15T10:30:00Z"
+}</code></pre>
+                </div></div>
+
+                <!-- Error Handling -->
+                <div class="card border-0 shadow-sm mb-4" id="error-table"><div class="card-body">
+                    <h4 class="text-danger"><i class="fas fa-exclamation-circle me-2"></i>Error Handling &amp; Edge Cases</h4>
+                    <table class="table dg-table table-bordered small">
+                        <thead class="table-light"><tr><th>Scenario</th><th>Status</th><th>Error Message</th></tr></thead>
+                        <tbody>
+                            <tr><td>Invalid API key</td><td><code>ERROR</code></td><td>"Invalid or disabled API key"</td></tr>
+                            <tr><td>Unknown request_type</td><td><code>ERROR</code></td><td>"No handler found for request_type=‘XYZ’"</td></tr>
+                            <tr><td>Handler class not found</td><td><code>ERROR</code></td><td>"Handler execution failed: ClassNotFoundException"</td></tr>
+                            <tr><td>Handler throws exception</td><td><code>ERROR</code></td><td>"Handler execution failed: [exception message]"</td></tr>
+                            <tr><td>TTL expired</td><td><code>TIMEOUT</code></td><td>"Request exceeded TTL and was terminated"</td></tr>
+                            <tr><td>Proxy: no execute method</td><td><code>ERROR</code></td><td>"No execute-compatible method found in [ClassName]"</td></tr>
+                            <tr><td>Handler stopped externally</td><td><code>ERROR</code></td><td>"Handler was stopped"</td></tr>
+                        </tbody>
+                    </table>
+                </div></div>
+
+            </div><!-- end col-lg-9 -->
+
+            <!-- ═══ SIDEBAR ═══ -->
+            <div class="col-lg-3"><div class="card border-0 shadow-sm sticky-top" style="top:80px">
+                <div class="card-header py-3" style="background:var(--dg-bg-code);color:var(--dg-text-heading);border-bottom:1px solid var(--dg-border);"><h6 class="mb-0"><i class="fas fa-list me-2"></i>On This Page</h6></div>
+                <div class="list-group list-group-flush small">
+                    <a href="#rest-tutorial" class="list-group-item list-group-item-action"><i class="fas fa-globe text-success me-2"></i>REST Tutorial</a>
+                    <a href="#websocket-tutorial" class="list-group-item list-group-item-action"><i class="fas fa-plug text-primary me-2"></i>WebSocket Tutorial</a>
+                    <a href="#pdc-tutorial" class="list-group-item list-group-item-action"><i class="fas fa-exchange-alt text-danger me-2"></i>PDCHandler</a>
+                    <a href="#custom-handlers" class="list-group-item list-group-item-action"><i class="fas fa-code text-info me-2"></i>Custom Handlers</a>
+                    <a href="#python-handlers" class="list-group-item list-group-item-action"><i class="fab fa-python me-2" style="color:#FFD43B;"></i>Python Handlers</a>
+                    <div class="list-group-item" style="background:var(--dg-bg-code);font-weight:600;color:var(--dg-text-heading);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;padding:0.5rem 1rem;">
+                        <i class="fas fa-link me-2"></i>Handler Chaining
+                    </div>
+                    <a href="#chain-overview" class="list-group-item list-group-item-action ps-4">Overview &amp; Concepts</a>
+                    <a href="#chain-config" class="list-group-item list-group-item-action ps-4">Config Schema</a>
+                    <a href="#chain-variables" class="list-group-item list-group-item-action ps-4">Variable Resolution</a>
+                    <a href="#chain-merge" class="list-group-item list-group-item-action ps-4">Merge Strategies</a>
+                    <a href="#chain-linear" class="list-group-item list-group-item-action ps-4">Linear Chains</a>
+                    <a href="#chain-conditional" class="list-group-item list-group-item-action ps-4">Conditional Steps</a>
+                    <a href="#chain-parallel" class="list-group-item list-group-item-action ps-4">Parallel Fan-Out</a>
+                    <a href="#chain-errors" class="list-group-item list-group-item-action ps-4">Error Strategies</a>
+                    <a href="#chain-trace" class="list-group-item list-group-item-action ps-4">Execution Trace</a>
+                    <a href="#chain-examples" class="list-group-item list-group-item-action ps-4">Quick Examples</a>
+                    <div class="list-group-item" style="background:var(--dg-bg-code);font-weight:600;color:var(--dg-text-heading);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;padding:0.5rem 1rem;">
+                        <i class="fas fa-microchip me-2"></i>Architecture
+                    </div>
+                    <a href="#pipeline" class="list-group-item list-group-item-action ps-4">Processing Pipeline</a>
+                    <a href="#dgrequest" class="list-group-item list-group-item-action ps-4">DGRequest Schema</a>
+                    <a href="#proxy" class="list-group-item list-group-item-action ps-4">Dynamic Proxy</a>
+                    <a href="#execution" class="list-group-item list-group-item-action ps-4">Pekko Execution &amp; TTL</a>
+                    <a href="#delivery" class="list-group-item list-group-item-action ps-4">Result Delivery</a>
+                    <a href="#error-table" class="list-group-item list-group-item-action ps-4">Error Handling</a>
                 </div>
                 <div class="card-body small">
                     <h6 class="fw-bold">Quick Links</h6>
                     <a th:href="@{/playground}" class="btn btn-sm btn-success w-100 mb-2"><i class="fas fa-flask me-1"></i>Handler Playground</a>
                     <a th:href="@{/monitoring/handlers}" class="btn btn-sm btn-outline-primary w-100 mb-2"><i class="fas fa-cogs me-1"></i>Handler Monitor</a>
-                    <a th:href="@{/help/channels}" class="btn btn-sm btn-outline-secondary w-100"><i class="fas fa-exchange-alt me-1"></i>Channel Docs</a>
+                    <a th:href="@{/help/channels}" class="btn btn-sm btn-outline-secondary w-100 mb-2"><i class="fas fa-exchange-alt me-1"></i>Channel Docs</a>
+                    <a th:href="@{/help/python}" class="btn btn-sm btn-outline-warning w-100"><i class="fab fa-python me-1"></i>Python Guide</a>
+                </div>
+                <div class="card-body border-top small">
+                    <h6 class="fw-bold">Chaining Quick Ref</h6>
+                    <p class="mb-1"><strong>Request Type:</strong> <code>"CHAIN"</code></p>
+                    <p class="mb-1"><strong>Merge:</strong> <code>REPLACE</code> | <code>MERGE_PREV</code> | <code>APPEND</code> | <code>PASSTHROUGH</code></p>
+                    <p class="mb-1"><strong>Errors:</strong> <code>ABORT</code> | <code>SKIP</code> | <code>FALLBACK</code></p>
+                    <p class="mb-1"><strong>Join:</strong> <code>KEYED</code> | <code>MERGE_ALL</code> | <code>FIRST_SUCCESS</code></p>
+                    <p class="mb-0"><strong>Vars:</strong> <code>${payload}</code> | <code>${prev}</code> | <code>${steps.alias}</code></p>
                 </div>
                 <div class="card-body border-top small">
                     <h6 class="fw-bold">REST vs WebSocket</h6>
@@ -240,8 +1051,8 @@ Continue until TTL expires → stop &amp; return summary
                     </tbody></table>
                 </div>
             </div></div>
-        </div>
-    </div>
+        </div><!-- end row -->
+    </div><!-- end container -->
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>

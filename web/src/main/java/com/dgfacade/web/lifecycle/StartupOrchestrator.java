@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.web.lifecycle;
 
@@ -9,6 +9,7 @@ import com.dgfacade.server.channel.ChannelAccessor;
 import com.dgfacade.server.cluster.ClusterService;
 import com.dgfacade.server.config.HandlerConfigRegistry;
 import com.dgfacade.server.engine.ExecutionEngine;
+import com.dgfacade.server.python.PythonWorkerManager;
 import com.dgfacade.server.ingestion.IngestionService;
 import com.dgfacade.server.metrics.MetricsService;
 import com.dgfacade.server.service.UserService;
@@ -62,11 +63,12 @@ public class StartupOrchestrator {
     private final ClusterService clusterService;
     private final ChannelAccessor channelAccessor;
     private final IngestionService ingestionService;
+    private final PythonWorkerManager pythonWorkerManager;
 
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.6.0}")
+    @Value("${dgfacade.version:1.6.1}")
     private String version;
 
     @Value("${server.port:8090}")
@@ -116,7 +118,8 @@ public class StartupOrchestrator {
                                MetricsService metricsService,
                                ClusterService clusterService,
                                ChannelAccessor channelAccessor,
-                               IngestionService ingestionService) {
+                               IngestionService ingestionService,
+                               PythonWorkerManager pythonWorkerManager) {
         this.executionEngine = executionEngine;
         this.handlerConfigRegistry = handlerConfigRegistry;
         this.userService = userService;
@@ -124,6 +127,7 @@ public class StartupOrchestrator {
         this.clusterService = clusterService;
         this.channelAccessor = channelAccessor;
         this.ingestionService = ingestionService;
+        this.pythonWorkerManager = pythonWorkerManager;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -225,6 +229,20 @@ public class StartupOrchestrator {
             logPhaseComplete(9, "Request Ingestion Startup",
                     ingestersStarted + " ingester(s) started",
                     "Config dir: config/ingesters");
+
+            // Phase 10: Python Worker Pool
+            phaseDelay();
+            logPhase(10, "Python Worker Pool",
+                    "Starting Python handler worker processes...");
+            int pythonWorkersStarted = 0;
+            if (pythonWorkerManager.isEnabled()) {
+                pythonWorkersStarted = pythonWorkerManager.start();
+            }
+            logPhaseComplete(10, "Python Worker Pool",
+                    pythonWorkerManager.isEnabled()
+                        ? pythonWorkersStarted + " Python worker(s) started"
+                        : "Disabled (config/python/py4j.json enabled=false)",
+                    "Binary: " + pythonWorkerManager.getConfig().getPythonBinary());
 
             // Final delay before system ready
             phaseDelay();
@@ -342,6 +360,10 @@ public class StartupOrchestrator {
                 pad("✓ WebSocket      : ACCEPTING CONNECTIONS", 52));
         String clusterStr = "✓ Cluster        : " + clusterMode + " (" + clusterRole + ")";
         log.info("║   {}{}║", clusterStr, pad(clusterStr, 52));
+        String pythonStr = "✓ Python Workers : " + (pythonWorkerManager.isEnabled()
+                ? (pythonWorkerManager.getHealthyWorkerCount() + " ready")
+                : "DISABLED");
+        log.info("║   {}{}║", pythonStr, pad(pythonStr, 52));
         log.info("║                                                                    ║");
         log.info("╠════════════════════════════════════════════════════════════════════╣");
         log.info("║                                                                    ║");
@@ -365,7 +387,7 @@ public class StartupOrchestrator {
                 pad("Login           : admin / admin123", 52));
         log.info("║   Startup Time    : {} ms{}║", elapsed.toMillis(),
                 pad("Startup Time    : " + elapsed.toMillis() + " ms", 52));
-        log.info("║   Copyright © 2025-2030 Ashutosh Sinha. Patent Pending.            ║");
+        log.info("║   Copyright © 2025-2030 Ashutosh Sinha.            ║");
         log.info("╚════════════════════════════════════════════════════════════════════╝");
         log.info("");
     }

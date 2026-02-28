@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.server.ingestion;
 
@@ -155,8 +155,9 @@ public class IngestionService {
             return "Cannot determine type from channel '" + channelId + "'";
         }
 
-        // Normalize type: "jms" → "activemq" for ingester matching
+        // Normalize type: "jms" → "activemq", "confluent-kafka" → "confluent_kafka" for ingester matching
         if ("jms".equalsIgnoreCase(typeStr)) typeStr = "activemq";
+        typeStr = typeStr.replace("-", "_");
 
         RequestIngester.IngesterType type;
         try {
@@ -411,7 +412,7 @@ public class IngestionService {
 
     private AbstractRequestIngester createIngester(RequestIngester.IngesterType type) {
         return switch (type) {
-            case KAFKA -> new KafkaRequestIngester();
+            case KAFKA, CONFLUENT_KAFKA -> new KafkaRequestIngester();
             case ACTIVEMQ -> new ActiveMQRequestIngester();
             case FILESYSTEM -> new FileSystemRequestIngester();
         };
@@ -422,6 +423,33 @@ public class IngestionService {
      */
     public Map<String, Object> getConfig(String id) {
         return loadConfig(id);
+    }
+
+    public void saveIngester(String id, Map<String, Object> config) throws IOException {
+        ensureDir();
+        Map<String, Object> clean = new LinkedHashMap<>(config);
+        clean.remove("_id");
+        clean.remove("_state");
+        clean.remove("_channelType");
+        clean.remove("_brokerId");
+        JsonUtil.toFile(new File(configDir, id + ".json"), clean);
+        log.info("Saved ingester config: {}", id);
+    }
+
+    public boolean deleteIngester(String id) {
+        // Stop if running
+        AbstractRequestIngester existing = ingesters.get(id);
+        if (existing != null) {
+            try { existing.stop(); } catch (Exception e) { /* ignore */ }
+            ingesters.remove(id);
+        }
+        File file = new File(configDir, id + ".json");
+        if (file.exists()) {
+            boolean deleted = file.delete();
+            if (deleted) log.info("Deleted ingester config: {}", id);
+            return deleted;
+        }
+        return false;
     }
 
     private Map<String, Object> loadConfig(String id) {

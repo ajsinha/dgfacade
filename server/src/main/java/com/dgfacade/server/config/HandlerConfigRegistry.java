@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.server.config;
 
@@ -96,5 +96,83 @@ public class HandlerConfigRegistry {
                 log.error("Failed to load handler config: {}", file.getName(), e);
             }
         }
+    }
+
+    // ═══ CRUD for handler config files ═══
+
+    /** List all handler config file IDs (filenames without .json). */
+    public List<String> listHandlerFileIds() {
+        File dir = new File(configDir);
+        if (!dir.exists() || !dir.isDirectory()) return Collections.emptyList();
+        File[] files = dir.listFiles((d, name) -> name.endsWith(".json") && !name.endsWith(".new"));
+        if (files == null) return Collections.emptyList();
+        List<String> ids = new ArrayList<>();
+        for (File f : files) ids.add(f.getName().replace(".json", ""));
+        Collections.sort(ids);
+        return ids;
+    }
+
+    /** Get a handler config file as a map of requestType -> HandlerConfig. */
+    public Map<String, HandlerConfig> getHandlerFile(String fileId) {
+        File file = new File(configDir, fileId + ".json");
+        if (!file.exists()) return null;
+        try {
+            Map<String, HandlerConfig> rawMap = JsonUtil.fromFile(file,
+                    new TypeReference<Map<String, HandlerConfig>>() {});
+            for (Map.Entry<String, HandlerConfig> entry : rawMap.entrySet()) {
+                entry.getValue().setRequestType(entry.getKey());
+            }
+            return rawMap;
+        } catch (IOException e) {
+            log.error("Failed to load handler file '{}': {}", fileId, e.getMessage());
+            return null;
+        }
+    }
+
+    /** Get all handler files with metadata. */
+    public List<Map<String, Object>> getAllHandlerFiles() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (String fileId : listHandlerFileIds()) {
+            Map<String, HandlerConfig> configs = getHandlerFile(fileId);
+            if (configs != null) {
+                Map<String, Object> entry = new LinkedHashMap<>();
+                entry.put("_file_id", fileId);
+                entry.put("_handler_count", configs.size());
+                entry.put("_handlers", configs);
+                result.add(entry);
+            }
+        }
+        return result;
+    }
+
+    /** Save a handler config file (map of requestType -> config). */
+    public void saveHandlerFile(String fileId, Map<String, Object> rawConfig) throws IOException {
+        ensureDir();
+        JsonUtil.toFile(new File(configDir, fileId + ".json"), rawConfig);
+        reload();
+        log.info("Saved handler config file: {}", fileId);
+    }
+
+    /** Delete a handler config file. */
+    public boolean deleteHandlerFile(String fileId) {
+        File file = new File(configDir, fileId + ".json");
+        if (file.exists()) {
+            boolean deleted = file.delete();
+            if (deleted) {
+                if ("default".equals(fileId)) {
+                    defaultConfigs = new ConcurrentHashMap<>();
+                } else {
+                    userConfigs.remove(fileId);
+                }
+                log.info("Deleted handler config file: {}", fileId);
+            }
+            return deleted;
+        }
+        return false;
+    }
+
+    private void ensureDir() {
+        File dir = new File(configDir);
+        if (!dir.exists()) dir.mkdirs();
     }
 }

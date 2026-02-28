@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.server.ingestion;
 
@@ -44,7 +44,7 @@ public interface RequestIngester {
     // ─── Types ──────────────────────────────────────────────────────────
 
     enum IngesterType {
-        KAFKA, ACTIVEMQ, FILESYSTEM
+        KAFKA, CONFLUENT_KAFKA, ACTIVEMQ, FILESYSTEM
     }
 
     record IngesterStats(

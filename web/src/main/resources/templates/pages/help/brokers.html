@@ -2,7 +2,7 @@
 <!--
   ~ Copyright © 2025-2030, All Rights Reserved
   ~ Ashutosh Sinha | Email: ajsinha@gmail.com
-  ~ Proprietary and confidential. Patent Pending.
+  ~ Proprietary and confidential.
   -->
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Broker Configuration')}"></head>
@@ -249,6 +249,107 @@ dgfacade.brokers.reconnect-backoff-ms=1000</code></pre>
     </div>
 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════════════════ CONFLUENT KAFKA ════════════════════ -->
+                <div class="card mb-4" id="confluent-kafka">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-cloud me-2"></i>Confluent Kafka Broker &mdash; <code>config/brokers/prod-confluent-kafka.json</code></h5></div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-3"><i class="fas fa-info-circle me-2"></i>Use <code>"type": "confluent-kafka"</code> instead of <code>"kafka"</code> to enable automatic SASL authentication injection and Schema Registry integration. All standard Kafka connection, SSL, and consumer/producer properties are inherited &mdash; Confluent-specific blocks (<code>authentication</code>, <code>schema_registry</code>) are additive.</div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#ck-basic">SASL_PLAINTEXT (Dev)</a></li>
+                            <li class="nav-item"><a class="nav-link text-danger fw-bold" data-bs-toggle="tab" href="#ck-ssl"><i class="fas fa-lock me-1"></i>SASL_SSL (Prod)</a></li>
+                        </ul>
+                        <div class="tab-content mt-3">
+                            <div class="tab-pane fade show active" id="ck-basic">
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "type": "confluent-kafka",
+  "description": "Development Confluent Platform broker (no SSL)",
+  "enabled": true,
+  "connection": {
+    "bootstrap_servers": "localhost:9092",
+    "client_id": "dgfacade-confluent-dev",
+    "group_id": "dgfacade-confluent-group",
+    "auto_offset_reset": "latest",
+    "max_poll_records": 500
+  },
+  "authentication": {
+    "mechanism": "SASL_PLAINTEXT",
+    "sasl_mechanism": "PLAIN",
+    "api_key": "dev-user",
+    "api_secret": "dev-secret"
+  },
+  "schema_registry": {
+    "url": "http://localhost:8081"
+  },
+  "properties": {
+    "request.timeout.ms": "30000",
+    "session.timeout.ms": "10000"
+  }
+}</code></pre>
+                            </div>
+                            <div class="tab-pane fade" id="ck-ssl">
+<div class="alert alert-success mb-3"><i class="fas fa-cloud me-2"></i><strong>Confluent Cloud:</strong> The <code>authentication</code> block builds the <code>sasl.jaas.config</code> string automatically from <code>api_key</code> / <code>api_secret</code>. Supported SASL mechanisms: <code>PLAIN</code>, <code>SCRAM-SHA-256</code>, <code>SCRAM-SHA-512</code>, <code>OAUTHBEARER</code>.</div>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "type": "confluent-kafka",
+  "description": "Production Confluent Cloud cluster with SASL_SSL",
+  "enabled": true,
+  "connection": {
+    "bootstrap_servers": "pkc-xxxxx.us-east-1.aws.confluent.cloud:9092",
+    "client_id": "dgfacade-prod",
+    "group_id": "dgfacade-consumer-group",
+    "acks": "all",
+    "retries": 5,
+    "auto_offset_reset": "latest",
+    "max_poll_records": 500
+  },
+  "authentication": {
+    "mechanism": "SASL_SSL",
+    "sasl_mechanism": "PLAIN",
+    "api_key": "${CONFLUENT_API_KEY}",
+    "api_secret": "${CONFLUENT_API_SECRET}"
+  },
+  "schema_registry": {
+    "url": "https://psrc-xxxxx.us-east-1.aws.confluent.cloud",
+    "api_key": "${CONFLUENT_SR_API_KEY}",
+    "api_secret": "${CONFLUENT_SR_API_SECRET}"
+  },
+  "ssl": {
+    "enabled": true,
+    "format": "PEM",
+    "protocol": "TLSv1.3",
+    "ca_cert_path": "config/certs/confluent/ca-chain.pem",
+    "client_cert_path": "config/certs/confluent/client-cert.pem",
+    "client_key_path": "config/certs/confluent/client-key.pem"
+  },
+  "properties": {
+    "ssl.endpoint.identification.algorithm": "https",
+    "client.dns.lookup": "use_all_dns_ips"
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <table class="table table-sm table-bordered">
+                                <thead><tr><th>Authentication Field</th><th>Description</th><th>Default</th></tr></thead>
+                                <tbody>
+                                    <tr><td><code>mechanism</code></td><td>Security protocol: <code>SASL_SSL</code> (prod) or <code>SASL_PLAINTEXT</code> (dev)</td><td><code>SASL_SSL</code></td></tr>
+                                    <tr><td><code>sasl_mechanism</code></td><td>SASL type: <code>PLAIN</code>, <code>SCRAM-SHA-256</code>, <code>SCRAM-SHA-512</code>, <code>OAUTHBEARER</code></td><td><code>PLAIN</code></td></tr>
+                                    <tr><td><code>api_key</code></td><td>Confluent Cloud API key (or SASL username)</td><td>&mdash;</td></tr>
+                                    <tr><td><code>api_secret</code></td><td>Confluent Cloud API secret (or SASL password)</td><td>&mdash;</td></tr>
+                                    <tr><td><code>sasl_jaas_config</code></td><td>Optional raw JAAS string (overrides api_key/secret if set)</td><td>auto-built</td></tr>
+                                </tbody>
+                            </table>
+                            <table class="table table-sm table-bordered mt-2">
+                                <thead><tr><th>Schema Registry Field</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr><td><code>url</code></td><td>Schema Registry endpoint URL</td></tr>
+                                    <tr><td><code>api_key</code></td><td>Schema Registry API key (sets <code>basic.auth.credentials.source=USER_INFO</code>)</td></tr>
+                                    <tr><td><code>api_secret</code></td><td>Schema Registry API secret</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -598,9 +699,80 @@ keytool -importkeystore -srckeystore client.p12 -srcstoretype PKCS12 \
                     </div>
                 </section>
 
+                <!-- ── Connection Recovery ──────────────────────────────── -->
+                <section id="connection-recovery" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-heartbeat me-2" style="color:var(--dg-danger);"></i>Connection Recovery</h3>
+                    <p>
+                        All broker connections include automatic recovery from connection breaks. The messaging layer detects failures
+                        and attempts reconnection with configurable backoff intervals. No manual intervention is required.
+                    </p>
+
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header"><h6 class="mb-0"><i class="fas fa-stream me-1 text-primary"></i>Kafka Recovery</h6></div>
+                        <div class="card-body small">
+                            <p>Kafka clients use built-in connection recovery with exponential backoff. Configurable via broker properties:</p>
+                            <table class="table table-sm mb-0">
+                                <thead><tr><th>Property</th><th>Default</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr><td><code>reconnect_backoff_ms</code></td><td>1000</td><td>Initial backoff for reconnection attempts</td></tr>
+                                    <tr><td><code>reconnect_backoff_max_ms</code></td><td>30000</td><td>Maximum backoff cap (30s)</td></tr>
+                                    <tr><td><code>retry_backoff_ms</code></td><td>500</td><td>Backoff between send retries</td></tr>
+                                    <tr><td><code>session_timeout_ms</code></td><td>45000</td><td>Consumer session timeout before rebalance</td></tr>
+                                    <tr><td><code>heartbeat_interval_ms</code></td><td>10000</td><td>Consumer heartbeat interval</td></tr>
+                                </tbody>
+                            </table>
+                            <p class="mt-2 mb-0 text-muted">The subscriber poll loop catches connection errors, closes the stale consumer, waits with exponential backoff, and reconnects automatically — re-subscribing to all previously active topics.</p>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header"><h6 class="mb-0"><i class="fas fa-envelope me-1 text-success"></i>ActiveMQ Recovery</h6></div>
+                        <div class="card-body small">
+                            <p>ActiveMQ connections register a JMS <code>ExceptionListener</code> that triggers automatic reconnection on failure.</p>
+                            <p class="mb-1"><strong>Recommended:</strong> Use ActiveMQ's <code>failover://</code> transport URL for built-in broker-level failover:</p>
+                            <pre class="p-2 rounded" style="background:var(--dg-bg-code);color:var(--dg-text-primary);font-size:0.78rem;">"broker_url": "failover:(tcp://broker1:61616,tcp://broker2:61616)?maxReconnectAttempts=-1&amp;randomize=true"</pre>
+                            <p class="mb-0 text-muted">The <code>reconnect_interval_seconds</code> property (default: 60) controls the application-level retry delay when the JMS connection is lost.</p>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header"><h6 class="mb-0"><i class="fas fa-rabbit me-1" style="color:#ff6600;"></i>RabbitMQ Recovery</h6></div>
+                        <div class="card-body small">
+                            <p>RabbitMQ connections have <strong>automatic recovery</strong> and <strong>topology recovery</strong> enabled by default. On connection loss, the client library automatically:</p>
+                            <ul class="mb-2">
+                                <li>Reconnects to the broker using exponential backoff</li>
+                                <li>Re-declares exchanges, queues, and bindings (topology recovery)</li>
+                                <li>Restores active consumers</li>
+                            </ul>
+                            <table class="table table-sm mb-0">
+                                <thead><tr><th>Property</th><th>Default</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr><td><code>network_recovery_interval_ms</code></td><td>10000</td><td>Interval between recovery attempts (10s)</td></tr>
+                                    <tr><td><code>heartbeat</code></td><td>60</td><td>Server-side heartbeat interval in seconds</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header"><h6 class="mb-0"><i class="fas fa-cog me-1 text-muted"></i>Application-Level Recovery (All Brokers)</h6></div>
+                        <div class="card-body small">
+                            <p>In addition to broker-specific recovery, all DGFacade publishers and subscribers share a common reconnection framework via <code>AbstractPublisher</code> / <code>AbstractSubscriber</code>:</p>
+                            <ul class="mb-2">
+                                <li><code>reconnect_interval_seconds</code> (default: 60) — cooldown before application-level reconnection attempt</li>
+                                <li>A dedicated daemon thread handles reconnection without blocking the main request path</li>
+                                <li>On successful reconnection, the connection state transitions back to <code>CONNECTED</code></li>
+                                <li>Publisher error counts and connection state are tracked and available via the monitoring APIs</li>
+                            </ul>
+                            <p class="mb-0 text-muted">For production deployments, combine broker-level failover (e.g. Kafka multi-broker, ActiveMQ failover://, RabbitMQ clustering) with the application-level recovery for maximum resilience.</p>
+                        </div>
+                    </div>
+                </section>
+
                 <div class="mt-5 text-center">
                     <a href="/help/architecture" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Architecture</a>
                     <a href="/help" class="btn btn-outline-secondary ms-2"><i class="fas fa-home me-2"></i>Help Index</a>
+                    <a th:href="@{/admin/brokers}" class="btn btn-success ms-2"><i class="fas fa-server me-1"></i>Manage Brokers</a>
                     <a href="/help/channels" class="btn btn-primary ms-2">Channel Configuration<i class="fas fa-arrow-right ms-2"></i></a>
                 </div>
             </div>
@@ -608,8 +780,8 @@ keytool -importkeystore -srckeystore client.p12 -srcstoretype PKCS12 \
 
         <footer class="py-4 mt-5 border-top">
             <div class="row">
-                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.0'">1.6.0</span></p></div>
-                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br><span class="badge bg-warning text-dark">Patent Pending</span></p></div>
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.1'">1.6.1</span></p></div>
+                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br></p></div>
             </div>
         </footer>
     </div>

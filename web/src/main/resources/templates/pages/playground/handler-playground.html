@@ -9,7 +9,7 @@
             <div class="col"><h2 class="mb-0"><i class="fas fa-flask me-2"></i>Handler Playground</h2>
                 <p class="text-muted mb-0">Test handlers via REST, WebSocket, Kafka, and Handler Chains in real-time.
                     <a th:href="@{/help/handlers}" class="small">Handler tutorials &rarr;</a>
-                    <a th:href="@{/help/handler-chaining}" class="small ms-2">Chaining guide &rarr;</a></p></div>
+                    <a th:href="@{/help/handlers#chaining}" class="small ms-2">Chaining guide &rarr;</a></p></div>
         </div>
 
         <!-- ═══════════════════ TABS ═══════════════════ -->
@@ -312,7 +312,7 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
   dgfacade:
-    image: dgfacade:1.6.0
+    image: dgfacade:1.6.1
     ports: ["8090:8090"]
     depends_on: [kafka]
     volumes:

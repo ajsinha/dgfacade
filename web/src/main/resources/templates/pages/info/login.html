@@ -3,49 +3,120 @@
   ~ Copyright © 2025-2030, All Rights Reserved
   ~ Ashutosh Sinha | Email: ajsinha@gmail.com
   -->
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="(${appName} ?: 'DGFacade') + ' - Login'">DGFacade - Login</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.5.1/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{/css/dgfacade.css}">
     <style>
         body {
-            background: linear-gradient(135deg, #0079c1 0%, #005a8e 50%, #003366 100%);
+            background: linear-gradient(160deg, #0f0e1a 0%, #1a1b2e 40%, #1e1b4b 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 2rem;
         }
         .login-card {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            background: var(--dg-bg-card);
+            border: 1px solid var(--dg-border);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(124,58,237,0.08);
             overflow: hidden;
-            max-width: 400px;
+            max-width: 420px;
             width: 100%;
         }
         .login-header {
-            background: linear-gradient(135deg, #0079c1 0%, #005a8e 50%, #003366 100%);
+            background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 50%, #1e1b4b 100%);
             color: white;
-            padding: 2rem;
+            padding: 2.5rem 2rem 2rem;
             text-align: center;
+            position: relative;
         }
-        .login-header i { font-size: 3rem; margin-bottom: 1rem; }
-        .login-body { padding: 2rem; }
-        .form-control:focus {
-            border-color: #0079c1;
-            box-shadow: 0 0 0 0.2rem rgba(0, 121, 193, 0.25);
+        .login-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(124,58,237,0.5), transparent);
+        }
+        .login-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.25rem;
+        }
+        .login-subtitle {
+            font-size: 0.78rem;
+            opacity: 0.7;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .login-body {
+            padding: 2rem;
+        }
+        .login-body .form-label {
+            color: var(--dg-text-secondary);
+            font-size: 0.78rem;
+        }
+        .login-body .form-control {
+            background: var(--dg-bg-input);
+            border-color: var(--dg-border);
+            color: var(--dg-text-primary);
+            font-size: 0.84rem;
+            padding: 0.6rem 0.75rem;
+        }
+        .login-body .input-group-text {
+            background: var(--dg-bg-input);
+            border-color: var(--dg-border);
+            color: var(--dg-text-muted);
         }
         .btn-login {
-            background: linear-gradient(135deg, #0079c1 0%, #005a8e 50%, #003366 100%);
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
             border: none;
-            padding: 0.75rem;
-            font-weight: 600;
+            padding: 0.7rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(124,58,237,0.35);
+            transition: all 0.2s;
         }
         .btn-login:hover {
-            background: linear-gradient(135deg, #005a8e 0%, #004570 50%, #002244 100%);
+            box-shadow: 0 6px 24px rgba(124,58,237,0.5);
+            transform: translateY(-1px);
+        }
+        .login-footer {
+            padding: 0 2rem 1.5rem;
+            text-align: center;
+        }
+        .login-footer a {
+            color: var(--dg-text-muted);
+            font-size: 0.76rem;
+            border: 1px solid var(--dg-border);
+            padding: 5px 14px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .login-footer a:hover {
+            border-color: var(--dg-primary);
+            color: var(--dg-primary-light);
+        }
+        .login-copy {
+            text-align: center;
+            padding: 0.75rem 2rem 1.25rem;
+            font-size: 0.68rem;
+            color: var(--dg-text-muted);
+            border-top: 1px solid var(--dg-border);
         }
     </style>
 </head>
@@ -53,9 +124,9 @@
 
 <div class="login-card">
     <div class="login-header">
-        <i class="fas fa-network-wired"></i>
-        <h2 class="mb-0" th:text="${appName} ?: 'DGFacade'">DGFacade</h2>
-        <small>High-Performance Data Gateway Facade</small>
+        <div class="mb-2"><i class="fas fa-database" style="font-size:2.5rem;opacity:0.8;"></i></div>
+        <h2 class="login-title" th:text="${appName} ?: 'DGFacade'">DGFacade</h2>
+        <div class="login-subtitle">Data Gateway Facade &mdash; Sign in to continue</div>
     </div>
 
     <div class="login-body">
@@ -63,46 +134,46 @@
             <i class="fas fa-exclamation-circle me-2"></i>
             Invalid username or password
         </div>
-        <div th:if="${param.logout}" class="alert alert-info" role="alert">
+        <div th:if="${param.logout}" class="alert alert-info" role="alert" style="background:rgba(16,185,129,0.12);color:var(--dg-success-light);border-left:3px solid var(--dg-success);">
             <i class="fas fa-check-circle me-2"></i>
-            You have been logged out successfully
+            Logged out successfully.
         </div>
 
         <form th:action="@{/login}" method="post">
             <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
+                <label for="username" class="form-label">User ID</label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <span class="input-group-text"><i class="fas fa-user" style="font-size:0.82rem;"></i></span>
                     <input type="text" class="form-control" id="username" name="username"
-                           placeholder="Enter username" required autofocus>
+                           placeholder="Enter user ID" required autofocus>
                 </div>
             </div>
             <div class="mb-4">
                 <label for="password" class="form-label">Password</label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <span class="input-group-text"><i class="fas fa-lock" style="font-size:0.82rem;"></i></span>
                     <input type="password" class="form-control" id="password" name="password"
                            placeholder="Enter password" required>
                 </div>
             </div>
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" id="remember" name="remember-me">
-                <label class="form-check-label" for="remember">Remember me</label>
+                <label class="form-check-label" for="remember" style="font-size:0.78rem;color:var(--dg-text-muted);">Remember me</label>
             </div>
             <button type="submit" class="btn btn-primary btn-login w-100">
-                <i class="fas fa-sign-in-alt me-2"></i> Sign In
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
             </button>
         </form>
+    </div>
 
-        <hr class="my-4">
-        <div class="text-center">
-            <a th:href="@{/help}" class="btn btn-outline-secondary btn-sm me-2">
-                <i class="fas fa-question-circle me-1"></i> Help
-            </a>
-            <a th:href="@{/about}" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-info-circle me-1"></i> About
-            </a>
-        </div>
+    <div class="login-footer">
+        <a th:href="@{/help}"><i class="fas fa-book"></i>Help</a>
+        <span style="display:inline-block;width:8px;"></span>
+        <a th:href="@{/about}"><i class="fas fa-info-circle"></i>About</a>
+    </div>
+
+    <div class="login-copy">
+        &copy; 2025&ndash;2030 Ashutosh Sinha. All Rights Reserved.
     </div>
 </div>
 

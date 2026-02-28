@@ -2,7 +2,7 @@
 <!--
   ~ Copyright © 2025-2030, All Rights Reserved
   ~ Ashutosh Sinha | Email: ajsinha@gmail.com
-  ~ Proprietary and confidential. Patent Pending.
+  ~ Proprietary and confidential.
   -->
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Help')}"></head>
@@ -34,19 +34,6 @@
                             <i class="fas fa-sitemap fa-3x mb-3"></i>
                             <h5 class="card-title">Architecture</h5>
                             <p class="card-text opacity-75 small">System design, data flow &amp; component overview</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-6 col-lg-3">
-                <a href="/help/request-processing" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
-                        <div class="card-body text-center py-4 text-white">
-                            <i class="fas fa-project-diagram fa-3x mb-3"></i>
-                            <h5 class="card-title">Request Processing</h5>
-                            <p class="card-text opacity-75 small">End-to-end flow, handlers, TTL, dynamic proxy</p>
-                            <span class="badge bg-light text-dark mt-1">v1.6.0</span>
                         </div>
                     </div>
                 </a>
@@ -94,22 +81,22 @@
                     <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
                         <div class="card-body text-center py-4 text-white">
                             <i class="fas fa-flask fa-3x mb-3"></i>
-                            <h5 class="card-title">Handlers Tutorial</h5>
-                            <p class="card-text opacity-75 small">REST, WebSocket, PDCHandler &amp; custom handlers</p>
-                            <span class="badge bg-light text-dark mt-1">v1.6.0</span>
+                            <h5 class="card-title">Handlers &amp; Chaining</h5>
+                            <p class="card-text opacity-75 small">REST, WebSocket, custom handlers, chains, proxy &amp; TTL</p>
+                            <span class="badge bg-light text-dark mt-1">v1.6.1</span>
                         </div>
                     </div>
                 </a>
             </div>
 
             <div class="col-md-6 col-lg-3">
-                <a href="/help/handler-chaining" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                <a href="/help/python" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #3776AB 0%, #FFD43B 100%);">
                         <div class="card-body text-center py-4 text-white">
-                            <i class="fas fa-link fa-3x mb-3"></i>
-                            <h5 class="card-title">Handler Chaining</h5>
-                            <p class="card-text opacity-75 small">Declarative pipelines: linear, conditional &amp; parallel</p>
-                            <span class="badge bg-light text-dark mt-1">v1.6.0</span>
+                            <i class="fab fa-python fa-3x mb-3"></i>
+                            <h5 class="card-title">Python Integration</h5>
+                            <p class="card-text opacity-75 small">Py4J worker pool, handler contract &amp; examples</p>
+                            <span class="badge bg-light text-dark mt-1">v1.6.1</span>
                         </div>
                     </div>
                 </a>
@@ -166,32 +153,6 @@
                     </div>
                 </a>
             </div>
-
-            <div class="col-md-6 col-lg-3">
-                <a href="/admin/brokers" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);">
-                        <div class="card-body text-center py-4 text-white">
-                            <i class="fas fa-server fa-3x mb-3"></i>
-                            <h5 class="card-title">Broker Management</h5>
-                            <p class="card-text opacity-75 small">Create, edit, start/stop brokers</p>
-                            <span class="badge bg-light text-dark mt-1">v1.6.0</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-6 col-lg-3">
-                <a href="/admin/input-channels" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);">
-                        <div class="card-body text-center py-4 text-white">
-                            <i class="fas fa-exchange-alt fa-3x mb-3"></i>
-                            <h5 class="card-title">Channel Management</h5>
-                            <p class="card-text opacity-75 small">Input &amp; Output Channels admin</p>
-                            <span class="badge bg-light text-dark mt-1">v1.6.0</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
         </div>
 
         <!-- Core Concepts Cards -->
@@ -201,7 +162,7 @@
             </div>
 
             <div class="col-md-6 col-lg-3">
-                <a href="/help/request-processing#proxy" class="text-decoration-none">
+                <a href="/help/handlers#proxy" class="text-decoration-none">
                     <div class="card h-100 border-0 shadow-sm hover-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);">
                         <div class="card-body text-center py-4 text-white">
                             <i class="fas fa-magic fa-3x mb-3"></i>
@@ -214,7 +175,7 @@
             </div>
 
             <div class="col-md-6 col-lg-3">
-                <a href="/help/request-processing#execution" class="text-decoration-none">
+                <a href="/help/handlers#execution" class="text-decoration-none">
                     <div class="card h-100 border-0 shadow-sm hover-card">
                         <div class="card-body text-center py-4">
                             <i class="fas fa-cogs fa-3x text-primary mb-3"></i>
@@ -322,12 +283,12 @@
             <div class="row">
                 <div class="col-md-6">
                     <h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6>
-                    <p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.0'">1.6.0</span></p>
+                    <p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.1'">1.6.0</span></p>
                 </div>
                 <div class="col-md-6 text-end">
                     <p class="text-muted small mb-0">
                         Copyright &copy; 2025-2030 Ashutosh Sinha<br>
-                        <span class="badge bg-warning text-dark">Patent Pending</span>
+                        
                     </p>
                 </div>
             </div>

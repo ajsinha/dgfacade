@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.server.actor;
 
@@ -75,18 +75,24 @@ public class HandlerActor extends AbstractBehavior<HandlerActor.Command> {
         getContext().scheduleOnce(Duration.ofMinutes(ttl), getContext().getSelf(), new Timeout());
 
         try {
-            // Instantiate handler class
-            Class<?> clazz = Class.forName(req.handlerConfig().getHandlerClass());
-
-            // If the class implements DGHandler, use it directly.
-            // Otherwise, wrap it in a dynamic proxy (DGHandlerProxy).
-            if (DGHandler.class.isAssignableFrom(clazz)) {
-                handler = (DGHandler) clazz.getDeclaredConstructor().newInstance();
-                log.debug("Handler {} implements DGHandler — using directly", clazz.getSimpleName());
+            // Check if this is a Python handler
+            if (req.handlerConfig().isPython()) {
+                handler = new com.dgfacade.server.python.DGHandlerPython();
+                log.debug("Handler is Python-based — using DGHandlerPython bridge");
             } else {
-                handler = DGHandlerProxy.createFrom(clazz);
-                log.info("Handler {} does NOT implement DGHandler — wrapped in DGHandlerProxy",
-                        clazz.getSimpleName());
+                // Instantiate Java handler class
+                Class<?> clazz = Class.forName(req.handlerConfig().getHandlerClass());
+
+                // If the class implements DGHandler, use it directly.
+                // Otherwise, wrap it in a dynamic proxy (DGHandlerProxy).
+                if (DGHandler.class.isAssignableFrom(clazz)) {
+                    handler = (DGHandler) clazz.getDeclaredConstructor().newInstance();
+                    log.debug("Handler {} implements DGHandler — using directly", clazz.getSimpleName());
+                } else {
+                    handler = DGHandlerProxy.createFrom(clazz);
+                    log.info("Handler {} does NOT implement DGHandler — wrapped in DGHandlerProxy",
+                            clazz.getSimpleName());
+                }
             }
 
             // Construct

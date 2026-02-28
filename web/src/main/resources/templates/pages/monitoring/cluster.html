@@ -1,31 +1,15 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8"/>
-    <title>DGFacade — Cluster Monitoring</title>
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}"/>
-    <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.5.1/css/all.min.css}"/>
-    <style>
-        .node-card { transition: all 0.3s; border-left: 4px solid #6c757d; }
-        .node-card.status-UP { border-left-color: #198754; }
-        .node-card.status-SUSPECT { border-left-color: #ffc107; }
-        .node-card.status-DOWN { border-left-color: #dc3545; }
-        .node-card.status-LEAVING { border-left-color: #6c757d; }
-        .node-card.self-node { background-color: #f0f8ff; }
-        .metric-box { text-align: center; padding: 1rem; border-radius: 0.5rem; }
-        .metric-box .value { font-size: 2rem; font-weight: 700; }
-        .metric-box .label { font-size: 0.85rem; color: #6c757d; }
-        .badge-role { font-size: 0.7rem; }
-        pre.json-block { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; max-height: 200px; overflow-y: auto; font-size: 0.8rem; }
-    </style>
-</head>
-<body>
+<head th:replace="~{fragments/layout :: head('Cluster Monitoring')}"></head>
+<body class="d-flex flex-column min-vh-100">
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+<div th:replace="~{fragments/layout :: alerts}"></div>
 <div class="container-fluid py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2><i class="fas fa-network-wired me-2"></i>Cluster Monitoring</h2>
+            <h2><i class="fas fa-network-wired me-2" style="color:var(--dg-primary);"></i>Cluster Monitoring</h2>
             <p class="text-muted mb-0">
                 Mode: <span class="badge" th:classappend="${clusterEnabled} ? 'bg-primary' : 'bg-secondary'"
                            th:text="${clusterEnabled} ? 'CLUSTER' : 'STANDALONE'">STANDALONE</span>
@@ -33,50 +17,64 @@
                 &nbsp;|&nbsp; Role: <span class="badge bg-info" th:text="${selfNode.role}">BOTH</span>
             </p>
         </div>
-        <button class="btn btn-outline-primary" onclick="location.reload()">
-            <i class="fas fa-sync-alt me-1"></i> Refresh
-        </button>
-        <a href="/help/clustering" class="btn btn-outline-info ms-2">
-            <i class="fas fa-book me-1"></i> Guide
-        </a>
+        <div>
+            <button class="btn btn-outline-primary btn-sm" onclick="location.reload()">
+                <i class="fas fa-sync-alt me-1"></i> Refresh
+            </button>
+            <a th:href="@{/help/clustering}" class="btn btn-outline-secondary btn-sm ms-2">
+                <i class="fas fa-book me-1"></i> Guide
+            </a>
+        </div>
     </div>
 
     <!-- Summary Metrics Row -->
     <div class="row g-3 mb-4">
         <div class="col-md-2">
-            <div class="metric-box bg-light">
-                <div class="value text-primary" th:text="${clusterSize}">1</div>
-                <div class="label">Total Nodes</div>
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--dg-primary);" th:text="${clusterSize}">1</div>
+                    <div class="small text-muted" style="text-transform:uppercase;letter-spacing:0.05em;font-size:0.7rem;">Total Nodes</div>
+                </div>
             </div>
         </div>
         <div class="col-md-2">
-            <div class="metric-box bg-light">
-                <div class="value text-success" th:text="${statusCounts['UP'] ?: 0}">1</div>
-                <div class="label">Nodes UP</div>
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--dg-success);" th:text="${statusCounts['UP'] ?: 0}">1</div>
+                    <div class="small text-muted" style="text-transform:uppercase;letter-spacing:0.05em;font-size:0.7rem;">Nodes UP</div>
+                </div>
             </div>
         </div>
         <div class="col-md-2">
-            <div class="metric-box bg-light">
-                <div class="value text-warning" th:text="${statusCounts['SUSPECT'] ?: 0}">0</div>
-                <div class="label">Suspect</div>
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--dg-warning);" th:text="${statusCounts['SUSPECT'] ?: 0}">0</div>
+                    <div class="small text-muted" style="text-transform:uppercase;letter-spacing:0.05em;font-size:0.7rem;">Suspect</div>
+                </div>
             </div>
         </div>
         <div class="col-md-2">
-            <div class="metric-box bg-light">
-                <div class="value text-danger" th:text="${statusCounts['DOWN'] ?: 0}">0</div>
-                <div class="label">Down</div>
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--dg-danger);" th:text="${statusCounts['DOWN'] ?: 0}">0</div>
+                    <div class="small text-muted" style="text-transform:uppercase;letter-spacing:0.05em;font-size:0.7rem;">Down</div>
+                </div>
             </div>
         </div>
         <div class="col-md-2">
-            <div class="metric-box bg-light">
-                <div class="value text-info" th:text="${requestsForwarded}">0</div>
-                <div class="label">Forwarded</div>
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--dg-info);" th:text="${requestsForwarded}">0</div>
+                    <div class="small text-muted" style="text-transform:uppercase;letter-spacing:0.05em;font-size:0.7rem;">Forwarded</div>
+                </div>
             </div>
         </div>
         <div class="col-md-2">
-            <div class="metric-box bg-light">
-                <div class="value text-info" th:text="${requestsReceived}">0</div>
-                <div class="label">Received</div>
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--dg-info);" th:text="${requestsReceived}">0</div>
+                    <div class="small text-muted" style="text-transform:uppercase;letter-spacing:0.05em;font-size:0.7rem;">Received</div>
+                </div>
             </div>
         </div>
     </div>
@@ -91,22 +89,23 @@
     </div>
 
     <!-- Node Cards -->
-    <h4 class="mb-3"><i class="fas fa-server me-2"></i>Cluster Nodes</h4>
+    <h4 class="mb-3"><i class="fas fa-server me-2" style="color:var(--dg-primary);"></i>Cluster Nodes</h4>
     <div class="row g-3">
         <div th:each="node : ${allNodes}" class="col-lg-6 col-xl-4">
-            <div class="card node-card" th:classappend="'status-' + ${node.status} + (${node.nodeId == selfNode.nodeId} ? ' self-node' : '')">
+            <div class="card"
+                 th:style="${node.status.name() == 'UP' ? 'border-left:4px solid var(--dg-success)' : (node.status.name() == 'SUSPECT' ? 'border-left:4px solid var(--dg-warning)' : (node.status.name() == 'DOWN' ? 'border-left:4px solid var(--dg-danger)' : 'border-left:4px solid var(--dg-border)'))}">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
                         <i class="fas fa-server me-1"></i>
                         <strong th:text="${node.nodeId}">node-abc123</strong>
-                        <span th:if="${node.nodeId == selfNode.nodeId}" class="badge bg-dark ms-1">THIS NODE</span>
+                        <span th:if="${node.nodeId == selfNode.nodeId}" class="badge bg-primary ms-1">THIS NODE</span>
                     </div>
                     <div>
-                        <span class="badge badge-role"
-                              th:classappend="${node.role.name() == 'GATEWAY'} ? 'bg-warning text-dark' : (${node.role.name() == 'EXECUTOR'} ? 'bg-success' : 'bg-info')"
+                        <span class="badge"
+                              th:classappend="${node.role.name() == 'GATEWAY'} ? 'bg-warning' : (${node.role.name() == 'EXECUTOR'} ? 'bg-success' : 'bg-info')"
                               th:text="${node.role}">BOTH</span>
                         <span class="badge"
-                              th:classappend="${node.status.name() == 'UP'} ? 'bg-success' : (${node.status.name() == 'SUSPECT'} ? 'bg-warning text-dark' : (${node.status.name() == 'DOWN'} ? 'bg-danger' : 'bg-secondary'))"
+                              th:classappend="${node.status.name() == 'UP'} ? 'bg-success' : (${node.status.name() == 'SUSPECT'} ? 'bg-warning' : (${node.status.name() == 'DOWN'} ? 'bg-danger' : 'bg-secondary'))"
                               th:text="${node.status}">UP</span>
                     </div>
                 </div>
@@ -118,7 +117,7 @@
                         </div>
                         <div class="col-6">
                             <small class="text-muted">Version</small><br/>
-                            <span th:text="${node.version}">1.6.0</span>
+                            <span th:text="${node.version}">1.6.1</span>
                         </div>
                     </div>
                     <div class="row mb-2">
@@ -158,9 +157,10 @@
 
     <!-- Cluster Configuration Reference -->
     <div class="card mt-4">
-        <div class="card-header"><i class="fas fa-cog me-2"></i>Cluster Configuration Reference</div>
+        <div class="card-header"><i class="fas fa-cog me-2" style="color:var(--dg-primary);"></i>Cluster Configuration Reference</div>
         <div class="card-body">
-            <pre class="json-block"># application.properties — Cluster Settings
+            <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;max-height:200px;overflow-y:auto;font-size:0.8rem;">
+# application.properties — Cluster Settings
 
 # Standalone mode (default — leave empty):
 dgfacade.cluster.seed-nodes=
@@ -183,10 +183,10 @@ dgfacade.cluster.heartbeat-seconds=15</pre>
 
     <!-- Cluster API Endpoints -->
     <div class="card mt-4">
-        <div class="card-header"><i class="fas fa-plug me-2"></i>Cluster API Endpoints</div>
+        <div class="card-header"><i class="fas fa-plug me-2" style="color:var(--dg-primary);"></i>Cluster API Endpoints</div>
         <div class="card-body">
-            <table class="table dg-table table-sm table-bordered mb-0">
-                <thead class="table-dark">
+            <table class="table dg-table table-sm mb-0">
+                <thead>
                     <tr><th>Endpoint</th><th>Method</th><th>Description</th><th>Try</th></tr>
                 </thead>
                 <tbody>
@@ -204,7 +204,7 @@ dgfacade.cluster.heartbeat-seconds=15</pre>
                     </tr>
                     <tr>
                         <td><code>/api/v1/cluster/heartbeat</code></td>
-                        <td><span class="badge bg-warning text-dark">POST</span></td>
+                        <td><span class="badge bg-warning">POST</span></td>
                         <td>Receive heartbeat from peer (used by cluster protocol)</td>
                         <td><span class="text-muted small">internal</span></td>
                     </tr>
@@ -215,9 +215,9 @@ dgfacade.cluster.heartbeat-seconds=15</pre>
 
     <!-- Distributed Execution Summary -->
     <div class="card mt-4 mb-4">
-        <div class="card-header"><i class="fas fa-project-diagram me-2"></i>Distributed Execution Flow</div>
+        <div class="card-header"><i class="fas fa-project-diagram me-2" style="color:var(--dg-primary);"></i>Distributed Execution Flow</div>
         <div class="card-body">
-            <pre class="bg-dark text-light p-3 rounded mb-3" style="font-size: 0.78rem; overflow-x: auto;"><code>  Request arrives → ExecutionEngine.submit()
+            <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>  Request arrives → ExecutionEngine.submit()
       │
       ├── Standalone / BOTH role     → Execute locally on this node
       ├── GATEWAY role + CHAIN type  → Execute locally (chain affinity)
@@ -225,18 +225,20 @@ dgfacade.cluster.heartbeat-seconds=15</pre>
       │       → Forward via HTTP POST /api/v1/request to peer
       │       → Response tagged with _forwarded_to metadata
       └── GATEWAY role + no peers    → Fallback: execute locally</code></pre>
-            <p class="text-muted small mb-0">
+            <p class="text-muted small mt-2 mb-0">
                 CHAIN requests always execute locally for state affinity. All other requests from GATEWAY nodes
                 are forwarded to healthy EXECUTOR/BOTH peers via round-robin selection. If forwarding fails,
                 execution falls back to local. For full details see the
-                <a href="/help/clustering">Clustering &amp; Distributed Execution</a> guide.
+                <a th:href="@{/help/clustering}">Clustering &amp; Distributed Execution</a> guide.
             </p>
         </div>
     </div>
 
 </div>
+</main>
 
-<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 <script>
 // Auto-refresh every 30 seconds
 setTimeout(function() { location.reload(); }, 30000);

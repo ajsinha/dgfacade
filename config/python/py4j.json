@@ -1,0 +1,17 @@
+{
+  "enabled": false,
+  "worker_count": 2,
+  "python_binary": "python3",
+  "python_path": [
+    "python",
+    "python/handlers"
+  ],
+  "worker_startup_timeout_seconds": 30,
+  "worker_health_check_interval_seconds": 10,
+  "worker_restart_delay_seconds": 5,
+  "max_restart_attempts": 10,
+  "request_timeout_seconds": 300,
+  "gateway_port_range_start": 25333,
+  "callback_port_range_start": 25400,
+  "log_python_output": true
+}

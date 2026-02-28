@@ -1,0 +1,39 @@
+{
+  "type": "confluent-kafka",
+  "description": "Production Confluent Cloud cluster with SASL_SSL",
+  "enabled": true,
+  "connection": {
+    "bootstrap_servers": "pkc-xxxxx.us-east-1.aws.confluent.cloud:9092",
+    "client_id": "dgfacade-prod",
+    "group_id": "dgfacade-consumer-group",
+    "acks": "all",
+    "retries": 5,
+    "auto_offset_reset": "latest",
+    "max_poll_records": 500
+  },
+  "authentication": {
+    "mechanism": "SASL_SSL",
+    "sasl_mechanism": "PLAIN",
+    "api_key": "${CONFLUENT_API_KEY}",
+    "api_secret": "${CONFLUENT_API_SECRET}"
+  },
+  "schema_registry": {
+    "url": "https://psrc-xxxxx.us-east-1.aws.confluent.cloud",
+    "api_key": "${CONFLUENT_SR_API_KEY}",
+    "api_secret": "${CONFLUENT_SR_API_SECRET}"
+  },
+  "ssl": {
+    "enabled": true,
+    "format": "PEM",
+    "protocol": "TLSv1.3",
+    "ca_cert_path": "config/certs/confluent/ca-chain.pem",
+    "client_cert_path": "config/certs/confluent/client-cert.pem",
+    "client_key_path": "config/certs/confluent/client-key.pem"
+  },
+  "properties": {
+    "ssl.endpoint.identification.algorithm": "https",
+    "client.dns.lookup": "use_all_dns_ips",
+    "max.poll.records": "500",
+    "auto.offset.reset": "latest"
+  }
+}

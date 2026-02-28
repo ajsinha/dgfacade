@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # DGFacade Run Script
-# Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved. Patent Pending.
+# Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.
 # =============================================================================
 
 JAR="dgfacade.jar"

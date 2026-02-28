@@ -2,7 +2,7 @@
 <!--
   ~ Copyright © 2025-2030, All Rights Reserved
   ~ Ashutosh Sinha | Email: ajsinha@gmail.com
-  ~ Proprietary and confidential. Patent Pending.
+  ~ Proprietary and confidential.
   -->
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
@@ -17,34 +17,45 @@
     <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
     <link rel="stylesheet" th:href="@{/css/dgfacade.css}">
     <link rel="stylesheet" th:href="@{/css/dg-table.css}">
+    <!-- Apply saved theme immediately to prevent flash -->
+    <script>
+        (function(){
+            var t = localStorage.getItem('dg-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
 
 <!-- ======== NAVBAR FRAGMENT ======== -->
-<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+<nav th:fragment="navbar" class="navbar navbar-expand-lg sticky-top">
     <div class="container-fluid">
+        <!-- Brand -->
         <a class="navbar-brand" th:href="@{/}">
-            <i class="fas fa-network-wired me-2"></i>
+            <span class="dg-brand-icon"><i class="fas fa-database" style="font-size:0.75rem;"></i></span>
             <strong th:text="${appName} ?: 'DGFacade'">DGFacade</strong>
+            <span class="dg-live-badge">LIVE</span>
         </a>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/}"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
+                    <a class="nav-link" th:href="@{/}"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/monitoring/handlers}"><i class="fas fa-cogs me-1"></i> Handlers</a>
+                    <a class="nav-link" th:href="@{/monitoring/handlers}"><i class="fas fa-cogs me-1"></i>Handlers</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/playground}"><i class="fas fa-flask me-1"></i> Playground</a>
+                    <a class="nav-link" th:href="@{/playground}"><i class="fas fa-flask me-1"></i>Playground</a>
                 </li>
-                <!-- Monitoring dropdown (public — no auth required) -->
+                <!-- Monitoring dropdown -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="fas fa-chart-line me-1"></i> Monitoring
+                        <i class="fas fa-chart-line me-1"></i>Monitoring
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" th:href="@{/health}"><i class="fas fa-heartbeat me-2"></i>Health Check</a></li>
@@ -54,9 +65,10 @@
                         <li><a class="dropdown-item" th:href="@{/monitoring/ingestion}"><i class="fas fa-download me-2"></i>Ingestion</a></li>
                     </ul>
                 </li>
+                <!-- Admin dropdown (requires ADMIN role) -->
                 <li class="nav-item dropdown" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="fas fa-shield-alt me-1"></i> Admin
+                        <i class="fas fa-shield-alt me-1"></i>Admin
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" th:href="@{/admin/users}"><i class="fas fa-users me-2"></i>Users</a></li>
@@ -65,44 +77,57 @@
                         <li><a class="dropdown-item" th:href="@{/admin/brokers}"><i class="fas fa-server me-2"></i>Brokers</a></li>
                         <li><a class="dropdown-item" th:href="@{/admin/input-channels}"><i class="fas fa-sign-in-alt me-2"></i>Input Channels</a></li>
                         <li><a class="dropdown-item" th:href="@{/admin/output-channels}"><i class="fas fa-sign-out-alt me-2"></i>Output Channels</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/ingesters}"><i class="fas fa-download me-2"></i>Ingesters</a></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/handlers}"><i class="fas fa-cogs me-2"></i>Handlers</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/python-workers}"><i class="fab fa-python me-2"></i>Python Workers</a></li>
                     </ul>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/help}"><i class="fas fa-book me-1"></i> Help</a>
+                    <a class="nav-link" th:href="@{/help}"><i class="fas fa-book me-1"></i>Help</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/about}"><i class="fas fa-info-circle me-1"></i> About</a>
+                    <a class="nav-link" th:href="@{/about}"><i class="fas fa-info-circle me-1"></i>About</a>
                 </li>
             </ul>
+
+            <!-- Right side: Theme toggle + Search + User -->
             <ul class="navbar-nav align-items-center">
+                <!-- Theme Toggle -->
                 <li class="nav-item me-2">
-                    <button class="btn btn-sm btn-outline-light" id="darkModeToggle" onclick="DGFacade.toggleDarkMode()" title="Toggle Dark Mode (Ctrl+D)">
-                        <i class="fas fa-moon" id="darkModeIcon"></i>
-                    </button>
+                    <div class="dg-theme-toggle" onclick="DGFacade.toggleTheme()" title="Toggle Theme (Ctrl+D)">
+                        <i class="fas fa-sun" id="themeIconSun" style="font-size:0.8rem;color:var(--dg-warning);"></i>
+                        <div class="dg-toggle-track"><div class="dg-toggle-thumb"></div></div>
+                        <i class="fas fa-moon" id="themeIconMoon" style="font-size:0.8rem;color:var(--dg-info-light);"></i>
+                    </div>
                 </li>
+                <!-- Command Palette -->
                 <li class="nav-item me-2">
                     <button class="btn btn-sm btn-outline-light" onclick="DGFacade.showCommandPalette()" title="Quick Search (Ctrl+K)">
                         <i class="fas fa-search"></i>
                     </button>
                 </li>
+                <!-- User dropdown -->
                 <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
                         <span sec:authentication="name">User</span>
+                        <span class="dg-admin-badge" sec:authorize="hasRole('ADMIN')">ADMIN</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li sec:authorize="hasRole('ADMIN')">
-                            <a class="dropdown-item" th:href="@{/admin/users}"><i class="fas fa-users me-2"></i> Manage Users</a>
+                            <a class="dropdown-item" th:href="@{/admin/users}"><i class="fas fa-users me-2"></i>Manage Users</a>
                         </li>
                         <li sec:authorize="hasRole('ADMIN')">
-                            <a class="dropdown-item" th:href="@{/admin/apikeys}"><i class="fas fa-key me-2"></i> API Keys</a>
+                            <a class="dropdown-item" th:href="@{/admin/apikeys}"><i class="fas fa-key me-2"></i>API Keys</a>
                         </li>
                         <li sec:authorize="hasRole('ADMIN')"><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="DGFacade.showKeyboardShortcuts()"><i class="fas fa-keyboard me-2"></i> Keyboard Shortcuts</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="DGFacade.showKeyboardShortcuts()"><i class="fas fa-keyboard me-2"></i>Keyboard Shortcuts</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form th:action="@{/logout}" method="post" class="d-inline">
-                                <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i> Logout</button>
+                                <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
                             </form>
                         </li>
                     </ul>
@@ -112,7 +137,7 @@
     </div>
 </nav>
 
-<!-- ======== TOAST CONTAINER (Enhancement 10) ======== -->
+<!-- ======== TOAST CONTAINER ======== -->
 <div th:fragment="toasts" id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
 
 <!-- ======== ALERTS FRAGMENT ======== -->
@@ -132,17 +157,24 @@
 </div>
 
 <!-- ======== FOOTER FRAGMENT ======== -->
-<footer th:fragment="footer" class="footer mt-auto py-3 bg-light border-top">
+<footer th:fragment="footer" class="footer mt-auto py-2">
     <div class="container-fluid">
-        <div class="row">
+        <div class="row align-items-center">
             <div class="col-md-6">
                 <span class="text-muted">
-                    <i class="fas fa-network-wired me-1"></i>
-                    <strong th:text="${appName} ?: 'DGFacade'">DGFacade</strong> &mdash; High-Performance Data Gateway Facade v1.6.0
+                    <i class="fas fa-database me-1" style="color:var(--dg-primary);"></i>
+                    <strong th:text="${appName} ?: 'DGFacade'">DGFacade</strong>
+                    <span style="color:var(--dg-text-muted);">v1.6.1</span>
+                    <span style="margin:0 6px;color:var(--dg-border);">|</span>
+                    <span style="color:var(--dg-text-muted);">High-Performance Data Gateway Facade</span>
                 </span>
             </div>
             <div class="col-md-6 text-end">
-                <span class="text-muted small">Copyright &copy; 2025-2030 Ashutosh Sinha. All Rights Reserved. Patent Pending.</span>
+                <span class="text-muted small">
+                    &copy; 2025&ndash;2030 Ashutosh Sinha. All Rights Reserved.
+                    <span style="margin-left:12px;color:var(--dg-text-muted);">Proprietary &amp; Confidential</span>
+                    
+                </span>
             </div>
         </div>
     </div>
@@ -156,17 +188,17 @@
     <script th:src="@{/js/dg-table.js}"></script>
 </th:block>
 
-<!-- Config Viewer Modal (reusable across admin pages) -->
+<!-- Config Viewer Modal (reusable) -->
 <th:block th:fragment="configViewerModal">
 <div class="modal fade" id="configModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-file-code me-2"></i><span id="configModalTitle">Configuration</span></h5>
+                <h5 class="modal-title"><i class="fas fa-file-code me-2" style="color:var(--dg-primary);"></i><span id="configModalTitle">Configuration</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">
-                <pre id="configModalBody" class="bg-dark text-light p-3 mb-0" style="max-height: 500px; overflow-y: auto; font-size: 0.82rem; border-radius: 0;"><span class="text-muted">Loading...</span></pre>
+                <pre id="configModalBody" style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;margin:0;max-height:500px;overflow-y:auto;font-size:0.82rem;border-radius:0;"><span style="color:var(--dg-text-muted);">Loading...</span></pre>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyConfig()"><i class="fas fa-copy me-1"></i>Copy</button>
@@ -178,7 +210,7 @@
 <script>
 function viewConfig(apiUrl, title) {
     document.getElementById('configModalTitle').textContent = title || 'Configuration';
-    document.getElementById('configModalBody').innerHTML = '<span class="text-muted">Loading...</span>';
+    document.getElementById('configModalBody').innerHTML = '<span style="color:var(--dg-text-muted);">Loading...</span>';
     new bootstrap.Modal(document.getElementById('configModal')).show();
     fetch(apiUrl)
         .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
@@ -187,7 +219,7 @@ function viewConfig(apiUrl, title) {
             document.getElementById('configModalBody').textContent = json;
         })
         .catch(err => {
-            document.getElementById('configModalBody').innerHTML = '<span class="text-danger">Error: ' + err.message + '</span>';
+            document.getElementById('configModalBody').innerHTML = '<span style="color:var(--dg-danger);">Error: ' + err.message + '</span>';
         });
 }
 function copyConfig() {

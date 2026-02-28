@@ -1,13 +1,17 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.web.config;
 
+import com.dgfacade.server.python.DGHandlerPython;
+import com.dgfacade.server.python.PythonConfig;
+import com.dgfacade.server.python.PythonWorkerManager;
 import com.dgfacade.common.util.ConfigPropertyResolver;
 import com.dgfacade.server.channel.ChannelAccessor;
 import com.dgfacade.server.cluster.ClusterService;
+import com.dgfacade.server.config.ConfigAutoReloadService;
 import com.dgfacade.server.config.ExternalJarLoader;
 import com.dgfacade.server.config.HandlerConfigRegistry;
 import com.dgfacade.server.engine.ExecutionEngine;
@@ -18,6 +22,8 @@ import com.dgfacade.server.service.InputChannelService;
 import com.dgfacade.server.service.OutputChannelService;
 import com.dgfacade.server.service.UserService;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +32,8 @@ import java.net.InetAddress;
 
 @Configuration
 public class AppConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(AppConfig.class);
 
     @Value("${dgfacade.config.handlers-dir:config/handlers}")
     private String handlersDir;
@@ -51,6 +59,9 @@ public class AppConfig {
     @Value("${dgfacade.ingesters.config-dir:config/ingesters}")
     private String ingestersConfigDir;
 
+    @Value("${dgfacade.python.config-dir:config/python}")
+    private String pythonConfigDir;
+
     // --- Cluster Configuration ---
     @Value("${dgfacade.cluster.seed-nodes:}")
     private String clusterSeedNodes;
@@ -64,8 +75,11 @@ public class AppConfig {
     @Value("${server.port:8090}")
     private int serverPort;
 
-    @Value("${dgfacade.version:1.6.0}")
+    @Value("${dgfacade.version:1.6.1}")
     private String version;
+
+    @Value("${dgfacade.config.auto-reload-seconds:300}")
+    private int autoReloadSeconds;
 
     @Bean
     public ConfigPropertyResolver configPropertyResolver() {
@@ -154,5 +168,33 @@ public class AppConfig {
                                              BrokerService brokerService,
                                              InputChannelService inputChannelService) {
         return new IngestionService(ingestersConfigDir, executionEngine, brokerService, inputChannelService);
+    }
+
+    @Bean
+    public PythonWorkerManager pythonWorkerManager() {
+        PythonConfig pyConfig = PythonConfig.load(pythonConfigDir);
+        PythonWorkerManager manager = new PythonWorkerManager(pyConfig, pythonConfigDir);
+        // Inject the manager into the static bridge handler
+        DGHandlerPython.setWorkerManager(manager);
+        return manager;
+    }
+
+    @Bean
+    public ConfigAutoReloadService configAutoReloadService(
+            HandlerConfigRegistry handlerConfigRegistry) {
+        ConfigAutoReloadService svc = new ConfigAutoReloadService(autoReloadSeconds);
+        svc.register("handlers", handlersDir, handlerConfigRegistry::reload);
+        // Brokers, channels, and ingesters read from disk on demand — no caching.
+        // Register their directories anyway so the fingerprint log shows change detection.
+        svc.register("brokers", brokersConfigDir, () ->
+                log.info("ConfigAutoReload: broker configs are read-on-demand; no cache to refresh"));
+        svc.register("input-channels", inputChannelsConfigDir, () ->
+                log.info("ConfigAutoReload: input-channel configs are read-on-demand; no cache to refresh"));
+        svc.register("output-channels", outputChannelsConfigDir, () ->
+                log.info("ConfigAutoReload: output-channel configs are read-on-demand; no cache to refresh"));
+        svc.register("ingesters", ingestersConfigDir, () ->
+                log.info("ConfigAutoReload: ingester configs are read-on-demand; no cache to refresh"));
+        svc.start();
+        return svc;
     }
 }

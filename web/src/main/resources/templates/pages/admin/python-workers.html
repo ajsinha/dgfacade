@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright (c) 2025-2030, All Rights Reserved
+  ~ Author and copyright sourced from application properties
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Python Workers')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="flex-fill">
+    <div class="container-fluid py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin"><i class="fas fa-cog me-1"></i>Admin</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Python Workers</li>
+            </ol>
+        </nav>
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-6">
+                <i class="fab fa-python me-3 text-warning"></i>Python Worker Pool
+                <small class="text-muted fs-6 ms-2">Py4J Bridge</small>
+            </h1>
+            <div>
+                <button class="btn btn-outline-primary me-2" onclick="refreshStatus()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+                <button class="btn btn-warning me-2" onclick="restartAllWorkers()">
+                    <i class="fas fa-redo me-1"></i>Restart All Workers
+                </button>
+                <button class="btn btn-outline-secondary" onclick="reloadConfig()">
+                    <i class="fas fa-file-import me-1"></i>Reload Config
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Loading / Disabled Banner -->
+        <div id="statusLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-3">Loading Python worker status...</p>
+        </div>
+
+        <div id="disabledBanner" class="alert alert-warning d-none">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Python Worker Pool is Disabled</strong><br>
+            To enable, edit <code>config/python/py4j.json</code> and set <code>"enabled": true</code>, then restart the server.
+        </div>
+
+        <!-- Main Content (hidden until loaded) -->
+        <div id="mainContent" class="d-none">
+
+            <!-- Overview Cards -->
+            <div class="row mb-4">
+                <div class="col-md-2">
+                    <div class="card text-white" id="statusCard">
+                        <div class="card-body text-center py-3">
+                            <i class="fas fa-power-off fa-2x mb-2"></i>
+                            <h5 id="statusText" class="mb-0">Loading</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center py-3">
+                            <i class="fab fa-python fa-2x mb-2"></i>
+                            <h4 id="totalWorkers" class="mb-0">0</h4>
+                            <small>Total Workers</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center py-3">
+                            <i class="fas fa-heartbeat fa-2x mb-2"></i>
+                            <h4 id="healthyWorkers" class="mb-0">0</h4>
+                            <small>Healthy</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center py-3">
+                            <i class="fas fa-exchange-alt fa-2x mb-2"></i>
+                            <h4 id="totalRequests" class="mb-0">0</h4>
+                            <small>Requests Routed</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center py-3">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                            <h4 id="totalErrors" class="mb-0">0</h4>
+                            <small>Errors</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body text-center py-3">
+                            <i class="fas fa-puzzle-piece fa-2x mb-2"></i>
+                            <h4 id="handlerCount" class="mb-0">0</h4>
+                            <small>Python Handlers</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Summary -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header"><h5 class="mb-0"><i class="fas fa-cog me-2"></i>Configuration</h5></div>
+                        <div class="card-body">
+                            <div class="row small">
+                                <div class="col-6">
+                                    <p class="mb-1"><strong>Python Binary:</strong> <code id="cfgPython">-</code></p>
+                                    <p class="mb-1"><strong>Config Path:</strong> <code id="cfgPath">-</code></p>
+                                </div>
+                                <div class="col-6">
+                                    <p class="mb-1"><strong>PYTHONPATH:</strong></p>
+                                    <div id="cfgPythonPath" class="small text-muted"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header"><h5 class="mb-0"><i class="fas fa-puzzle-piece me-2"></i>Registered Python Handlers</h5></div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr><th>Request Type</th><th>Python Class</th><th>Description</th></tr>
+                                    </thead>
+                                    <tbody id="handlerTableBody">
+                                        <tr><td colspan="3" class="text-center text-muted">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Worker Cards -->
+            <h4 class="mb-3"><i class="fas fa-server me-2"></i>Worker Processes</h4>
+            <div class="row" id="workerCards">
+                <div class="col-12 text-center text-muted py-4">Loading worker data...</div>
+            </div>
+
+        </div><!-- /mainContent -->
+
+        <!-- Worker Log Modal -->
+        <div class="modal fade" id="logModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-terminal me-2"></i>Worker <span id="logWorkerId">?</span> Logs</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <pre class="bg-dark text-light p-3 rounded" id="logContent"
+                             style="max-height: 500px; overflow-y: auto; font-size: 0.8rem;">Loading logs...</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="py-4 mt-5 border-top">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-database me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6>
+                    <p class="text-muted small mb-0" th:text="'Version ' + (${appVersion} ?: '1.6.1')">Version 1.6.1</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="text-muted small mb-0">
+                        Copyright &copy; <span th:text="${copyrightYear} ?: '2025-2030'">2025-2030</span>
+                        <span th:text="${authorName} ?: ''"></span>
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<script>
+const API_BASE = '/api/v1/python';
+let autoRefreshTimer = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    refreshStatus();
+    // Auto-refresh every 10 seconds
+    autoRefreshTimer = setInterval(refreshStatus, 10000);
+});
+
+function refreshStatus() {
+    fetch(API_BASE + '/status')
+        .then(r => r.json())
+        .then(data => renderStatus(data))
+        .catch(err => {
+            console.error('Failed to fetch status:', err);
+            document.getElementById('statusLoading').classList.add('d-none');
+            document.getElementById('disabledBanner').classList.remove('d-none');
+        });
+}
+
+function renderStatus(data) {
+    document.getElementById('statusLoading').classList.add('d-none');
+
+    if (!data.enabled) {
+        document.getElementById('disabledBanner').classList.remove('d-none');
+        document.getElementById('mainContent').classList.add('d-none');
+        return;
+    }
+
+    document.getElementById('disabledBanner').classList.add('d-none');
+    document.getElementById('mainContent').classList.remove('d-none');
+
+    // Overview cards
+    const sc = document.getElementById('statusCard');
+    sc.className = 'card text-white ' + (data.running ? 'bg-success' : 'bg-secondary');
+    document.getElementById('statusText').textContent = data.running ? 'Running' : 'Stopped';
+    document.getElementById('totalWorkers').textContent = data.workerCount || 0;
+    document.getElementById('healthyWorkers').textContent = data.healthyWorkerCount || 0;
+    document.getElementById('totalRequests').textContent = (data.totalRequestsRouted || 0).toLocaleString();
+    document.getElementById('totalErrors').textContent = (data.totalErrors || 0).toLocaleString();
+    document.getElementById('handlerCount').textContent = (data.handlers || []).length;
+
+    // Config
+    document.getElementById('cfgPython').textContent = data.pythonBinary || '-';
+    document.getElementById('cfgPath').textContent = data.configPath || '-';
+    const ppDiv = document.getElementById('cfgPythonPath');
+    ppDiv.innerHTML = (data.pythonPath || []).map(p => '<code>' + p + '</code>').join('<br>');
+
+    // Handler table
+    const tbody = document.getElementById('handlerTableBody');
+    const handlers = data.handlers || [];
+    if (handlers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No Python handlers configured</td></tr>';
+    } else {
+        tbody.innerHTML = handlers.map(h =>
+            `<tr>
+                <td><code>${h.requestType}</code></td>
+                <td><code class="small">${h.pythonClass}</code></td>
+                <td class="small">${h.description || ''}</td>
+            </tr>`
+        ).join('');
+    }
+
+    // Worker cards
+    renderWorkerCards(data.workers || []);
+}
+
+function renderWorkerCards(workers) {
+    const container = document.getElementById('workerCards');
+    if (workers.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center text-muted py-4">No workers configured</div>';
+        return;
+    }
+
+    container.innerHTML = workers.map(w => {
+        const stateColor = w.state === 'RUNNING' && w.healthy ? 'success' :
+                           w.state === 'RUNNING' ? 'warning' :
+                           w.state === 'FAILED' ? 'danger' : 'secondary';
+        const stateIcon = w.state === 'RUNNING' && w.healthy ? 'check-circle' :
+                          w.state === 'RUNNING' ? 'exclamation-triangle' :
+                          w.state === 'FAILED' ? 'times-circle' : 'minus-circle';
+        const uptime = w.uptimeSeconds ? formatUptime(w.uptimeSeconds) : '-';
+
+        return `
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card h-100 border-${stateColor}">
+                <div class="card-header bg-${stateColor}-subtle d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-${stateIcon} text-${stateColor} me-2"></i>
+                        <strong>Worker ${w.workerId}</strong>
+                        <span class="badge bg-${stateColor} ms-2">${w.state}</span>
+                        ${w.healthy ? '<span class="badge bg-success ms-1">Healthy</span>' : ''}
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-warning" onclick="restartWorker(${w.workerId})" title="Restart">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="btn btn-outline-info" onclick="viewLogs(${w.workerId})" title="View Logs">
+                            <i class="fas fa-terminal"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row small">
+                        <div class="col-6">
+                            <p class="mb-1"><strong>PID:</strong> ${w.pid > 0 ? w.pid : '-'}</p>
+                            <p class="mb-1"><strong>Gateway Port:</strong> ${w.gatewayPort}</p>
+                            <p class="mb-1"><strong>Callback Port:</strong> ${w.callbackPort}</p>
+                            <p class="mb-1"><strong>Uptime:</strong> ${uptime}</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-1"><strong>Requests:</strong> <span class="text-primary fw-bold">${(w.requestsHandled || 0).toLocaleString()}</span></p>
+                            <p class="mb-1"><strong>Errors:</strong> <span class="text-danger fw-bold">${(w.errorsCount || 0).toLocaleString()}</span></p>
+                            <p class="mb-1"><strong>Consecutive Fails:</strong> ${w.consecutiveFailures || 0}</p>
+                            <p class="mb-1"><strong>Last Response:</strong> ${w.lastResponseTimeMs || 0}ms</p>
+                        </div>
+                    </div>
+                    ${w.lastHealthCheck ? '<p class="small text-muted mt-2 mb-0"><i class="fas fa-heartbeat me-1"></i>Last health check: ' + new Date(w.lastHealthCheck).toLocaleTimeString() + '</p>' : ''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function formatUptime(seconds) {
+    if (seconds < 60) return seconds + 's';
+    if (seconds < 3600) return Math.floor(seconds / 60) + 'm ' + (seconds % 60) + 's';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return h + 'h ' + m + 'm';
+}
+
+function restartWorker(id) {
+    if (!confirm('Restart Python worker ' + id + '?')) return;
+    fetch(API_BASE + '/workers/' + id + '/restart', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.message || 'Restart initiated');
+            setTimeout(refreshStatus, 2000);
+        })
+        .catch(err => alert('Error: ' + err));
+}
+
+function restartAllWorkers() {
+    if (!confirm('Restart ALL Python workers? This will briefly interrupt Python handler processing.')) return;
+    fetch(API_BASE + '/restart-all', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.message || 'All workers restart initiated');
+            setTimeout(refreshStatus, 3000);
+        })
+        .catch(err => alert('Error: ' + err));
+}
+
+function reloadConfig() {
+    fetch(API_BASE + '/reload-config', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.message || 'Config reloaded');
+            refreshStatus();
+        })
+        .catch(err => alert('Error: ' + err));
+}
+
+function viewLogs(workerId) {
+    document.getElementById('logWorkerId').textContent = workerId;
+    document.getElementById('logContent').textContent = 'Loading logs...';
+    new bootstrap.Modal(document.getElementById('logModal')).show();
+
+    fetch(API_BASE + '/workers/' + workerId + '/logs')
+        .then(r => r.json())
+        .then(data => {
+            const logs = data.logs || [];
+            document.getElementById('logContent').textContent =
+                logs.length > 0 ? logs.join('\n') : '(no logs available)';
+            // Auto-scroll to bottom
+            const pre = document.getElementById('logContent');
+            pre.scrollTop = pre.scrollHeight;
+        })
+        .catch(err => {
+            document.getElementById('logContent').textContent = 'Error loading logs: ' + err;
+        });
+}
+</script>
+
+</body>
+</html>

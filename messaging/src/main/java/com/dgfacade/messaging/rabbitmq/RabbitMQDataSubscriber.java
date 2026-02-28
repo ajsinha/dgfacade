@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.messaging.rabbitmq;
 
@@ -33,6 +33,11 @@ public class RabbitMQDataSubscriber extends AbstractSubscriber {
             factory.setPassword((String) config.getOrDefault("password", "guest"));
             factory.setConnectionTimeout(((Number) config.getOrDefault("connection_timeout", 30000)).intValue());
             factory.setRequestedHeartbeat(((Number) config.getOrDefault("heartbeat", 60)).intValue());
+            // Connection recovery: automatic reconnection on connection loss
+            factory.setAutomaticRecoveryEnabled(true);
+            factory.setNetworkRecoveryInterval(
+                    ((Number) config.getOrDefault("network_recovery_interval_ms", 10000)).longValue());
+            factory.setTopologyRecoveryEnabled(true);
             factory.setAutomaticRecoveryEnabled(true);
             factory.setNetworkRecoveryInterval(
                     ((Number) config.getOrDefault("recovery_interval_ms", 5000)).longValue());

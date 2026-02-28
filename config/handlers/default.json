@@ -100,5 +100,27 @@
       "use_dynamic_topic": false,
       "kafka_group_id": "dgfacade-pdc-consumer"
     }
+  },
+  "PYTHON_ECHO": {
+    "handler_class": "com.dgfacade.server.python.DGHandlerPython",
+    "description": "Echo handler implemented in Python — returns the payload as-is",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "is_python": true,
+    "config": {
+      "python_module": "handlers.echo_handler",
+      "python_class": "EchoPythonHandler"
+    }
+  },
+  "PYTHON_TRANSFORM": {
+    "handler_class": "com.dgfacade.server.python.DGHandlerPython",
+    "description": "Data transformation handler implemented in Python",
+    "ttl_minutes": 10,
+    "enabled": true,
+    "is_python": true,
+    "config": {
+      "python_module": "handlers.transform_handler",
+      "python_class": "TransformPythonHandler"
+    }
   }
 }

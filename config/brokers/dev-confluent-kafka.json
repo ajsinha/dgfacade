@@ -1,0 +1,25 @@
+{
+  "type": "confluent-kafka",
+  "description": "Development Confluent Platform broker (no SSL)",
+  "enabled": true,
+  "connection": {
+    "bootstrap_servers": "localhost:9092",
+    "client_id": "dgfacade-confluent-dev",
+    "group_id": "dgfacade-confluent-group",
+    "auto_offset_reset": "latest",
+    "max_poll_records": 500
+  },
+  "authentication": {
+    "mechanism": "SASL_PLAINTEXT",
+    "sasl_mechanism": "PLAIN",
+    "api_key": "dev-user",
+    "api_secret": "dev-secret"
+  },
+  "schema_registry": {
+    "url": "http://localhost:8081"
+  },
+  "properties": {
+    "request.timeout.ms": "30000",
+    "session.timeout.ms": "10000"
+  }
+}

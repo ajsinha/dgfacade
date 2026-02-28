@@ -2,10 +2,10 @@
 <!--
   ~ Copyright © 2025-2030, All Rights Reserved
   ~ Ashutosh Sinha | Email: ajsinha@gmail.com
-  ~ Proprietary and confidential. Patent Pending.
+  ~ Proprietary and confidential.
   -->
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Configuration')}"></head>
+<head th:replace="~{fragments/layout :: head('Configuration Reference')}"></head>
 <body class="d-flex flex-column min-vh-100">
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 <main class="flex-fill">
@@ -13,145 +13,910 @@
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/help"><i class="fas fa-book me-1"></i>Help</a></li>
-                <li class="breadcrumb-item active">Configuration</li>
+                <li class="breadcrumb-item active">Configuration Reference</li>
             </ol>
         </nav>
+
         <div class="row">
-            <div class="col-lg-10 mx-auto">
-                <h1 class="display-5 mb-4"><i class="fas fa-cog text-secondary me-3"></i>Configuration</h1>
-
-                <p class="lead">All DGFacade settings are configured through <code>application.properties</code> (or <code>application.yml</code>).
-                Brokers and channels use JSON file-based configuration in separate directories.</p>
-
-                <!-- Server & Network -->
-                <h3 class="mt-4">Server &amp; Network</h3>
-<pre class="bg-dark text-light p-3 rounded"><code># Spring Boot server port
-server.port=8090
-
-# Application name displayed in UI
-dgfacade.app-name=DGFacade
-
-# Application version
-dgfacade.version=1.6.0</code></pre>
-
-                <!-- Broker Configuration -->
-                <h3 class="mt-4">Broker Configuration</h3>
-<pre class="bg-dark text-light p-3 rounded"><code># Directory containing broker JSON files (one file per broker)
-# Each .json file defines a broker connection (Kafka, ActiveMQ, RabbitMQ, IBM MQ)
-dgfacade.brokers.config-dir=config/brokers
-
-# Connection timeout for broker connections (milliseconds)
-dgfacade.brokers.connection-timeout=30000
-
-# Maximum reconnection attempts on connection failure
-dgfacade.brokers.max-reconnect-attempts=10
-
-# Initial backoff between reconnection attempts (milliseconds)
-dgfacade.brokers.reconnect-backoff-ms=1000</code></pre>
-
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-folder-open me-2"></i>
-                    <strong>File-Based Brokers:</strong> Drop a <code>.json</code> file into the broker config directory to define a new broker.
-                    The filename becomes the broker name. See <a href="/help/brokers">Broker Configuration</a> for JSON schema and examples.
+            <!-- ═══ SIDEBAR ═══ -->
+            <div class="col-lg-2 d-none d-lg-block">
+                <div class="sticky-top" style="top:80px;">
+                    <nav class="small">
+                        <p class="fw-bold mb-2" style="color:var(--dg-text-heading);">On this page</p>
+                        <ul class="list-unstyled" style="line-height:2.2;">
+                            <li><a href="#overview" class="text-decoration-none">Overview</a></li>
+                            <li><a href="#server" class="text-decoration-none">Server &amp; Network</a></li>
+                            <li><a href="#handlers" class="text-decoration-none">Handlers</a></li>
+                            <li><a href="#brokers" class="text-decoration-none">Brokers</a></li>
+                            <li><a href="#input-channels" class="text-decoration-none">Input Channels</a></li>
+                            <li><a href="#output-channels" class="text-decoration-none">Output Channels</a></li>
+                            <li><a href="#ingesters" class="text-decoration-none">Ingesters</a></li>
+                            <li><a href="#chains" class="text-decoration-none">Handler Chains</a></li>
+                            <li><a href="#python" class="text-decoration-none">Python / Py4J</a></li>
+                            <li><a href="#cluster" class="text-decoration-none">Cluster</a></li>
+                            <li><a href="#security" class="text-decoration-none">Security &amp; Auth</a></li>
+                            <li><a href="#users" class="text-decoration-none">Users &amp; API Keys</a></li>
+                            <li><a href="#pekko" class="text-decoration-none">Pekko / Actor System</a></li>
+                            <li><a href="#prometheus" class="text-decoration-none">Prometheus &amp; Actuator</a></li>
+                            <li><a href="#auto-reload" class="text-decoration-none">Auto-Reload</a></li>
+                            <li><a href="#logging" class="text-decoration-none">Logging</a></li>
+                            <li><a href="#websocket" class="text-decoration-none">WebSocket</a></li>
+                            <li><a href="#shutdown" class="text-decoration-none">Graceful Shutdown</a></li>
+                            <li><a href="#env-vars" class="text-decoration-none">Env Variables</a></li>
+                            <li><a href="#directory" class="text-decoration-none">Directory Structure</a></li>
+                        </ul>
+                    </nav>
                 </div>
+            </div>
 
-                <!-- Channel Configuration -->
-                <h3 class="mt-4">Channel Configuration</h3>
-<pre class="bg-dark text-light p-3 rounded"><code># Directory containing channel JSON files (one file per channel)
-# Each .json file defines a data channel with broker reference, subscriptions, and queue settings
-dgfacade.input-channels.config-dir / dgfacade.output-channels.config-dir=config/channels
+            <!-- ═══ MAIN CONTENT ═══ -->
+            <div class="col-lg-10">
+                <h1 class="display-5 mb-2"><i class="fas fa-cog me-3" style="color:var(--dg-primary);"></i>Configuration Reference</h1>
+                <p class="mb-1"><strong>Version 1.6.1</strong> &mdash; Complete reference for all <span th:text="${appName} ?: 'DGFacade'">DGFacade</span> configuration.</p>
+                <p class="text-muted mb-4">DGFacade uses two configuration layers: <code>application.properties</code> for application-level settings,
+                    and <strong>JSON files</strong> in dedicated directories for handlers, brokers, channels, ingesters, chains, users, and Python workers.
+                    Most JSON configs support hot-reload &mdash; changes take effect within 5 minutes or on-demand without restart.</p>
 
-# Default internal queue depth when not specified per channel
-dgfacade.channels.default-queue-depth=10000
+                <!-- ═══════════════ 1. OVERVIEW ═══════════════ -->
+                <section id="overview" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-map me-2" style="color:var(--dg-info);"></i>Configuration Map</h3>
+                    <div class="table-responsive">
+                        <table class="table dg-table table-hover align-middle mb-0">
+                            <thead><tr><th class="ps-4">Domain</th><th>Source</th><th>Format</th><th>Directory / File Property</th><th class="text-center">Hot-Reload</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><i class="fas fa-server me-2 text-primary"></i>Server &amp; Network</td><td><code>application.properties</code></td><td>Properties</td><td>&mdash;</td><td class="text-center"><span class="badge bg-secondary">Restart</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-bolt me-2 text-warning"></i>Handlers</td><td><code>config/handlers/*.json</code></td><td>JSON</td><td><code>dgfacade.config.handlers-dir</code></td><td class="text-center"><span class="badge bg-success">5 min</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-plug me-2 text-info"></i>Brokers</td><td><code>config/brokers/*.json</code></td><td>JSON</td><td><code>dgfacade.brokers.config-dir</code></td><td class="text-center"><span class="badge bg-success">On-Demand</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-sign-in-alt me-2 text-success"></i>Input Channels</td><td><code>config/input-channels/*.json</code></td><td>JSON</td><td><code>dgfacade.input-channels.config-dir</code></td><td class="text-center"><span class="badge bg-success">On-Demand</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-sign-out-alt me-2 text-danger"></i>Output Channels</td><td><code>config/output-channels/*.json</code></td><td>JSON</td><td><code>dgfacade.output-channels.config-dir</code></td><td class="text-center"><span class="badge bg-success">On-Demand</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-download me-2" style="color:var(--dg-cyan);"></i>Ingesters</td><td><code>config/ingesters/*.json</code></td><td>JSON</td><td><code>dgfacade.ingesters.config-dir</code></td><td class="text-center"><span class="badge bg-success">On-Demand</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-link me-2" style="color:var(--dg-teal);"></i>Handler Chains</td><td><code>config/chains/*.json</code></td><td>JSON</td><td>&mdash;</td><td class="text-center"><span class="badge bg-success">On-Demand</span></td></tr>
+                                <tr><td class="ps-4"><i class="fab fa-python me-2" style="color:#FFD43B;"></i>Python / Py4J</td><td><code>config/python/py4j.json</code></td><td>JSON</td><td><code>dgfacade.python.config-dir</code></td><td class="text-center"><span class="badge bg-secondary">Restart</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-project-diagram me-2" style="color:var(--dg-pink);"></i>Cluster</td><td><code>application.properties</code></td><td>Properties</td><td>&mdash;</td><td class="text-center"><span class="badge bg-secondary">Restart</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-users me-2 text-primary"></i>Users</td><td><code>config/users.json</code></td><td>JSON</td><td><code>dgfacade.config.users-file</code></td><td class="text-center"><span class="badge bg-success">On-Demand</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-key me-2 text-warning"></i>API Keys</td><td><code>config/apikeys.json</code></td><td>JSON</td><td><code>dgfacade.config.apikeys-file</code></td><td class="text-center"><span class="badge bg-success">On-Demand</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-chart-line me-2 text-success"></i>Prometheus &amp; Actuator</td><td><code>application.properties</code></td><td>Properties</td><td>&mdash;</td><td class="text-center"><span class="badge bg-secondary">Restart</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-chart-area me-2" style="color:#E6522C;"></i>Grafana Dashboard</td><td><code>config/grafana/*.json</code></td><td>JSON</td><td>&mdash;</td><td class="text-center"><span class="badge bg-info">External</span></td></tr>
+                                <tr><td class="ps-4"><i class="fas fa-fire me-2" style="color:#E6522C;"></i>Prometheus Scrape</td><td><code>config/prometheus/prometheus.yml</code></td><td>YAML</td><td>&mdash;</td><td class="text-center"><span class="badge bg-info">External</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
 
-# Backpressure warning threshold (% of queue depth)
-dgfacade.channels.backpressure-warning-pct=70
+                <!-- ═══════════════ 2. SERVER ═══════════════ -->
+                <section id="server" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-server me-2 text-primary"></i>Server &amp; Network</h3>
+                    <p>Core server settings in <code>application.properties</code>. These require a restart to take effect.</p>
+                    <div class="table-responsive">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>server.port</code></td><td><code>8090</code></td><td>HTTP listen port for REST API, WebSocket, and web UI</td></tr>
+                                <tr><td class="ps-4"><code>server.address</code></td><td><code>0.0.0.0</code></td><td>Bind address &mdash; <code>0.0.0.0</code> listens on all interfaces, <code>127.0.0.1</code> for localhost only</td></tr>
+                                <tr><td class="ps-4"><code>server.servlet.context-path</code></td><td><code>/</code></td><td>Root context path for all endpoints (e.g. set <code>/dgfacade</code> for reverse proxy prefix)</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.app-name</code></td><td><code>DGFacade</code></td><td>Application name shown in UI navbar, startup banner, and health endpoint</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.version</code></td><td><code>1.6.1</code></td><td>Version string shown in UI, <code>/health</code>, and startup banner</td></tr>
+                                <tr><td class="ps-4"><code>spring.application.name</code></td><td><code>dgfacade</code></td><td>Spring application name &mdash; used as global tag in Prometheus metrics</td></tr>
+                                <tr><td class="ps-4"><code>spring.thymeleaf.cache</code></td><td><code>false</code></td><td>Template caching &mdash; set <code>true</code> in production for performance</td></tr>
+                                <tr><td class="ps-4"><code>spring.thymeleaf.prefix</code></td><td><code>classpath:/templates/</code></td><td>Template directory location</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
 
-# Backpressure critical threshold - broker consumer paused at this level
-dgfacade.channels.backpressure-critical-pct=90
+                <!-- ═══════════════ 3. HANDLERS ═══════════════ -->
+                <section id="handlers" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-bolt me-2 text-warning"></i>Handler Configuration</h3>
+                    <p>Handlers are JSON files in <code>config/handlers/</code>. Each file maps request types to handler classes.
+                       The filename determines scope: <code>default.json</code> provides fallback handlers for all users;
+                       a file named after a user ID (e.g. <code>admin.json</code>) provides overrides for that user.</p>
 
-# Thread pool size for fan-out message distribution
-dgfacade.channels.fanout-thread-pool-size=16</code></pre>
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>dgfacade.config.handlers-dir</code></td><td><code>config/handlers</code></td><td>Directory containing handler JSON files</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.handler.default-ttl</code></td><td><code>30</code></td><td>Default TTL in minutes when not specified per handler</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.config.external-libs-dir</code></td><td><code>./libs</code></td><td>Directory for external handler JARs (drop custom handler classes here)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                <div class="alert alert-success mt-3">
-                    <i class="fas fa-broadcast-tower me-2"></i>
-                    <strong>Fan-Out Distribution:</strong> Each message from a channel's internal queue is delivered to ALL registered listeners.
-                    The fan-out thread pool processes deliveries concurrently. Increase <code>fanout-thread-pool-size</code> for high-throughput scenarios.
-                </div>
+                    <h6>Handler JSON Schema</h6>
+                    <p>Each top-level key is a request type. The value is the handler definition:</p>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "ECHO": {
+    "handler_class": "com.dgfacade.server.handler.EchoHandler",
+    "description": "Echoes back the request payload",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "config": {}
+  },
+  "PYTHON_ECHO": {
+    "handler_class": "com.dgfacade.server.python.DGHandlerPython",
+    "description": "Python echo handler",
+    "ttl_minutes": 10,
+    "enabled": true,
+    "is_python": true,
+    "config": {
+      "python_module": "handlers.echo_handler",
+      "python_class": "EchoPythonHandler"
+    }
+  }
+}</code></pre>
 
-                <div class="alert alert-warning mt-3">
-                    <i class="fas fa-tachometer-alt me-2"></i>
-                    <strong>Backpressure:</strong> When a channel's internal queue fills to the critical threshold, the broker consumer
-                    is automatically paused. It resumes when the queue drains below the warning threshold. This prevents memory exhaustion
-                    while maintaining data delivery guarantees.
-                </div>
+                    <div class="table-responsive mt-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>handler_class</code></td><td>string</td><td>Yes</td><td>Fully-qualified Java class name. For Python handlers use <code>com.dgfacade.server.python.DGHandlerPython</code>.</td></tr>
+                                <tr><td class="ps-4"><code>description</code></td><td>string</td><td>No</td><td>Human-readable description shown in admin UI and help pages</td></tr>
+                                <tr><td class="ps-4"><code>ttl_minutes</code></td><td>int</td><td>No</td><td>Execution timeout in minutes (falls back to <code>dgfacade.handler.default-ttl</code>)</td></tr>
+                                <tr><td class="ps-4"><code>enabled</code></td><td>boolean</td><td>No</td><td>Whether the handler is active (default: <code>true</code>). Disabled handlers return 404.</td></tr>
+                                <tr><td class="ps-4"><code>is_python</code></td><td>boolean</td><td>No</td><td>Set <code>true</code> to route through the DGHandlerPython bridge to the Python worker pool</td></tr>
+                                <tr><td class="ps-4"><code>config</code></td><td>object</td><td>No</td><td>Arbitrary key-value map passed to <code>construct(config)</code>. Python handlers must include <code>python_module</code> and <code>python_class</code>.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                <!-- Execution Engine -->
-                <h3 class="mt-4">Execution Engine</h3>
-<pre class="bg-dark text-light p-3 rounded"><code># Handler execution thread pool size
-dgfacade.engine.thread-pool-size=32
+                    <div class="alert" style="background:var(--dg-bg-alert-info);border:1px solid var(--dg-border);color:var(--dg-text-primary);">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Resolution priority:</strong> When a request arrives, the engine looks for a handler in the user-specific file first (e.g. <code>admin.json</code> for user &ldquo;admin&rdquo;),
+                        then falls back to <code>default.json</code>. See <a href="/admin/handlers">Admin &rarr; Handlers</a> for the full resolution flow diagram.
+                    </div>
+                </section>
 
-# Maximum execution time per handler (milliseconds)
-dgfacade.engine.execution-timeout-ms=60000
+                <!-- ═══════════════ 4. BROKERS ═══════════════ -->
+                <section id="brokers" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-plug me-2 text-info"></i>Broker Configuration</h3>
+                    <p>Each broker is a single JSON file in <code>config/brokers/</code>. The filename (without <code>.json</code>) becomes the broker ID
+                       referenced by channels and ingesters.</p>
 
-# Number of recent handler states to retain in memory
-dgfacade.engine.max-recent-states=1000
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>dgfacade.brokers.config-dir</code></td><td><code>config/brokers</code></td><td>Directory containing broker JSON files</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.brokers.connection-timeout</code></td><td><code>30000</code></td><td>Global connection timeout in milliseconds</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.brokers.max-reconnect-attempts</code></td><td><code>10</code></td><td>Maximum reconnection attempts on failure</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.brokers.reconnect-backoff-ms</code></td><td><code>1000</code></td><td>Initial backoff between reconnection attempts (ms)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-# Enable execution state persistence
-dgfacade.engine.persist-states=true</code></pre>
+                    <p>Supported broker types: <code>kafka</code>, <code>confluent-kafka</code>, <code>activemq</code>, <code>rabbitmq</code>, <code>ibmmq</code>, <code>filesystem</code>, <code>sql</code>.</p>
 
-                <!-- Security -->
-                <h3 class="mt-4">Security</h3>
-<pre class="bg-dark text-light p-3 rounded"><code># User configuration file
-dgfacade.security.users-file=config/users.json
+                    <h6>Broker JSON Schema</h6>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "type": "kafka",
+  "description": "Production Kafka cluster with mTLS",
+  "enabled": true,
+  "connection": {
+    "bootstrap_servers": "kafka-1:9093,kafka-2:9093",
+    "client_id": "dgfacade-prod",
+    "group_id": "dgfacade-consumer-group",
+    "acks": "all",
+    "retries": 5,
+    "auto_offset_reset": "latest",
+    "max_poll_records": 500
+  },
+  "ssl": {
+    "enabled": true,
+    "format": "PEM",
+    "protocol": "TLSv1.3",
+    "ca_cert_path": "config/certs/kafka/ca-chain.pem",
+    "client_cert_path": "config/certs/kafka/client-cert.pem",
+    "client_key_path": "config/certs/kafka/client-key.pem"
+  },
+  "authentication": {
+    "mechanism": "NONE"
+  },
+  "properties": {
+    "security.protocol": "SSL",
+    "request.timeout.ms": "30000"
+  }
+}</code></pre>
 
-# Session timeout for web UI
-server.servlet.session.timeout=30m
+                    <div class="table-responsive mt-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Section</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>type</code></td><td>Broker type: <code>kafka</code>, <code>confluent-kafka</code>, <code>activemq</code>, <code>rabbitmq</code>, <code>ibmmq</code>, <code>filesystem</code>, or <code>sql</code></td></tr>
+                                <tr><td class="ps-4"><code>enabled</code></td><td>Master switch &mdash; disabled brokers are skipped during startup</td></tr>
+                                <tr><td class="ps-4"><code>connection</code></td><td>Type-specific connection parameters (host, port, URL, credentials)</td></tr>
+                                <tr><td class="ps-4"><code>ssl</code></td><td>SSL/TLS configuration &mdash; supports both PEM and JKS formats. Includes <code>ca_cert_path</code>, <code>client_cert_path</code>, <code>client_key_path</code>, <code>protocol</code>, <code>cipher_suite</code>.</td></tr>
+                                <tr><td class="ps-4"><code>authentication</code></td><td>SASL authentication (Kafka): <code>mechanism</code> can be <code>NONE</code>, <code>PLAIN</code>, <code>SCRAM-SHA-256</code>, <code>SCRAM-SHA-512</code></td></tr>
+                                <tr><td class="ps-4"><code>properties</code></td><td>Pass-through key-value map sent directly to the native client library</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-# Remember-me token validity (seconds) - 24 hours default
-dgfacade.security.remember-me-seconds=86400</code></pre>
+                    <div class="alert" style="background:var(--dg-bg-alert-info);border:1px solid var(--dg-border);color:var(--dg-text-primary);">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        All brokers support automatic connection recovery. Kafka uses exponential backoff; RabbitMQ uses <code>automaticRecoveryEnabled</code>;
+                        ActiveMQ supports <code>failover://</code> transport URLs. See <a href="/help/brokers">Broker Configuration Guide</a> for complete examples, SSL setup, and recovery tuning.
+                    </div>
+                </section>
 
-                <div class="alert alert-primary mt-3">
-                    <i class="fas fa-users me-2"></i>
-                    <strong>User Management:</strong> Users are defined in <code>config/users.json</code> with roles (<code>ADMIN</code>, <code>USER</code>)
-                    and API keys. The default admin account is <code>admin</code> / <code>admin123</code>.
-                </div>
+                <!-- ═══════════════ 5. INPUT CHANNELS ═══════════════ -->
+                <section id="input-channels" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-sign-in-alt me-2 text-success"></i>Input Channel Configuration</h3>
+                    <p>Input channels subscribe to broker topics/queues and deliver messages to the execution engine via fan-out distribution.
+                       Each is a JSON file in <code>config/input-channels/</code>.</p>
 
-                <!-- Logging -->
-                <h3 class="mt-4">Logging</h3>
-<pre class="bg-dark text-light p-3 rounded"><code># Root logging level
-logging.level.root=INFO
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>dgfacade.input-channels.config-dir</code></td><td><code>config/input-channels</code></td><td>Directory containing input channel JSON files</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.input-channels.default-queue-depth</code></td><td><code>10000</code></td><td>Default internal queue depth per channel</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.input-channels.backpressure-warning-pct</code></td><td><code>70</code></td><td>Queue fill % that triggers a backpressure warning log</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.input-channels.backpressure-critical-pct</code></td><td><code>90</code></td><td>Queue fill % that pauses the broker consumer</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.input-channels.fanout-thread-pool-size</code></td><td><code>16</code></td><td>Thread pool for fan-out message distribution to listeners</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-# DGFacade component logging
-logging.level.com.dgfacade=INFO
+                    <h6>Input Channel JSON Schema</h6>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "type": "kafka",
+  "description": "Order lifecycle events from Kafka",
+  "enabled": true,
+  "broker": "dev-kafka",
+  "destinations": [
+    { "name": "orders.created", "type": "topic" },
+    { "name": "orders.updated", "type": "topic" }
+  ],
+  "queue": {
+    "depth": 10000,
+    "warning_threshold_pct": 70,
+    "critical_threshold_pct": 90,
+    "drain_resume_pct": 60
+  },
+  "retry": {
+    "max_attempts": 3,
+    "backoff_ms": 1000,
+    "backoff_multiplier": 2.0
+  }
+}</code></pre>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Field</th><th>Type</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>type</code></td><td>string</td><td><code>kafka</code>, <code>confluent-kafka</code>, <code>jms</code> (ActiveMQ), <code>rabbitmq</code>, <code>filesystem</code>, or <code>sql</code></td></tr>
+                                <tr><td class="ps-4"><code>broker</code></td><td>string</td><td>Broker ID &mdash; must match a filename in <code>config/brokers/</code> (without <code>.json</code>)</td></tr>
+                                <tr><td class="ps-4"><code>destinations</code></td><td>array</td><td>List of subscriptions. Each entry has <code>name</code> (topic/queue name) and <code>type</code> (<code>topic</code>, <code>queue</code>, or <code>directory</code>).</td></tr>
+                                <tr><td class="ps-4"><code>queue.depth</code></td><td>int</td><td>Internal bounded queue capacity (overrides global default)</td></tr>
+                                <tr><td class="ps-4"><code>queue.warning_threshold_pct</code></td><td>int</td><td>Backpressure warning threshold</td></tr>
+                                <tr><td class="ps-4"><code>queue.critical_threshold_pct</code></td><td>int</td><td>Backpressure critical threshold &mdash; pauses broker consumer</td></tr>
+                                <tr><td class="ps-4"><code>queue.drain_resume_pct</code></td><td>int</td><td>Resume threshold &mdash; consumer restarts when queue drains below this</td></tr>
+                                <tr><td class="ps-4"><code>retry.max_attempts</code></td><td>int</td><td>Maximum delivery retry attempts per message</td></tr>
+                                <tr><td class="ps-4"><code>retry.backoff_ms</code></td><td>int</td><td>Initial retry backoff in milliseconds</td></tr>
+                                <tr><td class="ps-4"><code>retry.backoff_multiplier</code></td><td>float</td><td>Exponential backoff multiplier (e.g. 2.0 doubles each retry)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert" style="background:var(--dg-bg-alert-warning);border:1px solid var(--dg-border);color:var(--dg-text-primary);">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        <strong>Backpressure:</strong> When a channel&rsquo;s internal queue fills to <code>critical_threshold_pct</code>, the broker consumer is automatically paused.
+                        It resumes when the queue drains below <code>drain_resume_pct</code>. This prevents memory exhaustion while maintaining data delivery guarantees.
+                    </div>
+                </section>
+
+                <!-- ═══════════════ 6. OUTPUT CHANNELS ═══════════════ -->
+                <section id="output-channels" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-sign-out-alt me-2 text-danger"></i>Output Channel Configuration</h3>
+                    <p>Output channels publish messages from handlers to broker topics/queues via fan-in collection.
+                       Each is a JSON file in <code>config/output-channels/</code>.</p>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>dgfacade.output-channels.config-dir</code></td><td><code>config/output-channels</code></td><td>Directory containing output channel JSON files</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.output-channels.default-queue-depth</code></td><td><code>10000</code></td><td>Default internal queue depth per channel</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.output-channels.backpressure-warning-pct</code></td><td><code>70</code></td><td>Queue fill % that triggers a warning</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.output-channels.backpressure-critical-pct</code></td><td><code>90</code></td><td>Queue fill % that pauses publishing</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.output-channels.fanin-thread-pool-size</code></td><td><code>16</code></td><td>Thread pool for fan-in message collection from handlers</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p>The JSON schema is identical to input channels &mdash; same <code>type</code>, <code>broker</code>, <code>destinations</code>,
+                       <code>queue</code>, and <code>retry</code> fields. Output channels use fan-in (many handlers &rarr; one broker topic) instead of fan-out.
+                       See <a href="/help/channels">Channel Configuration Guide</a> for detailed examples.</p>
+                </section>
+
+                <!-- ═══════════════ 7. INGESTERS ═══════════════ -->
+                <section id="ingesters" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-download me-2" style="color:var(--dg-cyan);"></i>Ingester Configuration</h3>
+                    <p>Ingesters bridge input channels to the execution engine. Each ingester subscribes to an input channel
+                       and automatically submits received messages as <code>DGRequest</code> objects &mdash; exactly like a REST API call.
+                       JSON files in <code>config/ingesters/</code>.</p>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>dgfacade.ingesters.config-dir</code></td><td><code>config/ingesters</code></td><td>Directory containing ingester JSON files</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6>Ingester JSON Schema</h6>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "enabled": true,
+  "description": "Kafka request ingestion",
+  "input_channel": "kafka-requests",
+  "overrides": {
+    "group_id": "dgfacade-ingester-kafka-requests"
+  }
+}</code></pre>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>enabled</code></td><td>boolean</td><td>Yes</td><td>Whether this ingester is active</td></tr>
+                                <tr><td class="ps-4"><code>description</code></td><td>string</td><td>No</td><td>Human-readable description</td></tr>
+                                <tr><td class="ps-4"><code>input_channel</code></td><td>string</td><td>Yes</td><td>Input channel ID &mdash; must match a filename in <code>config/input-channels/</code> (without <code>.json</code>)</td></tr>
+                                <tr><td class="ps-4"><code>overrides</code></td><td>object</td><td>No</td><td>Optional overrides passed to the subscriber (e.g. <code>group_id</code> for Kafka consumer group isolation)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert" style="background:var(--dg-bg-alert-info);border:1px solid var(--dg-border);color:var(--dg-text-primary);">
+                        <i class="fas fa-link me-2"></i>
+                        <strong>The full ingestion pipeline:</strong>
+                        Broker &rarr; Input Channel &rarr; Ingester &rarr; ExecutionEngine &rarr; Handler.
+                        The ingester deserializes broker messages into DGRequest JSON, resolves the API key and request type, and submits to the engine.
+                    </div>
+                </section>
+
+                <!-- ═══════════════ 8. CHAINS ═══════════════ -->
+                <section id="chains" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-link me-2" style="color:var(--dg-teal);"></i>Handler Chain Configuration</h3>
+                    <p>Handler chains define declarative pipelines that execute multiple handlers in sequence, conditionally, or in parallel.
+                       Each chain is a JSON file in <code>config/chains/</code>. Chains are invoked via the built-in <code>CHAIN</code> request type.</p>
+
+                    <h6>Chain JSON Schema</h6>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "chain_id": "ORDER_PROCESS",
+  "description": "Normalize, validate, hash, and enrich order data",
+  "ttl_minutes": 15,
+  "error_strategy": "ABORT",
+  "enabled": true,
+  "steps": [
+    {
+      "step": 1,
+      "handler": "JSON_TRANSFORM",
+      "alias": "normalize",
+      "description": "Flatten nested order structure",
+      "payload_mapping": {
+        "operation": "FLATTEN",
+        "input": "${payload}"
+      },
+      "merge_strategy": "REPLACE"
+    },
+    {
+      "step": 2,
+      "handler": "STRING_TRANSFORM",
+      "alias": "format_id",
+      "payload_mapping": {
+        "operation": "UPPER",
+        "input": "${prev.order_id}"
+      },
+      "merge_strategy": "APPEND"
+    }
+  ]
+}</code></pre>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Field</th><th>Type</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>chain_id</code></td><td>string</td><td>Unique chain identifier referenced when invoking via <code>CHAIN</code> request type</td></tr>
+                                <tr><td class="ps-4"><code>error_strategy</code></td><td>string</td><td><code>ABORT</code> (stop on first error), <code>SKIP</code> (skip failed step, continue), or <code>RETRY</code></td></tr>
+                                <tr><td class="ps-4"><code>steps</code></td><td>array</td><td>Ordered list of pipeline steps</td></tr>
+                                <tr><td class="ps-4"><code>steps[].handler</code></td><td>string</td><td>Request type of the handler to invoke at this step</td></tr>
+                                <tr><td class="ps-4"><code>steps[].alias</code></td><td>string</td><td>Short name for this step &mdash; used in <code>${alias.field}</code> references by later steps</td></tr>
+                                <tr><td class="ps-4"><code>steps[].payload_mapping</code></td><td>object</td><td>Payload template with placeholders: <code>${payload}</code> (original), <code>${prev.field}</code> (previous step output), <code>${alias.field}</code> (named step output)</td></tr>
+                                <tr><td class="ps-4"><code>steps[].merge_strategy</code></td><td>string</td><td><code>REPLACE</code> (step output becomes the payload), <code>APPEND</code> (merge into existing payload), or <code>DISCARD</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted">See <a href="/help/handlers#chaining">Handler Chaining Guide</a> for advanced patterns including conditional steps, parallel execution, and error handling.</p>
+                </section>
+
+                <!-- ═══════════════ 9. PYTHON ═══════════════ -->
+                <section id="python" class="mb-5">
+                    <h3 class="mb-3"><i class="fab fa-python me-2" style="color:#FFD43B;"></i>Python / Py4J Worker Pool</h3>
+                    <p>Python handler support is configured in <code>config/python/py4j.json</code>. This file controls the worker pool only &mdash;
+                       Python handler definitions belong in handler JSON files with <code>"is_python": true</code>.</p>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>dgfacade.python.config-dir</code></td><td><code>config/python</code></td><td>Directory containing <code>py4j.json</code></td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.python.config-file</code></td><td><code>py4j.json</code></td><td>Worker pool config filename</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6>py4j.json Schema</h6>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>{
+  "enabled": false,
+  "worker_count": 2,
+  "python_binary": "python3",
+  "python_path": ["python", "python/handlers"],
+  "worker_startup_timeout_seconds": 30,
+  "worker_health_check_interval_seconds": 10,
+  "worker_restart_delay_seconds": 5,
+  "max_restart_attempts": 10,
+  "request_timeout_seconds": 300,
+  "gateway_port_range_start": 25333,
+  "callback_port_range_start": 25400,
+  "log_python_output": true
+}</code></pre>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Field</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>enabled</code></td><td><code>false</code></td><td>Master switch &mdash; set <code>true</code> to start the Python worker pool at boot</td></tr>
+                                <tr><td class="ps-4"><code>worker_count</code></td><td><code>2</code></td><td>Number of Python worker processes. Each worker handles one request at a time.</td></tr>
+                                <tr><td class="ps-4"><code>python_binary</code></td><td><code>python3</code></td><td>Path to Python executable (absolute or on PATH)</td></tr>
+                                <tr><td class="ps-4"><code>python_path</code></td><td><code>["python"]</code></td><td>Directories appended to <code>PYTHONPATH</code> for handler imports</td></tr>
+                                <tr><td class="ps-4"><code>worker_startup_timeout_seconds</code></td><td><code>30</code></td><td>Max wait for a worker process to become ready</td></tr>
+                                <tr><td class="ps-4"><code>worker_health_check_interval_seconds</code></td><td><code>10</code></td><td>Interval between health pings to each worker</td></tr>
+                                <tr><td class="ps-4"><code>worker_restart_delay_seconds</code></td><td><code>5</code></td><td>Cooldown before restarting a failed worker</td></tr>
+                                <tr><td class="ps-4"><code>max_restart_attempts</code></td><td><code>10</code></td><td>Max restarts before marking a worker as permanently failed</td></tr>
+                                <tr><td class="ps-4"><code>request_timeout_seconds</code></td><td><code>300</code></td><td>Max time for a single Python handler <code>compute()</code> call</td></tr>
+                                <tr><td class="ps-4"><code>gateway_port_range_start</code></td><td><code>25333</code></td><td>First Py4J gateway port (worker 0 = 25333, worker 1 = 25334, etc.)</td></tr>
+                                <tr><td class="ps-4"><code>callback_port_range_start</code></td><td><code>25400</code></td><td>First Py4J callback port (one per worker)</td></tr>
+                                <tr><td class="ps-4"><code>log_python_output</code></td><td><code>true</code></td><td>Forward Python worker stdout/stderr to the Java log</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted">See <a href="/help/python">Python Integration Guide</a> for handler contract, examples, and troubleshooting.</p>
+                </section>
+
+                <!-- ═══════════════ 10. CLUSTER ═══════════════ -->
+                <section id="cluster" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-project-diagram me-2" style="color:var(--dg-pink);"></i>Cluster Configuration</h3>
+                    <p>Multi-node deployment via lightweight HTTP-based cluster protocol. In standalone mode (default, no seed nodes), the cluster layer adds zero overhead.</p>
+
+                    <div class="table-responsive">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>dgfacade.cluster.seed-nodes</code></td><td><em>(empty)</em></td><td>Comma-separated peer node URLs. Empty = standalone mode.<br>Example: <code>http://node2:8090,http://node3:8090</code></td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.cluster.node-role</code></td><td><code>BOTH</code></td><td>Node role: <code>GATEWAY</code> (receives requests, forwards to executors), <code>EXECUTOR</code> (runs handlers only), or <code>BOTH</code></td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.cluster.heartbeat-seconds</code></td><td><code>15</code></td><td>Interval between heartbeat pings to peer nodes. Lower values detect failures faster but increase network traffic.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted mt-2">See <a href="/help/clustering">Clustering Guide</a> for multi-node architecture, Docker Compose examples, and deployment patterns.</p>
+                </section>
+
+                <!-- ═══════════════ 11. SECURITY ═══════════════ -->
+                <section id="security" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-shield-alt me-2 text-danger"></i>Security &amp; Authentication</h3>
+                    <p>DGFacade uses two security layers: <strong>session-based form login</strong> for the web UI, and <strong>API-key authentication</strong> for REST, WebSocket, and broker ingestion.</p>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>dgfacade.config.users-file</code></td><td><code>config/users.json</code></td><td>User accounts and roles</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.config.apikeys-file</code></td><td><code>config/apikeys.json</code></td><td>API keys with allowed request types and rate limits</td></tr>
+                                <tr><td class="ps-4"><code>server.servlet.session.timeout</code></td><td><code>30m</code></td><td>Web UI session timeout (e.g. <code>30m</code>, <code>1h</code>)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6>URL Access Control</h6>
+                    <div class="table-responsive">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">URL Pattern</th><th>Access</th><th>Auth Method</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>/api/**</code></td><td>Public (stateless)</td><td>API key in request body <code>api_key</code> field</td></tr>
+                                <tr><td class="ps-4"><code>/ws/**</code></td><td>Public</td><td>API key in WebSocket JSON message</td></tr>
+                                <tr><td class="ps-4"><code>/admin/**</code></td><td><span class="badge bg-danger">ADMIN</span> role only</td><td>Form login session</td></tr>
+                                <tr><td class="ps-4"><code>/</code> (Dashboard)</td><td>Authenticated</td><td>Form login session</td></tr>
+                                <tr><td class="ps-4"><code>/playground/**</code></td><td>Authenticated</td><td>Form login session</td></tr>
+                                <tr><td class="ps-4"><code>/monitoring/**</code></td><td>Public</td><td>&mdash;</td></tr>
+                                <tr><td class="ps-4"><code>/health</code>, <code>/ping</code></td><td>Public</td><td>&mdash;</td></tr>
+                                <tr><td class="ps-4"><code>/actuator/**</code></td><td>Public</td><td>&mdash;</td></tr>
+                                <tr><td class="ps-4"><code>/help/**</code>, <code>/about</code>, <code>/glossary</code></td><td>Public</td><td>&mdash;</td></tr>
+                                <tr><td class="ps-4"><code>/login</code></td><td>Public</td><td>&mdash;</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted mt-2">Remember-me cookie: <code>dgfacade-remember-me</code> with 24-hour validity. API endpoints are fully stateless &mdash; no session cookies required.</p>
+                </section>
+
+                <!-- ═══════════════ 12. USERS & API KEYS ═══════════════ -->
+                <section id="users" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-users me-2 text-primary"></i>Users &amp; API Keys</h3>
+
+                    <h6>config/users.json</h6>
+                    <p>Array of user account definitions. Each user can have multiple roles and API keys.</p>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>[
+  {
+    "user_id": "admin",
+    "username": "admin",
+    "password": "admin123",
+    "display_name": "System Administrator",
+    "email": "admin@dgfacade.local",
+    "roles": ["ADMIN", "USER"],
+    "enabled": true,
+    "api_keys": ["dgf-admin-key-0001"]
+  },
+  {
+    "user_id": "user001",
+    "username": "testuser",
+    "password": "test123",
+    "display_name": "Test User",
+    "email": "testuser@dgfacade.local",
+    "roles": ["USER"],
+    "enabled": true,
+    "api_keys": ["dgf-test-key-0001"]
+  }
+]</code></pre>
+
+                    <div class="table-responsive mt-3 mb-4">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Field</th><th>Type</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>user_id</code></td><td>string</td><td>Unique user ID &mdash; also used to match handler config files (e.g. <code>admin.json</code>)</td></tr>
+                                <tr><td class="ps-4"><code>username</code></td><td>string</td><td>Login username for web UI form login</td></tr>
+                                <tr><td class="ps-4"><code>password</code></td><td>string</td><td>Cleartext password (supports <code>${ENV_VAR}</code> substitution)</td></tr>
+                                <tr><td class="ps-4"><code>roles</code></td><td>array</td><td>Roles: <code>ADMIN</code> (full access + admin pages), <code>USER</code> (standard access)</td></tr>
+                                <tr><td class="ps-4"><code>enabled</code></td><td>boolean</td><td>Disabled users cannot log in or use API keys</td></tr>
+                                <tr><td class="ps-4"><code>api_keys</code></td><td>array</td><td>List of API key strings linked to this user</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6>config/apikeys.json</h6>
+                    <p>Array of API key definitions with request type whitelists and rate limits.</p>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>[
+  {
+    "key": "dgf-admin-key-0001",
+    "user_id": "admin",
+    "description": "Admin master key &mdash; full access",
+    "enabled": true,
+    "allowed_request_types": ["*"],
+    "rate_limit_per_minute": 0
+  },
+  {
+    "key": "dgf-test-key-0001",
+    "user_id": "user001",
+    "description": "Test user &mdash; limited access",
+    "enabled": true,
+    "allowed_request_types": ["ECHO", "ARITHMETIC", "HASH"],
+    "rate_limit_per_minute": 60
+  }
+]</code></pre>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Field</th><th>Type</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>key</code></td><td>string</td><td>The API key string sent in DGRequest <code>api_key</code> field</td></tr>
+                                <tr><td class="ps-4"><code>user_id</code></td><td>string</td><td>Links to a user in <code>users.json</code> &mdash; determines handler file resolution scope</td></tr>
+                                <tr><td class="ps-4"><code>allowed_request_types</code></td><td>array</td><td>Whitelist of request types. Use <code>["*"]</code> for unrestricted access.</td></tr>
+                                <tr><td class="ps-4"><code>rate_limit_per_minute</code></td><td>int</td><td>Request rate limit per minute. <code>0</code> = unlimited.</td></tr>
+                                <tr><td class="ps-4"><code>enabled</code></td><td>boolean</td><td>Disabled keys are rejected immediately</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert" style="background:var(--dg-bg-alert-warning);border:1px solid var(--dg-border);color:var(--dg-text-primary);">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Security note:</strong> Passwords in <code>users.json</code> are stored in cleartext. For production, use environment variable substitution:
+                        <code>"password": "${ADMIN_PASSWORD}"</code>. The default admin account is <code>admin</code> / <code>admin123</code> &mdash; <strong>change this before deploying</strong>.
+                    </div>
+                </section>
+
+                <!-- ═══════════════ 13. PEKKO ═══════════════ -->
+                <section id="pekko" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-atom me-2" style="color:var(--dg-primary-light);"></i>Pekko / Actor System</h3>
+                    <p>The execution engine uses Apache Pekko (the open-source Akka successor) for concurrent handler execution.
+                       Each handler invocation runs as a lightweight actor. The dispatcher is tuned in <code>application.properties</code>.</p>
+
+                    <div class="table-responsive">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>pekko.loglevel</code></td><td><code>INFO</code></td><td>Pekko internal log level (<code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>)</td></tr>
+                                <tr><td class="ps-4"><code>pekko.actor.default-dispatcher<br>.fork-join-executor.parallelism-min</code></td><td><code>8</code></td><td>Minimum threads in the default dispatcher (floor)</td></tr>
+                                <tr><td class="ps-4"><code>pekko.actor.default-dispatcher<br>.fork-join-executor.parallelism-max</code></td><td><code>64</code></td><td>Maximum threads in the default dispatcher (ceiling)</td></tr>
+                                <tr><td class="ps-4"><code>pekko.actor.default-dispatcher<br>.fork-join-executor.parallelism-factor</code></td><td><code>3.0</code></td><td>Multiplier against available processors. Actual threads = <code>cores &times; factor</code>, clamped to min/max.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted mt-2">Example: On an 8-core machine with factor 3.0, the dispatcher uses 24 threads (8 &times; 3.0), clamped between 8 and 64.
+                        For I/O-heavy handlers (HTTP probes, database calls), increase the factor or max. For CPU-bound handlers, keep factor close to 1.0.</p>
+                </section>
+
+                <!-- ═══════════════ 14. PROMETHEUS ═══════════════ -->
+                <section id="prometheus" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-chart-line me-2 text-success"></i>Prometheus &amp; Actuator</h3>
+                    <p>DGFacade exposes Prometheus metrics and Spring Boot Actuator health endpoints.</p>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>management.endpoints.web.exposure.include</code></td><td><code>health,info,metrics,prometheus</code></td><td>Which actuator endpoints to expose over HTTP</td></tr>
+                                <tr><td class="ps-4"><code>management.endpoint.health.show-details</code></td><td><code>always</code></td><td>Show component health details (disk, JVM, etc.)</td></tr>
+                                <tr><td class="ps-4"><code>management.endpoint.prometheus.enabled</code></td><td><code>true</code></td><td>Enable Prometheus scrape endpoint</td></tr>
+                                <tr><td class="ps-4"><code>management.metrics.export.prometheus.enabled</code></td><td><code>true</code></td><td>Enable Prometheus metrics export</td></tr>
+                                <tr><td class="ps-4"><code>management.metrics.tags.application</code></td><td><code>${spring.application.name}</code></td><td>Global tag applied to all metrics</td></tr>
+                                <tr><td class="ps-4"><code>management.metrics.distribution<br>.percentiles-histogram...duration</code></td><td><code>true</code></td><td>Enable histogram buckets for handler execution duration</td></tr>
+                                <tr><td class="ps-4"><code>management.metrics.distribution<br>.percentiles...duration</code></td><td><code>0.5,0.9,0.95,0.99</code></td><td>Percentile calculations for handler latency</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6>Key Endpoints</h6>
+                    <div class="table-responsive">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Endpoint</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>/actuator/prometheus</code></td><td>Prometheus scrape endpoint &mdash; all metrics in Prometheus text format</td></tr>
+                                <tr><td class="ps-4"><code>/actuator/health</code></td><td>Health check with component status (disk, JVM memory, etc.)</td></tr>
+                                <tr><td class="ps-4"><code>/actuator/metrics</code></td><td>List of all available metric names</td></tr>
+                                <tr><td class="ps-4"><code>/actuator/metrics/{name}</code></td><td>Drill into a specific metric with tags and values</td></tr>
+                                <tr><td class="ps-4"><code>/api/v1/metrics/snapshot</code></td><td>Lightweight JSON snapshot for dashboard sparklines</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="mt-3">Bundled Configuration Files</h6>
+                    <p class="small text-muted">DGFacade ships with ready-to-use Prometheus and Grafana configs:</p>
+                    <div class="table-responsive">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">File</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>config/prometheus/prometheus.yml</code></td><td>Prometheus scrape config &mdash; targets <code>localhost:8090/actuator/prometheus</code> at 15s intervals. Copy to your Prometheus server or mount as Docker volume.</td></tr>
+                                <tr><td class="ps-4"><code>config/grafana/dgfacade-dashboard.json</code></td><td>Pre-built Grafana dashboard with handler throughput, latency percentiles, JVM metrics, and broker health panels. Import via Grafana UI.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted">See <a href="/help/prometheus">Prometheus Integration Guide</a> for setup walkthrough, alerting rules, and custom metric creation.</p>
+                </section>
+
+                <!-- ═══════════════ 15. AUTO-RELOAD ═══════════════ -->
+                <section id="auto-reload" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-sync-alt me-2" style="color:var(--dg-warning);"></i>Configuration Auto-Reload</h3>
+                    <p>A background daemon thread scans all configuration directories for changes and reloads automatically.</p>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>dgfacade.config.auto-reload-seconds</code></td><td><code>300</code></td><td>Scan interval in seconds (300 = 5 minutes). Set lower for development.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p>The service computes a fingerprint for each directory based on file count, filenames, sizes, and modification timestamps.
+                       Only directories with actual changes trigger a reload &mdash; the hot path is nearly zero-cost.</p>
+
+                    <h6>Monitored Directories</h6>
+                    <div class="table-responsive">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Directory</th><th>Reload Behavior</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>config/handlers/</code></td><td>Handlers are reloaded into the in-memory <code>HandlerConfigRegistry</code></td></tr>
+                                <tr><td class="ps-4"><code>config/brokers/</code></td><td>Read-on-demand &mdash; changes detected on next broker access</td></tr>
+                                <tr><td class="ps-4"><code>config/input-channels/</code></td><td>Read-on-demand</td></tr>
+                                <tr><td class="ps-4"><code>config/output-channels/</code></td><td>Read-on-demand</td></tr>
+                                <tr><td class="ps-4"><code>config/ingesters/</code></td><td>Read-on-demand</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted mt-2">For immediate reload, use the <strong>Reload All</strong> button on the <a href="/admin/handlers">Handlers admin page</a>
+                       or call <code>POST /admin/handlers/reload</code>.</p>
+                </section>
+
+                <!-- ═══════════════ 16. LOGGING ═══════════════ -->
+                <section id="logging" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-file-alt me-2" style="color:var(--dg-text-secondary);"></i>Logging</h3>
+                    <p>DGFacade uses two log files: the main application log and a separate handler execution log.</p>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>logging.level.root</code></td><td><code>INFO</code></td><td>Root log level for all loggers</td></tr>
+                                <tr><td class="ps-4"><code>logging.level.com.dgfacade</code></td><td><code>INFO</code></td><td>DGFacade application log level</td></tr>
+                                <tr><td class="ps-4"><code>logging.level.org.apache.pekko</code></td><td><code>INFO</code></td><td>Pekko actor system log level</td></tr>
+                                <tr><td class="ps-4"><code>logging.file.name</code></td><td><code>logs/dgfacade.log</code></td><td>Main log file path</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.handler-log.file</code></td><td><code>logs/handler-executions.log</code></td><td>Separate log file for handler execution events (start, success, failure, timing)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6>Troubleshooting Log Levels</h6>
+                    <p class="small text-muted">Set these in <code>application.properties</code> to debug specific subsystems:</p>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code># Handler execution details (request/response, timing, errors)
 logging.level.com.dgfacade.server.engine=DEBUG
-logging.level.com.dgfacade.messaging=INFO
 
-# Log broker connection events
-logging.level.com.dgfacade.messaging.broker=DEBUG
+# Broker connections, reconnections, message send/receive
+logging.level.com.dgfacade.messaging=DEBUG
 
-# Log channel backpressure events
-logging.level.com.dgfacade.messaging.channel=INFO</code></pre>
+# Config auto-reload fingerprint changes
+logging.level.com.dgfacade.server.config.ConfigAutoReloadService=DEBUG
 
-                <!-- Directory Structure -->
-                <h3 class="mt-4">Directory Structure</h3>
-<pre class="bg-dark text-light p-3 rounded"><code>dgfacade/
-├── application.properties          # Main configuration
-├── config/
-│   ├── users.json                  # User accounts &amp; API keys
-│   ├── brokers/                    # One JSON file per broker
-│   │   ├── prod-kafka.json         # → broker name: "prod-kafka"
-│   │   ├── prod-activemq.json      # → broker name: "prod-activemq"
-│   │   └── dev-rabbitmq.json       # → broker name: "dev-rabbitmq"
-│   └── channels/                   # One JSON file per channel
-│       ├── order-events.json       # → channel name: "order-events"
-│       ├── trade-queue.json        # → channel name: "trade-queue"
-│       └── webhook-ingest.json     # → channel name: "webhook-ingest"
-├── logs/
-│   └── dgfacade.log
-└── lib/
-    └── dgfacade-1.6.0.jar</code></pre>
+# Python worker pool lifecycle (start, stop, health checks)
+logging.level.com.dgfacade.server.python=DEBUG
 
+# Cluster heartbeat, peer discovery, request forwarding
+logging.level.com.dgfacade.server.cluster=DEBUG
+
+# Channel backpressure events
+logging.level.com.dgfacade.messaging.channel=DEBUG
+
+# Spring Security authentication decisions
+logging.level.org.springframework.security=DEBUG</code></pre>
+                    <p class="small text-muted">Both log files can be viewed live from the web UI at <a href="/admin/logs">Admin &rarr; Logs</a>.</p>
+                </section>
+
+                <!-- ═══════════════ 17. WEBSOCKET ═══════════════ -->
+                <section id="websocket" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-plug me-2" style="color:var(--dg-success);"></i>WebSocket Gateway</h3>
+                    <p>The WebSocket gateway provides real-time, bidirectional request processing. It accepts JSON-formatted DGRequest messages and returns DGResponse frames.</p>
+
+                    <div class="table-responsive">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Setting</th><th>Value</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4">Endpoint</td><td><code>ws://&lt;host&gt;:&lt;port&gt;/ws/gateway</code></td><td>WebSocket endpoint URL</td></tr>
+                                <tr><td class="ps-4">Allowed Origins</td><td><code>*</code></td><td>All origins permitted (CORS). Restrict in production if needed.</td></tr>
+                                <tr><td class="ps-4">Protocol</td><td>Stateless</td><td>Each message is an independent request &mdash; no session state between frames</td></tr>
+                                <tr><td class="ps-4">Authentication</td><td>Per-message <code>api_key</code></td><td>Every JSON message must include a valid <code>api_key</code> field</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted mt-2">The WebSocket gateway inherits the server port and context path. No separate configuration properties are needed.
+                       Test using the <a href="/playground">WebSocket Playground</a> in the UI.</p>
+                </section>
+
+                <!-- ═══════════════ 18. GRACEFUL SHUTDOWN ═══════════════ -->
+                <section id="shutdown" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-power-off me-2" style="color:var(--dg-danger);"></i>Graceful Shutdown</h3>
+                    <p>In-flight handler executions are allowed to complete before the JVM exits.</p>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table dg-table table-hover align-middle">
+                            <thead><tr><th class="ps-4">Property</th><th>Default</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="ps-4"><code>server.shutdown</code></td><td><code>graceful</code></td><td>Enable graceful shutdown (stops accepting new requests, drains in-flight work)</td></tr>
+                                <tr><td class="ps-4"><code>spring.lifecycle.timeout-per-shutdown-phase</code></td><td><code>30s</code></td><td>Maximum wait time for each shutdown phase to complete</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6>Shutdown Sequence</h6>
+                    <p class="small text-muted">The <code>ShutdownOrchestrator</code> tears down components in reverse startup order:</p>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>1. Stop accepting new HTTP/WebSocket requests
+2. Stop ingesters (drain in-flight ingestion)
+3. Stop input channels (disconnect subscribers)
+4. Stop output channels (flush pending publishes)
+5. Disconnect brokers (close connections)
+6. Shutdown Python worker pool (graceful worker stop)
+7. Shutdown Pekko actor system (await pending actors)
+8. Final log: "DGFacade shutdown complete"</code></pre>
+                </section>
+
+                <!-- ═══════════════ 19. ENVIRONMENT VARIABLES ═══════════════ -->
+                <section id="env-vars" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-terminal me-2" style="color:var(--dg-code-string);"></i>Environment Variable Substitution</h3>
+                    <p>All JSON configuration values support <code>${VAR}</code> and <code>${VAR:default}</code> placeholder syntax.
+                       The <code>ConfigPropertyResolver</code> resolves values using a waterfall strategy:</p>
+                    <ol class="small">
+                        <li><strong>JVM system properties</strong> (<code>-Dkey=value</code> on the command line)</li>
+                        <li><strong>application.properties</strong> (properties file on classpath)</li>
+                        <li><strong>Default value</strong> after the colon: <code>${key:defaultValue}</code></li>
+                        <li>If nothing resolves and no default is given, the system logs a warning and uses the raw placeholder string</li>
+                    </ol>
+
+                    <h6>Examples</h6>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.78rem;overflow-x:auto;"><code>// In any JSON config file:
+"password": "${KAFKA_PASSWORD}"                // Resolved from env or JVM -D
+"password": "${KAFKA_PASSWORD:changeme}"       // Falls back to "changeme"
+
+// JDBC URL with escaped colons:
+"jdbc_url": "${DB_URL:jdbc\\:postgresql\\://localhost/dgfacade}"
+
+// Spring Boot also auto-maps environment variables:
+//   export SERVER_PORT=9090    (maps to server.port)
+//   export DGFACADE_APP_NAME=MyGateway
+//
+// Or override via JVM args:
+//   java -Dserver.port=9090 -jar dgfacade-web-1.6.1.jar</code></pre>
+
+                    <div class="alert" style="background:var(--dg-bg-alert-warning);border:1px solid var(--dg-border);color:var(--dg-text-primary);">
+                        <i class="fas fa-key me-2"></i>
+                        <strong>Best practice:</strong> Never commit passwords or secrets in JSON config files.
+                        Use <code>${ENV_VAR}</code> placeholders and inject secrets via environment variables, JVM system properties,
+                        Kubernetes Secrets, or a vault (HashiCorp Vault, AWS Secrets Manager).
+                    </div>
+                </section>
+
+                <!-- ═══════════════ 20. DIRECTORY STRUCTURE ═══════════════ -->
+                <section id="directory" class="mb-5">
+                    <h3 class="mb-3"><i class="fas fa-folder-open me-2" style="color:var(--dg-warning-light);"></i>Complete Directory Structure</h3>
+<pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1.2rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.76rem;overflow-x:auto;"><code>dgfacade/
+&#9500;&#9472;&#9472; application.properties              # Main application configuration
+&#9500;&#9472;&#9472; config/
+&#9474;   &#9500;&#9472;&#9472; handlers/                       # Handler config (one file per user scope)
+&#9474;   &#9474;   &#9500;&#9472;&#9472; default.json                # Fallback handlers for all users
+&#9474;   &#9474;   &#9500;&#9472;&#9472; admin.json                  # Admin-specific handler overrides
+&#9474;   &#9474;   &#9492;&#9472;&#9472; pdc.json                    # PDC pipeline overrides
+&#9474;   &#9500;&#9472;&#9472; brokers/                        # Broker connections (one file per broker)
+&#9474;   &#9474;   &#9500;&#9472;&#9472; dev-kafka.json              # Development Kafka
+&#9474;   &#9474;   &#9500;&#9472;&#9472; dev-activemq.json           # Development ActiveMQ
+&#9474;   &#9474;   &#9500;&#9472;&#9472; dev-filesystem.json         # Filesystem broker for batch ingestion
+&#9474;   &#9474;   &#9500;&#9472;&#9472; prod-kafka-pem.json         # Production Kafka with mTLS
+&#9474;   &#9474;   &#9500;&#9472;&#9472; prod-activemq-pem.json      # Production ActiveMQ with SSL
+&#9474;   &#9474;   &#9500;&#9472;&#9472; prod-rabbitmq-pem.json      # Production RabbitMQ with mTLS
+&#9474;   &#9474;   &#9492;&#9472;&#9472; prod-ibmmq-pem.json         # Production IBM MQ with SSL
+&#9474;   &#9500;&#9472;&#9472; input-channels/                 # Inbound channels (broker to engine)
+&#9474;   &#9474;   &#9500;&#9472;&#9472; kafka-requests.json         # Kafka request ingestion
+&#9474;   &#9474;   &#9500;&#9472;&#9472; activemq-requests.json      # ActiveMQ request ingestion
+&#9474;   &#9474;   &#9500;&#9472;&#9472; order-events.json           # Order lifecycle events
+&#9474;   &#9474;   &#9500;&#9472;&#9472; trade-queue.json            # Trade execution queue
+&#9474;   &#9474;   &#9492;&#9472;&#9472; batch-requests.json         # Filesystem batch polling
+&#9474;   &#9500;&#9472;&#9472; output-channels/                # Outbound channels (engine to broker)
+&#9474;   &#9474;   &#9500;&#9472;&#9472; order-notifications.json    # Order notification publishing
+&#9474;   &#9474;   &#9492;&#9472;&#9472; trade-results.json          # Trade result publishing
+&#9474;   &#9500;&#9472;&#9472; ingesters/                      # Channel to engine bridge
+&#9474;   &#9474;   &#9500;&#9472;&#9472; kafka-requests.json         # Ingests from kafka-requests channel
+&#9474;   &#9474;   &#9500;&#9472;&#9472; activemq-requests.json      # Ingests from activemq-requests channel
+&#9474;   &#9474;   &#9492;&#9472;&#9472; filesystem-batch.json       # Ingests from batch-requests channel
+&#9474;   &#9500;&#9472;&#9472; chains/                         # Declarative handler pipelines
+&#9474;   &#9474;   &#9500;&#9472;&#9472; order-processing.json       # Order normalize/validate/hash/enrich
+&#9474;   &#9474;   &#9500;&#9472;&#9472; etl-pipeline.json           # Extract-transform-load pipeline
+&#9474;   &#9474;   &#9500;&#9472;&#9472; security-audit.json         # Security audit chain
+&#9474;   &#9474;   &#9500;&#9472;&#9472; data-enrichment.json        # Data enrichment pipeline
+&#9474;   &#9474;   &#9500;&#9472;&#9472; notification-router.json    # Conditional notification routing
+&#9474;   &#9474;   &#9500;&#9472;&#9472; parallel-analysis.json      # Parallel analysis pipeline
+&#9474;   &#9474;   &#9492;&#9472;&#9472; data-converter.json         # Format conversion chain
+&#9474;   &#9500;&#9472;&#9472; python/                         # Python worker pool config
+&#9474;   &#9474;   &#9492;&#9472;&#9472; py4j.json                   # Py4J settings (worker count, ports, timeouts)
+&#9474;   &#9500;&#9472;&#9472; certs/                          # SSL/TLS certificates (organized by broker)
+&#9474;   &#9474;   &#9500;&#9472;&#9472; kafka/                      # Kafka PEM certs (ca-chain, client-cert, client-key)
+&#9474;   &#9474;   &#9500;&#9472;&#9472; activemq/                   # ActiveMQ PEM certs
+&#9474;   &#9474;   &#9500;&#9472;&#9472; rabbitmq/                   # RabbitMQ PEM certs
+&#9474;   &#9474;   &#9492;&#9472;&#9472; ibmmq/                      # IBM MQ PEM certs
+&#9474;   &#9500;&#9472;&#9472; prometheus/                     # Prometheus scrape config
+&#9474;   &#9474;   &#9492;&#9472;&#9472; prometheus.yml              # Ready-to-use scrape config
+&#9474;   &#9500;&#9472;&#9472; grafana/                        # Grafana dashboard definitions
+&#9474;   &#9474;   &#9492;&#9472;&#9472; dgfacade-dashboard.json     # Pre-built dashboard (import via Grafana UI)
+&#9474;   &#9500;&#9472;&#9472; users.json                      # User accounts, passwords, and roles
+&#9474;   &#9492;&#9472;&#9472; apikeys.json                    # API keys with rate limits and request type ACLs
+&#9500;&#9472;&#9472; python/                                 # Python handler source code
+&#9474;   &#9500;&#9472;&#9472; dg_handler.py                       # DGHandler base class
+&#9474;   &#9492;&#9472;&#9472; handlers/
+&#9474;       &#9500;&#9472;&#9472; echo_handler.py                 # EchoPythonHandler
+&#9474;       &#9492;&#9472;&#9472; transform_handler.py            # TransformPythonHandler
+&#9500;&#9472;&#9472; logs/
+&#9474;   &#9500;&#9472;&#9472; dgfacade.log                        # Main application log
+&#9474;   &#9492;&#9472;&#9472; handler-executions.log              # Handler execution audit log
+&#9500;&#9472;&#9472; libs/                                   # External handler JARs (custom classes)
+&#9492;&#9472;&#9472; web/target/
+    &#9492;&#9472;&#9472; dgfacade-web-1.6.1.jar              # Runnable Spring Boot fat JAR</code></pre>
+                </section>
+
+                <!-- ═══ Navigation ═══ -->
                 <div class="mt-5 text-center">
                     <a href="/help/channels" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Channels</a>
                     <a href="/help" class="btn btn-outline-secondary ms-2"><i class="fas fa-home me-2"></i>Help Index</a>
@@ -159,10 +924,11 @@ logging.level.com.dgfacade.messaging.channel=INFO</code></pre>
                 </div>
             </div>
         </div>
+
         <footer class="py-4 mt-5 border-top">
             <div class="row">
-                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.0'">1.6.0</span></p></div>
-                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br><span class="badge bg-warning text-dark">Patent Pending</span></p></div>
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.1'">1.6.1</span></p></div>
+                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha</p></div>
             </div>
         </footer>
     </div>

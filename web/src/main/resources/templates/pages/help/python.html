@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Python Handler Integration')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+<div class="container-fluid py-4">
+
+    <!-- ── Header ──────────────────────────────────────────────── -->
+    <div class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+            <div class="me-3" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#3776AB,#FFD43B);display:flex;align-items:center;justify-content:center;">
+                <i class="fab fa-python fa-2x text-white"></i>
+            </div>
+            <div>
+                <h1 class="mb-0">Python Handler Integration</h1>
+                <p class="text-muted mb-0">Write DGFacade handlers in Python using the same handler contract &middot; <span class="badge bg-success">v1.6.1</span></p>
+            </div>
+        </div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a th:href="@{/help}">Help</a></li>
+                <li class="breadcrumb-item active">Python Integration</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- ── Table of Contents ───────────────────────────────────── -->
+    <div class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-list me-2" style="color:var(--dg-primary);"></i>On This Page</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="#overview" class="d-block mb-2">1. Overview</a>
+                            <a href="#architecture" class="d-block mb-2">2. Architecture</a>
+                            <a href="#prerequisites" class="d-block mb-2">3. Prerequisites</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="#handler-registration" class="d-block mb-2">4. Handler Registration</a>
+                            <a href="#worker-pool-config" class="d-block mb-2">5. Worker Pool Config</a>
+                            <a href="#handler-contract" class="d-block mb-2">6. Handler Contract</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="#example-handlers" class="d-block mb-2">7. Example Handlers</a>
+                            <a href="#writing-your-own" class="d-block mb-2">8. Writing Your Own</a>
+                            <a href="#worker-management" class="d-block mb-2">9. Worker Pool Management</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="#admin-ui" class="d-block mb-2">10. Admin UI</a>
+                            <a href="#api-reference" class="d-block mb-2">11. API Reference</a>
+                            <a href="#troubleshooting" class="d-block mb-2">12. Troubleshooting</a>
+                            <a href="#project-layout" class="d-block mb-2">13. Project Layout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 1. Overview ─────────────────────────────────────────── -->
+    <div id="overview" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-info-circle me-2" style="color:var(--dg-primary);"></i>1. Overview</h4></div>
+                <div class="card-body">
+                    <p>
+                        DGFacade v1.6.1 introduces first-class support for writing request handlers in <strong>Python</strong>.
+                        Python handlers follow the exact same <code>start → compute → stop</code> lifecycle contract as Java handlers,
+                        receive the same <code>DGRequest</code> dictionary, and return the same <code>DGResponse</code> dictionary.
+                        From the caller's perspective, there is <strong>no difference</strong> between a Java and Python handler.
+                    </p>
+
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-key me-2"></i>
+                        <strong>Key Principle:</strong> Python handlers are conceptually identical to Java handlers.
+                        They are registered in the <strong>same handler configuration files</strong> (<code>config/handlers/admin.json</code>
+                        or <code>config/handlers/default.json</code>) alongside Java handlers. The only difference is the
+                        <code>"is_python": true</code> flag and the <code>handler_class</code> pointing to the
+                        <code>DGHandlerPython</code> bridge.
+                    </div>
+
+                    <p>The integration is built on two pillars:</p>
+                    <div class="row g-3 mt-3">
+                        <div class="col-md-6">
+                            <div class="card h-100" style="border-left:4px solid var(--dg-primary);">
+                                <div class="card-body">
+                                    <h6 style="color:var(--dg-primary);">Py4J Bridge</h6>
+                                    <p class="small text-muted mb-0">Java ↔ Python communication via <strong>Py4J</strong> — a proven library for cross-language method invocation. DGRequest/DGResponse are serialized as JSON over TCP sockets between the JVM and Python workers.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100" style="border-left:4px solid var(--dg-success);">
+                                <div class="card-body">
+                                    <h6 style="color:var(--dg-success);">Managed Worker Pool</h6>
+                                    <p class="small text-muted mb-0">A configurable pool of Python worker processes managed by <code>PythonWorkerManager</code>. Features include round-robin dispatch, automatic health checks, auto-restart on failure, and real-time Admin UI monitoring.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 2. Architecture ─────────────────────────────────────── -->
+    <div id="architecture" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-sitemap me-2" style="color:var(--dg-primary);"></i>2. Architecture</h4></div>
+                <div class="card-body">
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1.5rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>  REST / Kafka / WebSocket
+         │
+         ▼
+  ┌─────────────────────┐
+  │   ExecutionEngine    │ ── looks up handler config by request_type
+  └────────┬────────────┘
+           │
+   ┌───────┴─────────────────────────┐
+   │  is_python == true?             │
+   │                                 │
+   │  NO → Java Handler              │  YES → DGHandlerPython
+   │       (EchoHandler, etc.)       │         │
+   └─────────────────────────────────┘         │
+                                               ▼
+                                    ┌─────────────────────────┐
+                                    │  PythonWorkerManager     │
+                                    │ ├─ round-robin pool      │
+                                    │ ├─ health checks         │
+                                    │ └─ auto-restart          │
+                                    └────────┬────────────────┘
+                                             │ JSON over TCP (Py4J)
+                                    ┌────────┴────────────────┐
+                                    │  Python Worker Process   │
+                                    │ ├─ dg_gateway.py (Py4J)  │
+                                    │ ├─ dgfacade_worker.py    │
+                                    │ └─ YourHandler.compute() │
+                                    └─────────────────────────┘</code></pre>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Components</h6>
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>Component</th><th>Language</th><th>Role</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>DGHandlerPython</code></td><td>Java</td><td>Bridge handler implementing <code>DGHandler</code>. Reads <code>python_module</code> and <code>python_class</code> from handler config, serializes DGRequest to JSON, dispatches to a Python worker, deserializes the response.</td></tr>
+                            <tr><td><code>PythonWorkerManager</code></td><td>Java</td><td>Manages N worker processes. Round-robin dispatch, health checks, auto-restart. Configured by <code>config/python/py4j.json</code>.</td></tr>
+                            <tr><td><code>PythonWorkerProcess</code></td><td>Java</td><td>One OS-level Python process. Wraps process lifecycle, stderr/stdout capture, Py4J gateway connection.</td></tr>
+                            <tr><td><code>Py4JConfig</code></td><td>Java</td><td>Deserializes <code>config/python/py4j.json</code> into typed configuration for the worker pool.</td></tr>
+                            <tr><td><code>dgfacade_worker.py</code></td><td>Python</td><td>Worker entry point. Starts the Py4J callback server, receives requests, dynamically imports handler classes, and invokes <code>compute()</code>.</td></tr>
+                            <tr><td><code>dg_gateway.py</code></td><td>Python</td><td>Py4J bridge module: connects to Java GatewayServer, registers callback delegate.</td></tr>
+                            <tr><td><code>dg_handler.py</code></td><td>Python</td><td>Base class <code>DGHandler</code> with <code>start()</code>, <code>compute()</code>, <code>stop()</code> lifecycle methods.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 3. Prerequisites ────────────────────────────────────── -->
+    <div id="prerequisites" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-check-circle me-2" style="color:var(--dg-primary);"></i>3. Prerequisites</h4></div>
+                <div class="card-body">
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>Requirement</th><th>Details</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Python 3.8+</strong></td><td>Must be accessible as <code>python3</code> (or configure <code>python_binary</code> in py4j.json)</td></tr>
+                            <tr><td><strong>py4j</strong></td><td><code>pip install py4j</code> — required for the Py4J gateway bridge</td></tr>
+                            <tr><td><strong>DGFacade v1.6.1+</strong></td><td>Python handler support is available from version 1.6.1 onwards</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Test your Python installation with <code>python3 --version</code> and <code>python3 -c "import py4j"</code> before enabling the worker pool.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 4. Handler Registration ─────────────────────────────── -->
+    <div id="handler-registration" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-cogs me-2" style="color:var(--dg-primary);"></i>4. Handler Registration</h4></div>
+                <div class="card-body">
+                    <p>
+                        Python handlers are registered in the <strong>same configuration files</strong> as Java handlers
+                        (<code>config/handlers/default.json</code> or <code>config/handlers/admin.json</code>).
+                        They are not defined in <code>py4j.json</code> — that file is exclusively for worker pool management.
+                    </p>
+
+                    <div class="alert alert-success mb-4">
+                        <i class="fas fa-key me-2"></i>
+                        <strong>Design Principle:</strong> A Python handler is just another handler. The <code>"is_python": true</code> flag
+                        tells the backend to route execution through the Py4J bridge instead of the standard Java handler class loader.
+                    </div>
+
+                    <h6 class="mb-3" style="color:var(--dg-text-secondary);">Handler Config Schema for Python</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1.5rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>{
+  <span style="color:var(--dg-cyan);">"PYTHON_ECHO"</span>: {                                          <span class="text-muted">// request type — must be unique</span>
+    <span style="color:var(--dg-cyan);">"handler_class"</span>: "com.dgfacade.server.python.DGHandlerPython",  <span class="text-muted">// always this bridge class</span>
+    <span style="color:var(--dg-cyan);">"description"</span>:   "Echo handler implemented in Python",
+    <span style="color:var(--dg-cyan);">"ttl_minutes"</span>:   5,
+    <span style="color:var(--dg-cyan);">"enabled"</span>:       true,
+    <span style="color:#FFD43B; font-weight:bold;">"is_python"</span>:     true,                                     <span class="text-muted">// ← marks this as a Python handler</span>
+    <span style="color:var(--dg-cyan);">"config"</span>: {
+      <span style="color:#FFD43B;">"python_module"</span>: "handlers.echo_handler",               <span class="text-muted">// Python module path (dot-separated)</span>
+      <span style="color:#FFD43B;">"python_class"</span>:  "EchoPythonHandler"                     <span class="text-muted">// Class name inside the module</span>
+    }
+  }
+}</code></pre>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Required Fields</h6>
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>Field</th><th>Value</th><th>Purpose</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>handler_class</code></td><td><code>com.dgfacade.server.python.DGHandlerPython</code></td><td>Always the Java bridge class. This is the handler that the ExecutionEngine instantiates.</td></tr>
+                            <tr><td><code>is_python</code></td><td><code>true</code></td><td>Tells the backend this handler runs in a Python worker. Without this flag, the handler is treated as a standard Java handler.</td></tr>
+                            <tr><td><code>config.python_module</code></td><td>e.g. <code>handlers.echo_handler</code></td><td>Python module path (relative to <code>python_path</code> directories). Uses dot notation like Python imports.</td></tr>
+                            <tr><td><code>config.python_class</code></td><td>e.g. <code>EchoPythonHandler</code></td><td>The Python class name inside the module. Must extend <code>DGHandler</code>.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Standard Fields (same as Java handlers)</h6>
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>Field</th><th>Purpose</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>description</code></td><td>Human-readable description shown in Admin UI and API responses</td></tr>
+                            <tr><td><code>ttl_minutes</code></td><td>Maximum execution time in minutes before timeout</td></tr>
+                            <tr><td><code>enabled</code></td><td>Set to <code>false</code> to disable without removing from config</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Java Handler vs Python Handler — Side by Side</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card" style="border-left:4px solid var(--dg-info);">
+                                <div class="card-body">
+                                    <h6 style="color:var(--dg-info);">Java Handler (ECHO)</h6>
+                                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:0.8rem;border-radius:6px;font-size:0.78rem;"><code>"ECHO": {
+  "handler_class": "com.dgfacade.server.handler.EchoHandler",
+  "description": "Echo handler",
+  "ttl_minutes": 5,
+  "enabled": true,
+  "config": {}
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card" style="border-left:4px solid #FFD43B;">
+                                <div class="card-body">
+                                    <h6 style="color:#FFD43B;">Python Handler (PYTHON_ECHO)</h6>
+                                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:0.8rem;border-radius:6px;font-size:0.78rem;"><code>"PYTHON_ECHO": {
+  "handler_class": "...python.DGHandlerPython",
+  "description": "Python echo handler",
+  "ttl_minutes": 5,
+  "enabled": true,
+  <span style="color:#FFD43B;font-weight:bold;">"is_python": true,</span>
+  "config": {
+    <span style="color:#FFD43B;">"python_module"</span>: "handlers.echo_handler",
+    <span style="color:#FFD43B;">"python_class"</span>: "EchoPythonHandler"
+  }
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 5. Worker Pool Configuration (py4j.json) ────────────── -->
+    <div id="worker-pool-config" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-cog me-2" style="color:var(--dg-primary);"></i>5. Worker Pool Configuration (py4j.json)</h4></div>
+                <div class="card-body">
+                    <p>
+                        The file <code>config/python/py4j.json</code> controls <strong>only</strong> the Python worker pool —
+                        how many workers to run, how to find the Python binary, health check intervals, port allocation, and timeout settings.
+                        <strong>Handler definitions are not specified here</strong> — they live in the standard handler config files.
+                    </p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1.5rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>{
+  <span style="color:var(--dg-cyan);">"enabled"</span>: false,                                    <span class="text-muted">// set to true to start the worker pool</span>
+  <span style="color:var(--dg-cyan);">"worker_count"</span>: 2,                                   <span class="text-muted">// number of Python worker processes</span>
+  <span style="color:var(--dg-cyan);">"python_binary"</span>: "python3",                          <span class="text-muted">// path to Python interpreter</span>
+  <span style="color:var(--dg-cyan);">"python_path"</span>: ["python", "python/handlers"],        <span class="text-muted">// directories added to PYTHONPATH</span>
+  <span style="color:var(--dg-cyan);">"worker_startup_timeout_seconds"</span>: 30,                <span class="text-muted">// max wait for worker to become READY</span>
+  <span style="color:var(--dg-cyan);">"worker_health_check_interval_seconds"</span>: 10,          <span class="text-muted">// health check ping interval</span>
+  <span style="color:var(--dg-cyan);">"worker_restart_delay_seconds"</span>: 5,                   <span class="text-muted">// delay before restarting a failed worker</span>
+  <span style="color:var(--dg-cyan);">"max_restart_attempts"</span>: 10,                          <span class="text-muted">// max restarts before giving up</span>
+  <span style="color:var(--dg-cyan);">"request_timeout_seconds"</span>: 300,                     <span class="text-muted">// timeout for a single Python handler call</span>
+  <span style="color:var(--dg-cyan);">"gateway_port_range_start"</span>: 25333,                  <span class="text-muted">// Py4J gateway ports (one per worker)</span>
+  <span style="color:var(--dg-cyan);">"callback_port_range_start"</span>: 25400,                 <span class="text-muted">// Py4J callback ports (one per worker)</span>
+  <span style="color:var(--dg-cyan);">"log_python_output"</span>: true                            <span class="text-muted">// capture worker stdout/stderr in logs</span>
+}</code></pre>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Configuration Reference</h6>
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>Property</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>enabled</code></td><td><code>false</code></td><td>Master switch. When <code>false</code>, no Python workers are started and Python handlers will return an error.</td></tr>
+                            <tr><td><code>worker_count</code></td><td><code>2</code></td><td>Number of Python processes in the pool. Each worker handles one request at a time. Increase for higher concurrency.</td></tr>
+                            <tr><td><code>python_binary</code></td><td><code>python3</code></td><td>Path to the Python interpreter. Can be absolute (e.g. <code>/usr/bin/python3.11</code>) or a venv path.</td></tr>
+                            <tr><td><code>python_path</code></td><td><code>["python", "python/handlers"]</code></td><td>Directories added to <code>PYTHONPATH</code>. Relative paths are resolved from the DGFacade install directory.</td></tr>
+                            <tr><td><code>worker_startup_timeout_seconds</code></td><td><code>30</code></td><td>Maximum time to wait for a worker to reach READY state after launch.</td></tr>
+                            <tr><td><code>worker_health_check_interval_seconds</code></td><td><code>10</code></td><td>Interval between health check pings. A worker that fails health checks is restarted.</td></tr>
+                            <tr><td><code>worker_restart_delay_seconds</code></td><td><code>5</code></td><td>Cooldown delay before restarting a crashed/failed worker.</td></tr>
+                            <tr><td><code>max_restart_attempts</code></td><td><code>10</code></td><td>Maximum restart attempts before marking a worker as permanently failed.</td></tr>
+                            <tr><td><code>request_timeout_seconds</code></td><td><code>300</code></td><td>Per-request timeout. If a handler takes longer, the request fails and the worker may be restarted.</td></tr>
+                            <tr><td><code>gateway_port_range_start</code></td><td><code>25333</code></td><td>Starting port for Py4J gateway sockets. Worker 0 gets 25333, worker 1 gets 25334, etc.</td></tr>
+                            <tr><td><code>callback_port_range_start</code></td><td><code>25400</code></td><td>Starting port for Py4J callback sockets.</td></tr>
+                            <tr><td><code>log_python_output</code></td><td><code>true</code></td><td>When <code>true</code>, worker stdout/stderr is captured and available in the Admin UI log viewer.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 6. Handler Contract ─────────────────────────────────── -->
+    <div id="handler-contract" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-file-contract me-2" style="color:var(--dg-primary);"></i>6. Handler Contract</h4></div>
+                <div class="card-body">
+                    <p>Every Python handler extends <code>DGHandler</code> (from <code>python/dg_handler.py</code>) and implements the same lifecycle as Java handlers:</p>
+
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>Method</th><th>When Called</th><th>Purpose</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>start(config, app_context)</code></td><td>Once, when the handler is first loaded</td><td>Initialize resources (DB connections, caches, ML models, etc.)</td></tr>
+                            <tr><td><code>compute(request)</code></td><td>On every request</td><td>Process the request and return a response. <strong>This is the main method to implement.</strong></td></tr>
+                            <tr><td><code>stop()</code></td><td>On shutdown</td><td>Clean up resources. Called when the worker pool is shutting down.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">DGRequest (Python dict)</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>{
+    "requestId":    "uuid-string",         # unique request ID
+    "requestType":  "PYTHON_ECHO",         # matches config key
+    "payload":      { ... },               # arbitrary JSON — your input data
+    "metadata":     { "user": "admin" },   # optional metadata from caller
+    "timestamp":    "2025-01-15T10:30:00Z" # ISO-8601 timestamp
+}</code></pre>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">DGResponse (Python dict to return)</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>{
+    "requestId":    "uuid-string",        # must match request
+    "status":       "SUCCESS",            # SUCCESS or ERROR
+    "payload":      { ... },              # your output data
+    "metadata":     { "handler": "..." }, # optional metadata
+    "timestamp":    "2025-01-15T10:30:01Z"
+}</code></pre>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Base Class (dg_handler.py)</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code><span style="color:var(--dg-cyan);">class</span> <span style="color:#FFD43B;">DGHandler</span>:
+    """Base class for all Python DGFacade handlers."""
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">start</span>(self, config: dict, app_context: dict):
+        """Called once at initialization. Override to set up resources."""
+        pass
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">compute</span>(self, request: dict) -> dict:
+        """Process a request. MUST return a DGResponse dict."""
+        raise NotImplementedError("Subclasses must implement compute()")
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">stop</span>(self):
+        """Called on shutdown. Override to clean up resources."""
+        pass</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 7. Example Handlers ─────────────────────────────────── -->
+    <div id="example-handlers" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-code me-2" style="color:var(--dg-primary);"></i>7. Example Handlers</h4></div>
+                <div class="card-body">
+
+                    <h6 class="mb-3" style="color:var(--dg-text-secondary);">7a. EchoPythonHandler</h6>
+                    <p class="small text-muted">Location: <code>python/handlers/echo_handler.py</code></p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code><span style="color:var(--dg-cyan);">import</span> logging
+<span style="color:var(--dg-cyan);">from</span> datetime <span style="color:var(--dg-cyan);">import</span> datetime, timezone
+<span style="color:var(--dg-cyan);">from</span> dg_handler <span style="color:var(--dg-cyan);">import</span> DGHandler
+
+logger = logging.getLogger(__name__)
+
+<span style="color:var(--dg-cyan);">class</span> <span style="color:#FFD43B;">EchoPythonHandler</span>(DGHandler):
+    """Echoes the request payload back as the response."""
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">start</span>(self, config, app_context):
+        logger.info("EchoPythonHandler started — config keys: %s", list(config.keys()))
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">compute</span>(self, request):
+        <span style="color:var(--dg-cyan);">return</span> {
+            "requestId":  request.get("requestId"),
+            "status":     "SUCCESS",
+            "payload":    request.get("payload", {}),
+            "metadata":   {
+                "handler":   "EchoPythonHandler",
+                "language":  "python",
+                "echoed_at": datetime.now(timezone.utc).isoformat()
+            },
+            "timestamp":  datetime.now(timezone.utc).isoformat()
+        }
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">stop</span>(self):
+        logger.info("EchoPythonHandler stopped")</code></pre>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">7b. TransformPythonHandler</h6>
+                    <p class="small text-muted">Location: <code>python/handlers/transform_handler.py</code></p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code><span style="color:var(--dg-cyan);">import</span> logging
+<span style="color:var(--dg-cyan);">from</span> datetime <span style="color:var(--dg-cyan);">import</span> datetime, timezone
+<span style="color:var(--dg-cyan);">from</span> dg_handler <span style="color:var(--dg-cyan);">import</span> DGHandler
+
+logger = logging.getLogger(__name__)
+
+<span style="color:var(--dg-cyan);">class</span> <span style="color:#FFD43B;">TransformPythonHandler</span>(DGHandler):
+    """Transforms data: UPPER, LOWER, REVERSE, WORD_COUNT, KEY_COUNT."""
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">compute</span>(self, request):
+        payload   = request.get("payload", {})
+        operation = payload.get("operation", "UPPER").upper()
+        data      = payload.get("data", "")
+
+        <span style="color:var(--dg-cyan);">if</span> operation == "UPPER":
+            result = data.upper() <span style="color:var(--dg-cyan);">if</span> isinstance(data, str) <span style="color:var(--dg-cyan);">else</span> data
+        <span style="color:var(--dg-cyan);">elif</span> operation == "LOWER":
+            result = data.lower() <span style="color:var(--dg-cyan);">if</span> isinstance(data, str) <span style="color:var(--dg-cyan);">else</span> data
+        <span style="color:var(--dg-cyan);">elif</span> operation == "REVERSE":
+            result = data[::-1] <span style="color:var(--dg-cyan);">if</span> isinstance(data, str) <span style="color:var(--dg-cyan);">else</span> list(reversed(data))
+        <span style="color:var(--dg-cyan);">elif</span> operation == "WORD_COUNT":
+            result = len(data.split()) <span style="color:var(--dg-cyan);">if</span> isinstance(data, str) <span style="color:var(--dg-cyan);">else</span> 0
+        <span style="color:var(--dg-cyan);">elif</span> operation == "KEY_COUNT":
+            result = len(data) <span style="color:var(--dg-cyan);">if</span> isinstance(data, dict) <span style="color:var(--dg-cyan);">else</span> 0
+        <span style="color:var(--dg-cyan);">else</span>:
+            <span style="color:var(--dg-cyan);">return</span> {"requestId": request.get("requestId"), "status": "ERROR",
+                    "payload": {"error": f"Unknown operation: {operation}"}}
+
+        <span style="color:var(--dg-cyan);">return</span> {
+            "requestId": request.get("requestId"),
+            "status":    "SUCCESS",
+            "payload":   {"operation": operation, "result": result},
+            "metadata":  {"handler": "TransformPythonHandler", "language": "python"},
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 8. Writing Your Own Handler ─────────────────────────── -->
+    <div id="writing-your-own" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-hammer me-2" style="color:var(--dg-primary);"></i>8. Writing Your Own Handler</h4></div>
+                <div class="card-body">
+                    <h6 class="mb-3" style="color:var(--dg-text-secondary);">Step 1: Create the Python file</h6>
+                    <p>Create your handler in <code>python/handlers/</code> (or any directory in <code>python_path</code>):</p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code><span class="text-muted"># python/handlers/my_handler.py</span>
+<span style="color:var(--dg-cyan);">from</span> dg_handler <span style="color:var(--dg-cyan);">import</span> DGHandler
+<span style="color:var(--dg-cyan);">from</span> datetime <span style="color:var(--dg-cyan);">import</span> datetime, timezone
+
+<span style="color:var(--dg-cyan);">class</span> <span style="color:#FFD43B;">MyCustomHandler</span>(DGHandler):
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">start</span>(self, config, app_context):
+        self.db_url = config.get("db_url", "localhost:5432")
+        <span class="text-muted"># Initialize connections, load models, etc.</span>
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">compute</span>(self, request):
+        payload = request.get("payload", {})
+        <span class="text-muted"># Your business logic here</span>
+        result = {"processed": True, "input_keys": list(payload.keys())}
+
+        <span style="color:var(--dg-cyan);">return</span> {
+            "requestId": request.get("requestId"),
+            "status":    "SUCCESS",
+            "payload":   result,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+    <span style="color:var(--dg-cyan);">def</span> <span style="color:#FFD43B;">stop</span>(self):
+        <span class="text-muted"># Close connections, release resources</span>
+        pass</code></pre>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Step 2: Register in handler config</h6>
+                    <p>Add to <code>config/handlers/default.json</code> (or <code>admin.json</code> for admin-only access):</p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>"MY_CUSTOM": {
+  "handler_class": "com.dgfacade.server.python.DGHandlerPython",
+  "description":   "My custom Python handler",
+  "ttl_minutes":   10,
+  "enabled":       true,
+  "is_python":     true,
+  "config": {
+    "python_module": "handlers.my_handler",
+    "python_class":  "MyCustomHandler",
+    "db_url":        "postgresql://localhost:5432/mydb"
+  }
+}</code></pre>
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Any extra keys in <code>config</code> (like <code>db_url</code> above) are passed directly to your handler's
+                        <code>start(config, app_context)</code> method — use them for handler-specific settings.
+                    </div>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Step 3: Enable the worker pool</h6>
+                    <p>Set <code>"enabled": true</code> in <code>config/python/py4j.json</code> and restart DGFacade.</p>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Step 4: Test it</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>curl -s -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "requestType": "MY_CUSTOM",
+    "payload": {"key1": "value1", "key2": "value2"}
+  }' | python3 -m json.tool</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 9. Worker Pool Management ───────────────────────────── -->
+    <div id="worker-management" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-tasks me-2" style="color:var(--dg-primary);"></i>9. Worker Pool Management</h4></div>
+                <div class="card-body">
+                    <h6 class="mb-3" style="color:var(--dg-text-secondary);">Worker Lifecycle</h6>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>  STARTING → READY → BUSY → READY → ... → STOPPING → STOPPED
+                ↘ (health check fail) ↗
+                  UNHEALTHY → restart</code></pre>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Worker States</h6>
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>State</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><span class="badge bg-secondary">STARTING</span></td><td>Worker process launched, waiting for Py4J connection</td></tr>
+                            <tr><td><span class="badge bg-success">READY</span></td><td>Connected to Py4J gateway, available for requests</td></tr>
+                            <tr><td><span class="badge bg-primary">BUSY</span></td><td>Currently executing a handler request</td></tr>
+                            <tr><td><span class="badge bg-danger">UNHEALTHY</span></td><td>Failed health check — will be restarted automatically</td></tr>
+                            <tr><td><span class="badge bg-warning">STOPPING</span></td><td>Shutdown in progress</td></tr>
+                            <tr><td><span class="badge bg-dark">STOPPED</span></td><td>Worker process has exited</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Health Checks</h6>
+                    <p>
+                        The <code>PythonWorkerManager</code> runs periodic health checks at the interval specified by
+                        <code>worker_health_check_interval_seconds</code>. Each check pings the worker's Py4J callback port.
+                        If a worker fails to respond, it is marked UNHEALTHY and automatically restarted after
+                        <code>worker_restart_delay_seconds</code>. Restart attempts are capped at <code>max_restart_attempts</code>.
+                    </p>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Environment Variables</h6>
+                    <p>Each worker process receives these environment variables:</p>
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>Variable</th><th>Example</th><th>Purpose</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>DG_WORKER_ID</code></td><td><code>0</code></td><td>Worker index in the pool</td></tr>
+                            <tr><td><code>DG_GATEWAY_PORT</code></td><td><code>25333</code></td><td>Py4J gateway port for this worker</td></tr>
+                            <tr><td><code>DG_CALLBACK_PORT</code></td><td><code>25400</code></td><td>Py4J callback port for this worker</td></tr>
+                            <tr><td><code>PYTHONPATH</code></td><td><code>python:python/handlers</code></td><td>Module search paths (from <code>python_path</code> config)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 10. Admin UI ────────────────────────────────────────── -->
+    <div id="admin-ui" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-desktop me-2" style="color:var(--dg-primary);"></i>10. Admin UI</h4></div>
+                <div class="card-body">
+                    <p>
+                        The Python Workers admin page (<a th:href="@{/admin/python-workers}">/admin/python-workers</a>) provides
+                        real-time monitoring of the worker pool:
+                    </p>
+                    <div class="row g-3 mt-3">
+                        <div class="col-md-4">
+                            <div class="card h-100" style="border-left:4px solid var(--dg-primary);">
+                                <div class="card-body">
+                                    <h6 style="color:var(--dg-primary);">Status Dashboard</h6>
+                                    <p class="small text-muted mb-0">Overview cards showing pool status, worker count, healthy workers, total requests routed, and total errors.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100" style="border-left:4px solid var(--dg-success);">
+                                <div class="card-body">
+                                    <h6 style="color:var(--dg-success);">Worker Management</h6>
+                                    <p class="small text-muted mb-0">Restart individual workers or the entire pool. Reload <code>py4j.json</code> configuration from disk without Java restart.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100" style="border-left:4px solid var(--dg-warning);">
+                                <div class="card-body">
+                                    <h6 style="color:var(--dg-warning);">Log Viewer</h6>
+                                    <p class="small text-muted mb-0">Real-time stdout/stderr output from each worker. Color-coded log levels. Useful for debugging handler logic.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 11. API Reference ───────────────────────────────────── -->
+    <div id="api-reference" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-plug me-2" style="color:var(--dg-primary);"></i>11. API Reference</h4></div>
+                <div class="card-body">
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>Endpoint</th><th>Method</th><th>Auth</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>/api/v1/python/status</code></td><td><span class="badge bg-success">GET</span></td><td>Public</td><td>Full status snapshot: enabled, running, worker count, healthy count, total requests/errors</td></tr>
+                            <tr><td><code>/api/v1/python/workers</code></td><td><span class="badge bg-success">GET</span></td><td>Public</td><td>List all worker statuses: state, uptime, requests handled, port info</td></tr>
+                            <tr><td><code>/api/v1/python/workers/{id}/restart</code></td><td><span class="badge bg-warning">POST</span></td><td>Admin</td><td>Restart a specific worker by its pool index</td></tr>
+                            <tr><td><code>/api/v1/python/restart-all</code></td><td><span class="badge bg-warning">POST</span></td><td>Admin</td><td>Restart all workers in the pool</td></tr>
+                            <tr><td><code>/api/v1/python/reload-config</code></td><td><span class="badge bg-warning">POST</span></td><td>Admin</td><td>Reload <code>py4j.json</code> from disk. Restart workers to apply changes.</td></tr>
+                            <tr><td><code>/api/v1/python/handlers</code></td><td><span class="badge bg-success">GET</span></td><td>Public</td><td>List Python handler definitions from worker pool config</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h6 class="mt-4 mb-3" style="color:var(--dg-text-secondary);">Invoking a Python Handler</h6>
+                    <p>Use the standard request endpoint — the same one used for Java handlers:</p>
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>curl -s -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "requestType":  "PYTHON_ECHO",
+    "payload":      {"message": "Hello from Python!"}
+  }' | python3 -m json.tool</code></pre>
+                    <p class="small text-muted mt-2">The caller does not need to know (or care) whether a handler is Java or Python.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 12. Troubleshooting ─────────────────────────────────── -->
+    <div id="troubleshooting" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-bug me-2" style="color:var(--dg-primary);"></i>12. Troubleshooting</h4></div>
+                <div class="card-body">
+                    <table class="table dg-table table-sm">
+                        <thead><tr><th>Symptom</th><th>Likely Cause</th><th>Fix</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Python handler pool is not enabled</code></td>
+                                <td><code>enabled</code> is <code>false</code> in py4j.json</td>
+                                <td>Set <code>"enabled": true</code> in <code>config/python/py4j.json</code> and restart</td>
+                            </tr>
+                            <tr>
+                                <td><code>No healthy Python workers available</code></td>
+                                <td>All workers crashed or failed to start</td>
+                                <td>Check logs for Python errors. Verify <code>python3</code> is on PATH. Run <code>python3 -c "import py4j"</code> to check.</td>
+                            </tr>
+                            <tr>
+                                <td><code>ModuleNotFoundError: handlers.my_handler</code></td>
+                                <td>Module not found on PYTHONPATH</td>
+                                <td>Add the directory to <code>python_path</code> in py4j.json, or check file name matches module name</td>
+                            </tr>
+                            <tr>
+                                <td><code>ImportError: No module named 'py4j'</code></td>
+                                <td>py4j package not installed</td>
+                                <td>Run <code>pip install py4j</code> in the Python environment used by workers</td>
+                            </tr>
+                            <tr>
+                                <td><code>DGHandlerPython requires 'python_module'</code></td>
+                                <td>Missing <code>python_module</code> or <code>python_class</code> in handler config</td>
+                                <td>Verify your handler entry in <code>config/handlers/*.json</code> has both fields under <code>config</code></td>
+                            </tr>
+                            <tr>
+                                <td>Worker keeps restarting</td>
+                                <td>Crash loop — Python error on startup</td>
+                                <td>Check Admin UI log viewer or DGFacade logs for Python traceback. Fix the handler code.</td>
+                            </tr>
+                            <tr>
+                                <td>Request timeout on Python handler</td>
+                                <td>Handler taking too long or deadlocked</td>
+                                <td>Increase <code>request_timeout_seconds</code> in py4j.json, or optimize handler logic</td>
+                            </tr>
+                            <tr>
+                                <td>Port conflict on startup</td>
+                                <td>Py4J ports already in use</td>
+                                <td>Change <code>gateway_port_range_start</code> or <code>callback_port_range_start</code> in py4j.json</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 13. Project Layout ──────────────────────────────────── -->
+    <div id="project-layout" class="row mb-5">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header"><h4 class="mb-0"><i class="fas fa-folder-open me-2" style="color:var(--dg-primary);"></i>13. Project Layout</h4></div>
+                <div class="card-body">
+                    <pre style="background:var(--dg-bg-code);color:var(--dg-text-primary);padding:1.5rem;border:1px solid var(--dg-border);border-radius:8px;font-size:0.82rem;overflow-x:auto;"><code>dgfacade/
+├── config/
+│   ├── handlers/
+│   │   ├── default.json                  <span class="text-muted"># Default handlers (Java + Python)</span>
+│   │   └── admin.json                    <span class="text-muted"># Admin-only handlers (Java + Python)</span>
+│   └── python/
+│       └── py4j.json                     <span class="text-muted"># Worker pool configuration ONLY</span>
+│
+├── python/                               <span class="text-muted"># Python runtime code</span>
+│   ├── dg_handler.py                     <span class="text-muted"># Base class: DGHandler</span>
+│   ├── dg_gateway.py                     <span class="text-muted"># Py4J bridge (connects to Java GatewayServer)</span>
+│   ├── dgfacade_worker.py                <span class="text-muted"># Worker entry point (launched by Java)</span>
+│   └── handlers/                         <span class="text-muted"># Your handler implementations</span>
+│       ├── __init__.py
+│       ├── echo_handler.py               <span class="text-muted"># EchoPythonHandler</span>
+│       └── transform_handler.py          <span class="text-muted"># TransformPythonHandler</span>
+│
+└── server/src/.../python/                <span class="text-muted"># Java-side Python support</span>
+    ├── DGHandlerPython.java              <span class="text-muted"># Bridge handler (implements DGHandler)</span>
+    ├── PythonWorkerManager.java          <span class="text-muted"># Worker pool manager</span>
+    ├── PythonWorkerProcess.java          <span class="text-muted"># Single worker process wrapper</span>
+    ├── PythonConfig.java                 <span class="text-muted"># Config properties binding</span>
+    └── Py4JConfig.java                   <span class="text-muted"># Worker pool config loader (py4j.json)</span></code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

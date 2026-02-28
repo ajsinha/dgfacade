@@ -72,5 +72,27 @@
       "precision": 20,
       "metadata": "Admin-only POJO handler via DGHandlerProxy"
     }
+  },
+  "PYTHON_ECHO": {
+    "handler_class": "com.dgfacade.server.python.DGHandlerPython",
+    "description": "Admin Python echo handler — returns the payload as-is (extended 60-min TTL)",
+    "ttl_minutes": 60,
+    "enabled": true,
+    "is_python": true,
+    "config": {
+      "python_module": "handlers.echo_handler",
+      "python_class": "EchoPythonHandler"
+    }
+  },
+  "PYTHON_TRANSFORM": {
+    "handler_class": "com.dgfacade.server.python.DGHandlerPython",
+    "description": "Admin Python data transformation handler (extended 60-min TTL)",
+    "ttl_minutes": 60,
+    "enabled": true,
+    "is_python": true,
+    "config": {
+      "python_module": "handlers.transform_handler",
+      "python_class": "TransformPythonHandler"
+    }
   }
 }

@@ -1,6 +1,6 @@
 # DGFacade Tutorial: Building a Custom Handler
 
-Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved. Patent Pending.
+Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.
 
 ## Step 1: Implement DGHandler
 
@@ -112,4 +112,81 @@ public class DataSyncHandler implements StreamingDGHandler {
     @Override
     public void cleanup() { }
 }
+```
+
+## Python Handler Tutorial
+
+Python handlers follow the same contract as Java handlers. No JAR packaging needed — just write a Python class.
+
+### Step 1: Create Handler
+
+Create `python/handlers/sentiment_handler.py`:
+
+```python
+from dg_handler import DGHandler
+from datetime import datetime, timezone
+
+class SentimentHandler(DGHandler):
+    """Simple sentiment analysis handler."""
+
+    def start(self, config, app_context):
+        self.positive_words = config.get("positive_words", ["good", "great", "excellent", "happy"])
+        self.negative_words = config.get("negative_words", ["bad", "terrible", "awful", "sad"])
+
+    def compute(self, request):
+        text = request.get("payload", {}).get("text", "").lower()
+        words = text.split()
+        pos = sum(1 for w in words if w in self.positive_words)
+        neg = sum(1 for w in words if w in self.negative_words)
+        sentiment = "positive" if pos > neg else ("negative" if neg > pos else "neutral")
+
+        return {
+            "requestId": request.get("requestId"),
+            "status": "SUCCESS",
+            "payload": {
+                "sentiment": sentiment,
+                "positive_count": pos,
+                "negative_count": neg,
+                "word_count": len(words)
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+```
+
+### Step 2: Register in Configuration
+
+Add to `config/handlers/default.json` — note the `is_python: true` flag:
+
+```json
+{
+  "SENTIMENT": {
+    "handler_class": "com.dgfacade.server.python.DGHandlerPython",
+    "description": "Python sentiment analysis handler",
+    "ttl_minutes": 5,
+    "enabled": true,
+    "is_python": true,
+    "config": {
+      "python_module": "handlers.sentiment_handler",
+      "python_class": "SentimentHandler",
+      "positive_words": ["good", "great", "excellent", "happy", "love"],
+      "negative_words": ["bad", "terrible", "awful", "sad", "hate"]
+    }
+  }
+}
+```
+
+### Step 3: Enable Worker Pool
+
+Set `"enabled": true` in `config/python/py4j.json` and restart DGFacade.
+
+### Step 4: Test
+
+```bash
+curl -X POST http://localhost:8090/api/v1/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "dgf-test-key-0001",
+    "request_type": "SENTIMENT",
+    "payload": {"text": "This is a great and excellent product!"}
+  }'
 ```

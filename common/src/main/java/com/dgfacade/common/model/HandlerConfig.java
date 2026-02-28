@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.common.model;
 
@@ -34,6 +34,9 @@ public class HandlerConfig {
     @JsonProperty("enabled")
     private boolean enabled = true;
 
+    @JsonProperty("is_python")
+    private boolean isPython = false;
+
     public HandlerConfig() {}
 
     public String getRequestType() { return requestType; }
@@ -48,4 +51,6 @@ public class HandlerConfig {
     public void setDescription(String description) { this.description = description; }
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public boolean isPython() { return isPython; }
+    public void setPython(boolean python) { isPython = python; }
 }

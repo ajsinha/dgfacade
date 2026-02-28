@@ -1,6 +1,6 @@
 # =============================================================================
 # DGFacade — Prometheus Scrape Configuration
-# Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved. Patent Pending.
+# Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.
 # =============================================================================
 #
 # Copy this file to your Prometheus server's config directory and restart

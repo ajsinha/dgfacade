@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2025-2030, All Rights Reserved
+  ~ Ashutosh Sinha | Email: ajsinha@gmail.com
+  ~ Proprietary and confidential.
+  -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ingesters')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="flex-fill">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="container-fluid py-4">
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-1"><i class="fas fa-download me-2"></i>Request Ingesters</h2>
+                <p class="text-muted mb-0">Create, configure, and manage request ingestion pipelines &mdash;
+                    each ingester binds to an input channel to consume messages from a broker</p>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/ingesters/create}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i>New Ingester
+                </a>
+            </div>
+        </div>
+
+        <!-- Ingester Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table dg-table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Ingester ID</th>
+                                <th>Description</th>
+                                <th>Input Channel</th>
+                                <th>Channel Type</th>
+                                <th>Broker</th>
+                                <th class="text-center">Enabled</th>
+                                <th class="text-center">State</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="c : ${configs}">
+                                <td class="ps-4">
+                                    <i class="fas fa-download me-2 text-info"></i>
+                                    <strong th:text="${c['_id']}">ingester-id</strong>
+                                </td>
+                                <td class="text-muted small" th:text="${c['description']}">-</td>
+                                <td>
+                                    <code class="small" th:text="${c['input_channel']}">-</code>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary" th:text="${c['_channel_type'] ?: '—'}">—</span>
+                                </td>
+                                <td>
+                                    <code class="small" th:text="${c['_broker_id'] ?: '—'}">—</code>
+                                </td>
+                                <td class="text-center">
+                                    <span th:if="${c['enabled'] == true}" class="badge bg-success">Yes</span>
+                                    <span th:unless="${c['enabled'] == true}" class="badge bg-secondary">No</span>
+                                </td>
+                                <td class="text-center">
+                                    <span th:if="${c['_running'] == true}" class="badge bg-success">RUNNING</span>
+                                    <span th:unless="${c['_running'] == true}" class="badge bg-secondary">STOPPED</span>
+                                </td>
+                                <td class="text-end pe-4 text-nowrap">
+                                    <button class="btn btn-sm btn-outline-info" title="View Config"
+                                            th:data-url="@{'/admin/api/ingesters/' + ${c['_id']} + '/config'}"
+                                            th:data-title="${'Ingester: ' + c['_id']}"
+                                            onclick="viewConfig(this.dataset.url, this.dataset.title)">
+                                        <i class="fas fa-eye"></i></button>
+                                    <form th:unless="${c['_running'] == true}" th:action="@{/admin/ingesters/start}" method="post" class="d-inline">
+                                        <input type="hidden" name="ingesterId" th:value="${c['_id']}">
+                                        <button class="btn btn-sm btn-outline-success" title="Start"><i class="fas fa-play"></i></button>
+                                    </form>
+                                    <form th:if="${c['_running'] == true}" th:action="@{/admin/ingesters/stop}" method="post" class="d-inline">
+                                        <input type="hidden" name="ingesterId" th:value="${c['_id']}">
+                                        <button class="btn btn-sm btn-outline-warning" title="Stop"><i class="fas fa-stop"></i></button>
+                                    </form>
+                                    <a th:href="@{/admin/ingesters/edit/{id}(id=${c['_id']})}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
+                                    <form th:action="@{/admin/ingesters/delete}" method="post" class="d-inline" onsubmit="return confirm('Delete this ingester configuration permanently?');">
+                                        <input type="hidden" name="ingesterId" th:value="${c['_id']}">
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${configs == null or configs.isEmpty()}">
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="fas fa-download fa-3x mb-3 d-block"></i>No ingester configurations found
+                                    <br><a th:href="@{/admin/ingesters/create}" class="btn btn-primary mt-3">Create Your First Ingester</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm bg-light mt-4"><div class="card-body">
+            <h6 class="text-muted mb-2"><i class="fas fa-info-circle me-2"></i>About Ingesters</h6>
+            <p class="small text-muted mb-0">An <strong>Ingester</strong> binds to an <strong>Input Channel</strong> to consume messages from a messaging broker (Kafka, ActiveMQ, FileSystem, etc.) and submit them into DGFacade's request processing engine. Each ingester references an input channel by ID, which in turn references a broker for connection details. Ingester configs are stored in <code>config/ingesters/</code>.</p>
+        </div></div>
+
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<th:block th:replace="~{fragments/layout :: configViewerModal}"></th:block>
+</body>
+</html>

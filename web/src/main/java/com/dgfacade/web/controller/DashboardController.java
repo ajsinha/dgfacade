@@ -1,29 +1,34 @@
 /*
  * Copyright © 2025-2030, All Rights Reserved
  * Ashutosh Sinha | Email: ajsinha@gmail.com
- * Proprietary and confidential. Patent Pending.
+ * Proprietary and confidential.
  */
 package com.dgfacade.web.controller;
 
 import com.dgfacade.server.engine.ExecutionEngine;
+import com.dgfacade.server.service.BrokerService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.Map;
+
 @Controller
 public class DashboardController {
 
     private final ExecutionEngine engine;
+    private final BrokerService brokerService;
 
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.6.0}")
+    @Value("${dgfacade.version:1.6.1}")
     private String version;
 
-    public DashboardController(ExecutionEngine engine) {
+    public DashboardController(ExecutionEngine engine, BrokerService brokerService) {
         this.engine = engine;
+        this.brokerService = brokerService;
     }
 
     @GetMapping("/")
@@ -33,8 +38,25 @@ public class DashboardController {
         model.addAttribute("handlers", engine.getRegisteredRequestTypes());
         model.addAttribute("handlerCount", engine.getRegisteredRequestTypes().size());
         model.addAttribute("recentStates", engine.getRecentStates());
-        model.addAttribute("kafkaEnabled", false);
-        model.addAttribute("activemqEnabled", false);
+
+        // Dynamically detect broker types from config files
+        boolean kafkaEnabled = false;
+        boolean activemqEnabled = false;
+        boolean rabbitmqEnabled = false;
+        for (String brokerId : brokerService.listBrokerIds()) {
+            Map<String, Object> broker = brokerService.getBroker(brokerId);
+            if (broker == null) continue;
+            Object enabled = broker.get("enabled");
+            boolean isEnabled = enabled == null || Boolean.TRUE.equals(enabled) || "true".equals(String.valueOf(enabled));
+            if (!isEnabled) continue;
+            String type = String.valueOf(broker.getOrDefault("type", "")).toLowerCase();
+            if (type.contains("kafka")) kafkaEnabled = true;
+            else if (type.contains("activemq")) activemqEnabled = true;
+            else if (type.contains("rabbit")) rabbitmqEnabled = true;
+        }
+        model.addAttribute("kafkaEnabled", kafkaEnabled);
+        model.addAttribute("activemqEnabled", activemqEnabled);
+        model.addAttribute("rabbitmqEnabled", rabbitmqEnabled);
         return "pages/monitoring/dashboard";
     }
 
@@ -87,10 +109,8 @@ public class DashboardController {
     }
 
     @GetMapping("/help/request-processing")
-    public String helpRequestProcessing(Model model) {
-        model.addAttribute("appName", appName);
-        model.addAttribute("version", version);
-        return "pages/help/request-processing";
+    public String helpRequestProcessing() {
+        return "redirect:/help/handlers#internals";
     }
 
     @GetMapping("/help/prometheus")
@@ -129,10 +149,8 @@ public class DashboardController {
     }
 
     @GetMapping("/help/handler-chaining")
-    public String helpHandlerChaining(Model model) {
-        model.addAttribute("appName", appName);
-        model.addAttribute("version", version);
-        return "pages/help/handler-chaining";
+    public String helpHandlerChaining() {
+        return "redirect:/help/handlers#chaining";
     }
 
     @GetMapping("/help/clustering")
@@ -154,5 +172,12 @@ public class DashboardController {
         model.addAttribute("appName", appName);
         model.addAttribute("version", version);
         return "pages/help/operational-tooling";
+    }
+
+    @GetMapping("/help/python")
+    public String helpPython(Model model) {
+        model.addAttribute("appName", appName);
+        model.addAttribute("version", version);
+        return "pages/help/python";
     }
 }

@@ -40,7 +40,7 @@ public class GlobalExceptionHandler implements ErrorController {
     @Value("${dgfacade.app-name:DGFacade}")
     private String appName;
 
-    @Value("${dgfacade.version:1.6.1}")
+    @Value("${dgfacade.version:1.6.2}")
     private String version;
 
     /**

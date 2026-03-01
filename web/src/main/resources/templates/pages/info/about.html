@@ -27,7 +27,7 @@
                     broker management, and comprehensive operational monitoring.
                 </p>
                 <div class="mt-4">
-                    <span class="badge bg-primary fs-6 me-2" th:text="'Version ' + (${appVersion} ?: '1.6.1')">Version 1.6.1</span>
+                    <span class="badge bg-primary fs-6 me-2" th:text="'Version ' + (${appVersion} ?: '1.6.2')">Version 1.6.2</span>
                     <span class="badge bg-success fs-6 me-2">Production Ready</span>
                 </div>
             </div>
@@ -166,7 +166,7 @@
                             <i class="fab fa-python fa-2x" style="color:var(--dg-warning);"></i>
                         </div>
                         <h5>Python Handler Support</h5>
-                        <p class="text-muted mb-0">Write handlers in Python with the same start/compute/stop contract. Py4J worker pool with auto-restart and admin UI. <span class="badge bg-info">NEW in 1.6.1</span></p>
+                        <p class="text-muted mb-0">Write handlers in Python with the same start/compute/stop contract. Py4J worker pool with auto-restart and admin UI. <span class="badge bg-info">NEW in 1.6.2</span></p>
                     </div>
                 </div>
             </div>
@@ -213,10 +213,10 @@
                         <h4 class="mb-0"><i class="fas fa-history me-2" style="color:var(--dg-primary);"></i>Version History</h4>
                     </div>
                     <div class="card-body">
-                        <!-- v1.6.1 -->
+                        <!-- v1.6.2 -->
                         <div class="mb-4">
                             <h6 class="mb-1">
-                                <span class="badge bg-success me-2">v1.6.1</span>
+                                <span class="badge bg-success me-2">v1.6.2</span>
                                 <span class="text-muted small">Python Handler Support &amp; Chakra Theme</span>
                             </h6>
                             <ul class="small text-muted mb-0">
@@ -271,12 +271,12 @@
                         <ul class="list-unstyled mb-0">
                             <li class="mb-3">
                                 <i class="fas fa-user fa-fw me-2" style="color:var(--dg-primary);"></i>
-                                <strong>Author:</strong> <span th:text="${authorName} ?: 'Ashutosh Sinha'"></span>
+                                <strong>Author:</strong> <span th:text="${authorName}"></span>
                             </li>
                             <li class="mb-3">
                                 <i class="fas fa-envelope fa-fw me-2" style="color:var(--dg-primary);"></i>
                                 <strong>Email:</strong>
-                                <a th:href="'mailto:' + (${authorEmail} ?: 'ajsinha@gmail.com')" th:text="${authorEmail} ?: 'ajsinha@gmail.com'"></a>
+                                <a th:href="'mailto:' + ${authorEmail}" th:text="${authorEmail}"></a>
                             </li>
                             <li class="mb-3" th:if="${githubUrl}">
                                 <i class="fab fa-github fa-fw me-2" style="color:var(--dg-primary);"></i>
@@ -289,7 +289,7 @@
                             </li>
                             <li class="mb-0">
                                 <i class="fas fa-code-branch fa-fw me-2" style="color:var(--dg-primary);"></i>
-                                <strong>Version:</strong> <span th:text="${appVersion} ?: '1.6.1'">1.6.1</span>
+                                <strong>Version:</strong> <span th:text="${appVersion} ?: '1.6.2'">1.6.2</span>
                             </li>
                         </ul>
                     </div>
@@ -307,7 +307,7 @@
                         <p class="text-muted mb-2">High-Performance Data Gateway Facade</p>
                         <p class="small text-muted mb-0">
                             Copyright &copy; <span th:text="${copyrightYear} ?: '2025-2030'">2025-2030</span>, All Rights Reserved |
-                            <span th:text="${authorName} ?: 'Ashutosh Sinha'"></span>
+                            <span th:text="${authorName}"></span>
                             <span th:if="${authorEmail}"> | <a th:href="'mailto:' + ${authorEmail}" th:text="${authorEmail}"></a></span>
                             <br>Proprietary &amp; Confidential
                         </p>

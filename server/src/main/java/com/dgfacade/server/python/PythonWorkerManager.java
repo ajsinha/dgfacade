@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * The manager handles startup, health monitoring, round-robin dispatch,
  * automatic restart of failed workers, and admin operations for the UI.</p>
  *
- * @since 1.6.1
+ * @since 1.6.2
  */
 public class PythonWorkerManager {
 

@@ -20,9 +20,9 @@
             </ol>
         </nav>
 
-        <h2 class="mb-4"><i class="fas fa-tools me-2 text-primary"></i>Operational Tooling <span class="badge bg-primary">v1.6.1</span></h2>
+        <h2 class="mb-4"><i class="fas fa-tools me-2 text-primary"></i>Operational Tooling <span class="badge bg-primary" th:text="'v' + ${appVersion}">v1.6.2</span></h2>
         <p class="lead text-muted mb-4">
-            DGFacade v1.6.1 introduces a comprehensive suite of operational features for monitoring, diagnostics,
+            DGFacade <span th:text="'v' + ${appVersion}">v1.6.2</span> introduces a comprehensive suite of operational features for monitoring, diagnostics,
             configuration management, and user experience enhancements. All monitoring and health endpoints are
             accessible without authentication.
         </p>
@@ -68,9 +68,9 @@
                     <div class="text-success mb-1"># Simple ping</div>
                     <div class="mb-2">$ curl http://localhost:8090/ping<br>pong</div>
                     <div class="text-success mb-1"># JSON ping</div>
-                    <div class="mb-2">$ curl http://localhost:8090/api/ping<br>{"status":"UP","app":"DGFacade","version":"1.6.1","timestamp":"...","uptime":"2h 15m 30s"}</div>
+                    <div class="mb-2">$ curl http://localhost:8090/api/ping<br>{"status":"UP","app":"DGFacade","version":"1.6.2","timestamp":"...","uptime":"2h 15m 30s"}</div>
                     <div class="text-success mb-1"># JSON health</div>
-                    <div>$ curl http://localhost:8090/api/health<br>{"status":"UP","version":"1.6.1","uptime":"2h 15m","components":{...},"jvm":{...}}</div>
+                    <div>$ curl http://localhost:8090/api/health<br>{"status":"UP","version":"1.6.2","uptime":"2h 15m","components":{...},"jvm":{...}}</div>
                 </div>
             </div>
         </div>

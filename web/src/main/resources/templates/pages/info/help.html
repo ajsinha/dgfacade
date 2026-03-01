@@ -83,7 +83,7 @@
                             <i class="fas fa-flask fa-3x mb-3"></i>
                             <h5 class="card-title">Handlers &amp; Chaining</h5>
                             <p class="card-text opacity-75 small">REST, WebSocket, custom handlers, chains, proxy &amp; TTL</p>
-                            <span class="badge bg-light text-dark mt-1">v1.6.1</span>
+                            <span class="badge bg-light text-dark mt-1" th:text="'v' + ${appVersion}">v1.6.2</span>
                         </div>
                     </div>
                 </a>
@@ -96,7 +96,7 @@
                             <i class="fab fa-python fa-3x mb-3"></i>
                             <h5 class="card-title">Python Integration</h5>
                             <p class="card-text opacity-75 small">Py4J worker pool, handler contract &amp; examples</p>
-                            <span class="badge bg-light text-dark mt-1">v1.6.1</span>
+                            <span class="badge bg-light text-dark mt-1" th:text="'v' + ${appVersion}">v1.6.2</span>
                         </div>
                     </div>
                 </a>
@@ -283,11 +283,11 @@
             <div class="row">
                 <div class="col-md-6">
                     <h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6>
-                    <p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.1'">1.6.0</span></p>
+                    <p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.2'">1.6.0</span></p>
                 </div>
                 <div class="col-md-6 text-end">
                     <p class="text-muted small mb-0">
-                        Copyright &copy; 2025-2030 Ashutosh Sinha<br>
+                        <span th:text="${copyrightText}">Copyright</span><br>
                         
                     </p>
                 </div>

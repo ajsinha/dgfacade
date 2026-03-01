@@ -17,7 +17,7 @@
             <div class="col">
                 <h2 class="mb-1"><i class="fas fa-server me-2"></i>Message Brokers</h2>
                 <p class="text-muted mb-0">Create, configure, and manage broker connections &mdash;
-                    Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, SQL</p>
+                    Kafka, Confluent Kafka, ActiveMQ, RabbitMQ, IBM MQ, FileSystem, SQL</p>
             </div>
             <div class="col-auto">
                 <a th:href="@{/admin/brokers/create}" class="btn btn-success">
@@ -48,11 +48,12 @@
                                 <td class="ps-4">
                                     <i class="fas me-2"
                                        th:classappend="${b['type'] == 'kafka'} ? 'fa-stream text-primary' :
+                                           (${b['type'] == 'confluent-kafka'} ? 'fa-cloud text-primary' :
                                            (${b['type'] == 'activemq'} ? 'fa-exchange-alt text-warning' :
                                            (${b['type'] == 'rabbitmq'} ? 'fa-envelope text-orange' :
                                            (${b['type'] == 'ibmmq'} ? 'fa-industry text-info' :
                                            (${b['type'] == 'filesystem'} ? 'fa-folder text-success' :
-                                           'fa-database text-secondary'))))"></i>
+                                           'fa-database text-secondary')))))"></i>
                                     <strong th:text="${b['_broker_id']}">broker-id</strong>
                                 </td>
                                 <td><span class="badge bg-secondary" th:text="${b['type']}">kafka</span></td>
@@ -130,6 +131,7 @@
                                 <thead class="table-light"><tr><th class="ps-4">Type</th><th>Protocol</th><th>Default Port</th><th>SSL Support</th><th>Notes</th></tr></thead>
                                 <tbody>
                                     <tr><td class="ps-4"><i class="fas fa-stream text-primary me-2"></i><strong>Kafka</strong></td><td>TCP</td><td>9092 / 9093 (SSL)</td><td><span class="badge bg-success">PEM &amp; JKS</span></td><td>Supports mTLS, SASL/PLAIN, SASL/SCRAM</td></tr>
+                                    <tr><td class="ps-4"><i class="fas fa-cloud text-primary me-2"></i><strong>Confluent Kafka</strong></td><td>TCP (SASL)</td><td>9092</td><td><span class="badge bg-success">SASL_SSL</span></td><td>Confluent Cloud &amp; Platform: auto SASL injection, Schema Registry, OAUTHBEARER</td></tr>
                                     <tr><td class="ps-4"><i class="fas fa-exchange-alt text-warning me-2"></i><strong>ActiveMQ</strong></td><td>OpenWire / AMQP</td><td>61616 / 61617 (SSL)</td><td><span class="badge bg-success">PEM &amp; JKS</span></td><td>Supports failover:() URIs</td></tr>
                                     <tr><td class="ps-4"><i class="fas fa-envelope text-orange me-2"></i><strong>RabbitMQ</strong></td><td>AMQP 0-9-1</td><td>5672 / 5671 (SSL)</td><td><span class="badge bg-success">PEM &amp; JKS</span></td><td>Virtual hosts, exchange routing</td></tr>
                                     <tr><td class="ps-4"><i class="fas fa-industry text-info me-2"></i><strong>IBM MQ</strong></td><td>MQI / JMS</td><td>1414</td><td><span class="badge bg-success">PEM &amp; JKS</span></td><td>Queue Manager + SVRCONN channel</td></tr>

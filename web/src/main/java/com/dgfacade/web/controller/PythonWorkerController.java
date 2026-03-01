@@ -22,7 +22,7 @@ import java.util.Map;
  * Provides REST endpoints consumed by the Admin UI (python-workers.html)
  * and a Thymeleaf page route.
  *
- * @since 1.6.1
+ * @since 1.6.2
  */
 @Controller
 public class PythonWorkerController {

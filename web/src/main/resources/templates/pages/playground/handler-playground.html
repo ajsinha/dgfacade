@@ -312,7 +312,7 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
   dgfacade:
-    image: dgfacade:1.6.1
+    image: dgfacade:1.6.2
     ports: ["8090:8090"]
     depends_on: [kafka]
     volumes:

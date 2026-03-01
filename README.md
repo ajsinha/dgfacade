@@ -1,6 +1,6 @@
 # DGFacade — Data Gateway Facade
 
-**Version:** 1.6.1
+**Version:** 1.6.2
 **Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.**
 
 ---

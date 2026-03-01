@@ -52,7 +52,7 @@
             <!-- ═══ MAIN CONTENT ═══ -->
             <div class="col-lg-10">
                 <h1 class="display-5 mb-2"><i class="fas fa-cog me-3" style="color:var(--dg-primary);"></i>Configuration Reference</h1>
-                <p class="mb-1"><strong>Version 1.6.1</strong> &mdash; Complete reference for all <span th:text="${appName} ?: 'DGFacade'">DGFacade</span> configuration.</p>
+                <p class="mb-1"><strong th:text="'Version ' + ${appVersion}">Version 1.6.2</strong> &mdash; Complete reference for all <span th:text="${appName} ?: 'DGFacade'">DGFacade</span> configuration.</p>
                 <p class="text-muted mb-4">DGFacade uses two configuration layers: <code>application.properties</code> for application-level settings,
                     and <strong>JSON files</strong> in dedicated directories for handlers, brokers, channels, ingesters, chains, users, and Python workers.
                     Most JSON configs support hot-reload &mdash; changes take effect within 5 minutes or on-demand without restart.</p>
@@ -95,7 +95,7 @@
                                 <tr><td class="ps-4"><code>server.address</code></td><td><code>0.0.0.0</code></td><td>Bind address &mdash; <code>0.0.0.0</code> listens on all interfaces, <code>127.0.0.1</code> for localhost only</td></tr>
                                 <tr><td class="ps-4"><code>server.servlet.context-path</code></td><td><code>/</code></td><td>Root context path for all endpoints (e.g. set <code>/dgfacade</code> for reverse proxy prefix)</td></tr>
                                 <tr><td class="ps-4"><code>dgfacade.app-name</code></td><td><code>DGFacade</code></td><td>Application name shown in UI navbar, startup banner, and health endpoint</td></tr>
-                                <tr><td class="ps-4"><code>dgfacade.version</code></td><td><code>1.6.1</code></td><td>Version string shown in UI, <code>/health</code>, and startup banner</td></tr>
+                                <tr><td class="ps-4"><code>dgfacade.version</code></td><td><code>1.6.2</code></td><td>Version string shown in UI, <code>/health</code>, and startup banner</td></tr>
                                 <tr><td class="ps-4"><code>spring.application.name</code></td><td><code>dgfacade</code></td><td>Spring application name &mdash; used as global tag in Prometheus metrics</td></tr>
                                 <tr><td class="ps-4"><code>spring.thymeleaf.cache</code></td><td><code>false</code></td><td>Template caching &mdash; set <code>true</code> in production for performance</td></tr>
                                 <tr><td class="ps-4"><code>spring.thymeleaf.prefix</code></td><td><code>classpath:/templates/</code></td><td>Template directory location</td></tr>
@@ -841,7 +841,7 @@ logging.level.org.springframework.security=DEBUG</code></pre>
 //   export DGFACADE_APP_NAME=MyGateway
 //
 // Or override via JVM args:
-//   java -Dserver.port=9090 -jar dgfacade-web-1.6.1.jar</code></pre>
+//   java -Dserver.port=9090 -jar dgfacade-web-1.6.2.jar</code></pre>
 
                     <div class="alert" style="background:var(--dg-bg-alert-warning);border:1px solid var(--dg-border);color:var(--dg-text-primary);">
                         <i class="fas fa-key me-2"></i>
@@ -913,7 +913,7 @@ logging.level.org.springframework.security=DEBUG</code></pre>
 &#9474;   &#9492;&#9472;&#9472; handler-executions.log              # Handler execution audit log
 &#9500;&#9472;&#9472; libs/                                   # External handler JARs (custom classes)
 &#9492;&#9472;&#9472; web/target/
-    &#9492;&#9472;&#9472; dgfacade-web-1.6.1.jar              # Runnable Spring Boot fat JAR</code></pre>
+    &#9492;&#9472;&#9472; dgfacade-web-1.6.2.jar              # Runnable Spring Boot fat JAR</code></pre>
                 </section>
 
                 <!-- ═══ Navigation ═══ -->
@@ -927,8 +927,8 @@ logging.level.org.springframework.security=DEBUG</code></pre>
 
         <footer class="py-4 mt-5 border-top">
             <div class="row">
-                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.1'">1.6.1</span></p></div>
-                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha</p></div>
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.2'">1.6.2</span></p></div>
+                <div class="col-md-6 text-end"><p class="text-muted small mb-0"><span th:text="${copyrightText}">Copyright</span></p></div>
             </div>
         </footer>
     </div>

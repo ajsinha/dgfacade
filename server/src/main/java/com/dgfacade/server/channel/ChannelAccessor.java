@@ -78,9 +78,10 @@ public class ChannelAccessor {
             if (channelConfig == null) {
                 throw new IllegalArgumentException("Output channel not found: " + id);
             }
-            BrokerConfig brokerConfig = resolveBroker(channelConfig, id);
+            ResolvedBroker resolved = resolveBroker(channelConfig, id);
+            BrokerConfig brokerConfig = resolved.config();
             DataPublisher publisher = MessagingFactory.createPublisher(brokerConfig);
-            publisher.initialize(buildConnectionProps(channelConfig, brokerConfig));
+            publisher.initialize(buildConnectionProps(channelConfig, brokerConfig, resolved.rawMap()));
             log.info("DataPublisher created for output channel '{}' via broker '{}' ({})",
                     id, brokerConfig.getBrokerId(), brokerConfig.getBrokerType());
             return publisher;
@@ -103,9 +104,10 @@ public class ChannelAccessor {
             if (channelConfig == null) {
                 throw new IllegalArgumentException("Input channel not found: " + id);
             }
-            BrokerConfig brokerConfig = resolveBroker(channelConfig, id);
+            ResolvedBroker resolved = resolveBroker(channelConfig, id);
+            BrokerConfig brokerConfig = resolved.config();
             DataSubscriber subscriber = MessagingFactory.createSubscriber(brokerConfig);
-            subscriber.initialize(buildConnectionProps(channelConfig, brokerConfig));
+            subscriber.initialize(buildConnectionProps(channelConfig, brokerConfig, resolved.rawMap()));
             log.info("DataSubscriber created for input channel '{}' via broker '{}' ({})",
                     id, brokerConfig.getBrokerId(), brokerConfig.getBrokerType());
             return subscriber;
@@ -177,10 +179,13 @@ public class ChannelAccessor {
 
     // ─── Internal helpers ────────────────────────────────────────────────────
 
+    /** Resolved broker: typed config + raw JSON map for nested block pass-through. */
+    private record ResolvedBroker(BrokerConfig config, Map<String, Object> rawMap) {}
+
     /**
      * Resolve the BrokerConfig from a channel config's "broker" field.
      */
-    private BrokerConfig resolveBroker(Map<String, Object> channelConfig, String channelId) {
+    private ResolvedBroker resolveBroker(Map<String, Object> channelConfig, String channelId) {
         String brokerId = (String) channelConfig.get("broker");
         if (brokerId == null || brokerId.isBlank()) {
             throw new IllegalArgumentException(
@@ -195,7 +200,8 @@ public class ChannelAccessor {
         BrokerConfig bc = new BrokerConfig();
         bc.setBrokerId(brokerId);
         String type = String.valueOf(brokerMap.getOrDefault("type",
-                brokerMap.getOrDefault("broker_type", "KAFKA"))).toUpperCase();
+                brokerMap.getOrDefault("broker_type", "KAFKA")))
+                .toUpperCase().replace("-", "_");
         bc.setBrokerType(BrokerConfig.BrokerType.valueOf(type));
         bc.setConnectionUri(String.valueOf(brokerMap.getOrDefault("connection_uri", "")));
         bc.setDisplayName(String.valueOf(brokerMap.getOrDefault("display_name",
@@ -212,7 +218,7 @@ public class ChannelAccessor {
             p.forEach((k, v) -> props.put(String.valueOf(k), String.valueOf(v)));
         }
         bc.setProperties(props);
-        return bc;
+        return new ResolvedBroker(bc, brokerMap);
     }
 
     /**
@@ -221,7 +227,8 @@ public class ChannelAccessor {
      */
     @SuppressWarnings("unchecked")
     private Map<String, Object> buildConnectionProps(Map<String, Object> channelConfig,
-                                                      BrokerConfig brokerConfig) {
+                                                      BrokerConfig brokerConfig,
+                                                      Map<String, Object> rawBrokerMap) {
         Map<String, Object> props = new LinkedHashMap<>();
 
         // Broker-level properties
@@ -234,6 +241,21 @@ public class ChannelAccessor {
         props.put("broker_type", brokerConfig.getBrokerType().name());
         props.put("broker_id", brokerConfig.getBrokerId());
 
+        // Pass through nested config blocks (authentication, schema_registry, ssl)
+        // Required by Confluent Kafka and other brokers that read structured sub-maps
+        for (String block : List.of("authentication", "schema_registry", "ssl")) {
+            if (rawBrokerMap.get(block) instanceof Map<?, ?> nested) {
+                props.put(block, new LinkedHashMap<>(nested));
+            }
+        }
+
+        // Nested "properties" map from broker JSON (native client overrides)
+        if (rawBrokerMap.get("properties") instanceof Map<?, ?> nativeProps) {
+            Map<String, String> propsCopy = new LinkedHashMap<>();
+            nativeProps.forEach((k, v) -> propsCopy.put(String.valueOf(k), String.valueOf(v)));
+            props.put("properties", propsCopy);
+        }
+
         // Channel-level overrides (retry, queue depth, etc.)
         if (channelConfig.get("retry") instanceof Map<?, ?> retry) {
             retry.forEach((k, v) -> props.put("retry." + k, v));
@@ -242,7 +264,7 @@ public class ChannelAccessor {
             queue.forEach((k, v) -> props.put("queue." + k, v));
         }
 
-        // SSL config from broker
+        // SSL config from channel (overrides broker-level)
         if (channelConfig.get("ssl") instanceof Map<?, ?> ssl) {
             ssl.forEach((k, v) -> props.put("ssl." + k, v));
         }

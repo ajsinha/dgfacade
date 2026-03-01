@@ -27,7 +27,7 @@
 
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Version 1.6.1</strong> &mdash; This document describes the architecture of <span th:text="${appName} ?: 'DGFacade'">DGFacade</span>,
+                    <strong th:text="'Version ' + ${appVersion}">Version 1.6.2</strong> &mdash; This document describes the architecture of <span th:text="${appName} ?: 'DGFacade'">DGFacade</span>,
                     a high-performance data gateway facade with JSON-configured brokers, bidirectional channels (input fan-out &amp; output fan-in),
                     handler chaining pipelines, and backpressure management.
                 </div>
@@ -184,7 +184,7 @@
 
                     <pre class="bg-dark text-white p-3 rounded" style="font-size: 0.85rem;">
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         STARTUP SEQUENCE (v1.6.1)                            │
+│                         STARTUP SEQUENCE (v1.6.2)                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
@@ -250,7 +250,7 @@
                     <h4 class="mt-4">Startup Logging</h4>
                     <pre class="bg-dark text-white p-3 rounded" style="font-size: 0.85rem;">
 ╔════════════════════════════════════════════════════════════════════╗
-║  DGFacade v1.6.1 - Starting initialization sequence...             ║
+║  DGFacade v1.6.2 - Starting initialization sequence...             ║
 ╚════════════════════════════════════════════════════════════════════╝
 
 ╔════════════════════════════════════════════════════════════════════╗
@@ -285,7 +285,7 @@
   → 3 ingester(s) started
 
 ╔════════════════════════════════════════════════════════════════════╗
-║   SYSTEM READY - DGFacade v1.6.1                                   ║
+║   SYSTEM READY - DGFacade v1.6.2                                   ║
 ║   ✓ Brokers: 2 connected        ✓ Channels: 2 active              ║
 ║   ✓ Handlers: 12 registered     ✓ Ingesters: 3 consuming          ║
 ╚════════════════════════════════════════════════════════════════════╝</pre>
@@ -786,7 +786,7 @@ session.start();</pre>
 
                 <section id="clustering" class="mb-5">
                     <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-network-wired me-2 text-primary"></i>13. Clustering &amp; Distributed Execution</h2>
-                    <p>DGFacade v1.6.1 supports multi-node deployment via a lightweight HTTP-based cluster protocol. In <strong>standalone mode</strong> (default, no seed nodes), the cluster layer adds zero overhead. In <strong>cluster mode</strong>, nodes discover peers, exchange heartbeats, and can forward handler execution to remote nodes.</p>
+                    <p>DGFacade <span th:text="'v' + ${appVersion}">v1.6.2</span> supports multi-node deployment via a lightweight HTTP-based cluster protocol. In <strong>standalone mode</strong> (default, no seed nodes), the cluster layer adds zero overhead. In <strong>cluster mode</strong>, nodes discover peers, exchange heartbeats, and can forward handler execution to remote nodes.</p>
 
                     <h4 class="mt-4">Cluster Topology</h4>
                     <pre class="bg-dark text-light p-4 rounded" style="font-size: 0.72rem; overflow-x: auto;">
@@ -859,8 +859,8 @@ session.start();</pre>
 
         <footer class="py-4 mt-5 border-top">
             <div class="row">
-                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.1'">1.6.1</span></p></div>
-                <div class="col-md-6 text-end"><p class="text-muted small mb-0">Copyright &copy; 2025-2030 Ashutosh Sinha<br></p></div>
+                <div class="col-md-6"><h6><i class="fas fa-network-wired me-2"></i><span th:text="${appName} ?: 'DGFacade'">DGFacade</span></h6><p class="text-muted small mb-0">Version <span th:text="${version} ?: '1.6.2'">1.6.2</span></p></div>
+                <div class="col-md-6 text-end"><p class="text-muted small mb-0"><span th:text="${copyrightText}">Copyright</span><br></p></div>
             </div>
         </footer>
     </div>

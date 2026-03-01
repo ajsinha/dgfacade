@@ -19,7 +19,7 @@
             </div>
             <div>
                 <h1 class="mb-0">Python Handler Integration</h1>
-                <p class="text-muted mb-0">Write DGFacade handlers in Python using the same handler contract &middot; <span class="badge bg-success">v1.6.1</span></p>
+                <p class="text-muted mb-0">Write DGFacade handlers in Python using the same handler contract &middot; <span class="badge bg-success" th:text="'v' + ${appVersion}">v1.6.2</span></p>
             </div>
         </div>
         <nav aria-label="breadcrumb">
@@ -71,7 +71,7 @@
                 <div class="card-header"><h4 class="mb-0"><i class="fas fa-info-circle me-2" style="color:var(--dg-primary);"></i>1. Overview</h4></div>
                 <div class="card-body">
                     <p>
-                        DGFacade v1.6.1 introduces first-class support for writing request handlers in <strong>Python</strong>.
+                        DGFacade <span th:text="'v' + ${appVersion}">v1.6.2</span> introduces first-class support for writing request handlers in <strong>Python</strong>.
                         Python handlers follow the exact same <code>start → compute → stop</code> lifecycle contract as Java handlers,
                         receive the same <code>DGRequest</code> dictionary, and return the same <code>DGResponse</code> dictionary.
                         From the caller's perspective, there is <strong>no difference</strong> between a Java and Python handler.
@@ -173,7 +173,7 @@
                         <tbody>
                             <tr><td><strong>Python 3.8+</strong></td><td>Must be accessible as <code>python3</code> (or configure <code>python_binary</code> in py4j.json)</td></tr>
                             <tr><td><strong>py4j</strong></td><td><code>pip install py4j</code> — required for the Py4J gateway bridge</td></tr>
-                            <tr><td><strong>DGFacade v1.6.1+</strong></td><td>Python handler support is available from version 1.6.1 onwards</td></tr>
+                            <tr><td><strong>DGFacade <span th:text="'v' + ${appVersion} + '+'">v1.6.2+</span></strong></td><td>Python handler support is available from version 1.6.2 onwards</td></tr>
                         </tbody>
                     </table>
                     <div class="alert alert-warning mt-3">

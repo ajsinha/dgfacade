@@ -1,6 +1,6 @@
 # DGFacade Architecture
 
-**Version:** 1.6.1
+**Version:** 1.6.2
 **Copyright © 2025-2030 Ashutosh Sinha. All Rights Reserved.**
 
 ## Overview
@@ -131,7 +131,7 @@ The system initializes in 9 phases:
 - Thymeleaf, Bootstrap 5, Font Awesome 6
 - Prometheus/Micrometer for metrics, Grafana for dashboards
 
-## Python Handler Support (v1.6.1)
+## Python Handler Support (v1.6.2)
 
 DGFacade supports writing handlers in Python using the same start/execute/stop contract as Java handlers.
 

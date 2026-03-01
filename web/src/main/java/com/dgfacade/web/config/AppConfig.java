@@ -75,7 +75,7 @@ public class AppConfig {
     @Value("${server.port:8090}")
     private int serverPort;
 
-    @Value("${dgfacade.version:1.6.1}")
+    @Value("${dgfacade.version:1.6.2}")
     private String version;
 
     @Value("${dgfacade.config.auto-reload-seconds:300}")

@@ -16,7 +16,7 @@ import java.util.List;
  * Includes handler definitions that map request types to Python classes,
  * enabling the Admin UI to display registered Python handlers.
  *
- * @since 1.6.1
+ * @since 1.6.2
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Py4JConfig {
